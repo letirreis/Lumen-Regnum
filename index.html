@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumen Regnum - Campaign Manager</title>
+    
+    <!-- Fonts: Cinzel (Arcane Titles) & Inter (Clean UI) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              // Paleta Primária
+              obsidian: '#0E0E11',    // Antracito Obsidiana (Background)
+              shadow: '#1A1A22',      // Tinta de Sombra (Cards/Panels)
+              
+              // Luz Arcana (Accents)
+              gold: {
+                DEFAULT: '#C2A86C',   // Ouro Nebuloso
+                dim: '#8A7545',
+                glow: '#F0D696'
+              },
+              violet: {
+                DEFAULT: '#6E51A3',   // Violeta Etéreo
+                dark: '#4A3275',
+                light: '#9176C7'
+              },
+              silver: '#B8BCC4',      // Prata Espectral (Text)
+              
+              // Mistério
+              twilight: '#2D3F57',    // Azul Crepúsculo
+            },
+            fontFamily: {
+              cinzel: ['Cinzel', 'serif'],
+              sans: ['Inter', 'sans-serif'], // Inter as default sans
+            },
+            boxShadow: {
+              'arcane': '0 0 15px -3px rgba(110, 81, 163, 0.3)', // Violet glow
+              'gold': '0 0 10px -2px rgba(194, 168, 108, 0.15)', // Gold glow
+            },
+            backgroundImage: {
+              'vignette': 'radial-gradient(circle at center, transparent 0%, #0E0E11 120%)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #0E0E11; /* obsidian */
+        color: #B8BCC4; /* silver */
+        font-family: 'Inter', sans-serif;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Cinzel', serif;
+        letter-spacing: 0.05em;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0E0E11; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2D3F57; /* twilight */
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #6E51A3; /* violet */
+      }
+
+      /* Subtle Selection */
+      ::selection {
+        background: #6E51A3;
+        color: white;
+      }
+      
+      /* Glass Utility */
+      .glass-panel {
+        background: rgba(26, 26, 34, 0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(194, 168, 108, 0.15); /* Gold low opacity */
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.86.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
