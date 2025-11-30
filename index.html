@@ -18,11 +18,11 @@
             colors: {
               // Paleta Primária
               obsidian: '#0E0E11',    // Antracito Obsidiana (Background)
-              shadow: '#16161C',      // Tinta de Sombra (Cards/Panels) - Darker for contrast
+              shadow: '#16161C',      // Tinta de Sombra (Cards/Panels)
               
               // Luz Arcana (Accents)
               gold: {
-                DEFAULT: '#D4B875',   // Ouro Nebuloso - Brighter/More Metallic
+                DEFAULT: '#D4B875',   // Ouro Nebuloso
                 dim: '#8A7545',
                 glow: '#F0D696'
               },
@@ -31,21 +31,18 @@
                 dark: '#4A3275',
                 light: '#9176C7'
               },
-              silver: '#E2E4E9',      // Platina (Text) - Much brighter for readability
+              silver: '#E2E4E9',      // Platina (Text)
               
               // Mistério
               twilight: '#2D3F57',    // Azul Crepúsculo
             },
             fontFamily: {
               cinzel: ['Cinzel', 'serif'],
-              sans: ['Inter', 'sans-serif'], // Inter as default sans
+              sans: ['Inter', 'sans-serif'],
             },
             boxShadow: {
               'arcane': '0 0 15px -3px rgba(110, 81, 163, 0.3)', // Violet glow
               'gold': '0 0 10px -2px rgba(212, 184, 117, 0.2)', // Gold glow
-            },
-            backgroundImage: {
-              'vignette': 'radial-gradient(circle at center, transparent 0%, #0E0E11 120%)',
             }
           }
         }
@@ -53,9 +50,30 @@
     </script>
     <style>
       body {
-        background-color: #0E0E11; /* obsidian */
-        color: #E2E4E9; /* silver/platinum */
+        background-color: #0E0E11;
+        /* Vignette + Luz Central Sutil */
+        background-image: radial-gradient(circle at center, #101018 0%, #050509 55%, #020206 100%);
+        background-attachment: fixed;
+        color: #E2E4E9;
         font-family: 'Inter', sans-serif;
+        min-height: 100vh;
+      }
+
+      /* Poeira Arcana (Dust Texture) */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.25;
+        background-image: 
+            radial-gradient(1px 1px at 20% 20%, #ffffff55 0, transparent 100%),
+            radial-gradient(1px 1px at 80% 40%, #C2A86C55 0, transparent 100%),
+            radial-gradient(1px 1px at 10% 80%, #6E51A355 0, transparent 100%),
+            radial-gradient(1px 1px at 50% 50%, #ffffff33 0, transparent 100%),
+            radial-gradient(1px 1px at 90% 10%, #C2A86C33 0, transparent 100%);
+        background-size: 100% 100%;
+        z-index: 0;
       }
       
       h1, h2, h3, h4, h5, h6 {
@@ -72,24 +90,16 @@
         background: #0E0E11; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #2D3F57; /* twilight */
+        background: #2D3F57;
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #6E51A3; /* violet */
+        background: #6E51A3;
       }
 
-      /* Subtle Selection */
       ::selection {
         background: #6E51A3;
         color: white;
-      }
-      
-      /* Glass Utility */
-      .glass-panel {
-        background: rgba(22, 22, 28, 0.95); /* Higher opacity for readability */
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(212, 184, 117, 0.2); /* Gold low opacity */
       }
     </style>
   <script type="importmap">
@@ -106,6 +116,6 @@
 </script>
 </head>
   <body>
-    <div id="root"></div>
+    <div id="root" class="relative z-10"></div>
   </body>
 </html>

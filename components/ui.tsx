@@ -55,8 +55,12 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input: React.FC<InputProps> = ({ label, className = '', ...props }) => (
-  <div className="mb-3">
-    {label && <label className="block text-xs font-cinzel text-gold mb-1 tracking-wide font-semibold">{label}</label>}
+  <div className="mb-4">
+    {label && (
+        <label className="block text-[10px] font-cinzel text-gold mb-2 tracking-[0.25em] uppercase font-bold">
+            {label}
+        </label>
+    )}
     <input
       className={`flex h-10 w-full rounded-sm border border-twilight/50 bg-obsidian/50 px-3 py-1 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
       {...props}
@@ -70,8 +74,12 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 export const Textarea: React.FC<TextareaProps> = ({ label, className = '', ...props }) => (
-  <div className="mb-3">
-    {label && <label className="block text-xs font-cinzel text-gold mb-1 tracking-wide font-semibold">{label}</label>}
+  <div className="mb-4">
+    {label && (
+        <label className="block text-[10px] font-cinzel text-gold mb-2 tracking-[0.25em] uppercase font-bold">
+            {label}
+        </label>
+    )}
     <textarea
       className={`flex min-h-[80px] w-full rounded-sm border border-twilight/50 bg-obsidian/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
       {...props}

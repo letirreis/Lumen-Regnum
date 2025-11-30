@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { signIn, signUp } from '../services/supabase';
 import { Button, Input, Card } from '../components/ui';
@@ -39,18 +38,21 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
     };
 
     return (
-        <div className="min-h-screen bg-obsidian bg-vignette flex flex-col items-center justify-center p-4">
-            <div className="mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden">
+            {/* Círculo Arcano (Glow) Atrás do Card */}
+            <div className="absolute inset-0 m-auto w-[500px] h-[500px] rounded-full bg-gold/5 blur-[100px] pointer-events-none z-0"></div>
+
+            <div className="relative z-10 mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
                 <Crown className="w-12 h-12 text-gold mx-auto mb-4 drop-shadow-lg" />
-                <h1 className="text-4xl font-cinzel font-bold text-gold tracking-widest drop-shadow-md">
+                <h1 className="text-4xl font-cinzel font-bold text-gold tracking-[0.25em] drop-shadow-md">
                     LUMEN REGNUM
                 </h1>
-                <p className="text-twilight text-xs uppercase tracking-[0.3em] mt-2 font-bold">
+                <p className="text-[#7E8299] text-xs uppercase tracking-[0.3em] mt-3 font-bold">
                     Campaign Manager OS
                 </p>
             </div>
 
-            <Card className="w-full max-w-md border-gold/30 bg-shadow/90 shadow-2xl backdrop-blur-md p-8 animate-in zoom-in-95 duration-500">
+            <Card className="relative z-10 w-full max-w-md border-gold/30 bg-shadow/95 shadow-2xl backdrop-blur-md p-8 animate-in zoom-in-95 duration-500">
                 <div className="flex border-b border-gold/10 mb-6">
                     <button 
                         className={`flex-1 pb-2 text-sm font-cinzel font-bold tracking-wide transition-colors ${isLogin ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-zinc-400'}`}
@@ -80,7 +82,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <Input 
                         label="Email Identity" 
                         type="email" 
@@ -102,21 +104,21 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
 
                     <Button 
                         type="submit" 
-                        className="w-full mt-4" 
+                        className="w-full mt-2" 
                         disabled={loading}
                     >
                         {loading ? 'Processing...' : (isLogin ? 'Enter the Realm' : 'Forge Identity')}
                     </Button>
                 </form>
 
-                <div className="mt-6 text-center">
-                    <p className="text-[10px] text-zinc-600 font-serif italic">
+                <div className="mt-8 text-center">
+                    <p className="text-[10px] text-zinc-500 font-serif italic opacity-70">
                         "Only those who hold the key may shape the world."
                     </p>
                 </div>
             </Card>
 
-            <div className="mt-8 text-center text-zinc-700 text-xs">
+            <div className="relative z-10 mt-8 text-center text-zinc-700 text-xs">
                  <p>Secure. Private. Offline-Capable.</p>
             </div>
         </div>
