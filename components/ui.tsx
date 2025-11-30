@@ -2,14 +2,15 @@ import React from 'react';
 
 // --- Card ---
 export const Card: React.FC<{ children: React.ReactNode; className?: string; title?: string; action?: React.ReactNode }> = ({ children, className = '', title, action }) => (
-  <div className={`bg-shadow/95 backdrop-blur-sm border border-gold/20 rounded-sm p-4 shadow-lg transition-all hover:border-gold/40 hover:shadow-gold ${className}`}>
+  // Updated: bg-[#13141A]/98 for very high opacity/contrast against the gray background
+  <div className={`bg-[#13141A]/98 backdrop-blur-sm border border-gold/20 rounded-sm p-4 shadow-lg transition-all hover:border-gold/40 hover:shadow-gold ${className}`}>
     {(title || action) && (
       <div className="flex justify-between items-center mb-4 border-b border-gold/10 pb-2">
         {title && <h3 className="text-lg font-cinzel font-semibold text-gold tracking-wide">{title}</h3>}
         {action && <div>{action}</div>}
       </div>
     )}
-    <div className="text-silver">{children}</div>
+    <div className="text-white">{children}</div>
   </div>
 );
 
@@ -27,13 +28,13 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', s
     primary: "bg-violet/20 border border-violet/50 text-violet-light hover:bg-violet/30 hover:border-violet hover:shadow-arcane hover:text-white",
     
     // Secondary: Shadow background, Gold border
-    secondary: "bg-shadow border border-gold/30 text-gold hover:border-gold hover:bg-gold/10 hover:shadow-gold",
+    secondary: "bg-[#09090B] border border-gold/30 text-gold hover:border-gold hover:bg-gold/10 hover:shadow-gold",
     
     // Danger: Dark Red
     danger: "bg-red-950/30 text-red-400 hover:bg-red-900/50 border border-red-900/50 hover:border-red-800",
     
     // Ghost: Subtle
-    ghost: "hover:bg-shadow text-silver hover:text-gold",
+    ghost: "hover:bg-shadow text-white/70 hover:text-gold",
   };
 
   const sizes = {
@@ -62,7 +63,8 @@ export const Input: React.FC<InputProps> = ({ label, className = '', ...props })
         </label>
     )}
     <input
-      className={`flex h-10 w-full rounded-sm border border-twilight/50 bg-obsidian/50 px-3 py-1 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
+      // Updated: bg-[#09090B] (Almost Black) + text-white for maximum typing visibility
+      className={`flex h-10 w-full rounded-sm border border-twilight/50 bg-[#09090B] px-3 py-1 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
       {...props}
     />
   </div>
@@ -81,7 +83,7 @@ export const Textarea: React.FC<TextareaProps> = ({ label, className = '', ...pr
         </label>
     )}
     <textarea
-      className={`flex min-h-[80px] w-full rounded-sm border border-twilight/50 bg-obsidian/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
+      className={`flex min-h-[80px] w-full rounded-sm border border-twilight/50 bg-[#09090B] px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
       {...props}
     />
   </div>
@@ -112,13 +114,13 @@ export const Badge: React.FC<{ children: React.ReactNode; color?: 'green' | 'red
 export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/90 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-shadow border border-gold/30 rounded-sm shadow-2xl animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#13141A] border border-gold/30 rounded-sm shadow-2xl animate-in fade-in zoom-in duration-300">
         <div className="flex justify-between items-center p-4 border-b border-gold/20 bg-gradient-to-r from-shadow to-obsidian">
           <h2 className="text-xl font-cinzel font-bold text-gold glow-gold">{title}</h2>
           <button onClick={onClose} className="text-twilight hover:text-gold transition-colors">✕</button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 text-white">{children}</div>
       </div>
     </div>
   );
@@ -136,7 +138,7 @@ export const ConfirmModal: React.FC<{
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="space-y-6">
-        <p className="text-silver/80 font-serif leading-relaxed">{message}</p>
+        <p className="text-white/80 font-serif leading-relaxed">{message}</p>
         <div className="flex justify-end gap-3 pt-4 border-t border-twilight/20">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button variant="danger" onClick={() => { onConfirm(); onClose(); }}>{confirmText}</Button>
