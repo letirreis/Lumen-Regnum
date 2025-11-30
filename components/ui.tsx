@@ -1,9 +1,8 @@
-
 import React from 'react';
 
 // --- Card ---
 export const Card: React.FC<{ children: React.ReactNode; className?: string; title?: string; action?: React.ReactNode }> = ({ children, className = '', title, action }) => (
-  <div className={`bg-shadow/80 backdrop-blur-sm border border-gold/20 rounded-sm p-4 shadow-lg transition-all hover:border-gold/40 hover:shadow-gold ${className}`}>
+  <div className={`bg-shadow/95 backdrop-blur-sm border border-gold/20 rounded-sm p-4 shadow-lg transition-all hover:border-gold/40 hover:shadow-gold ${className}`}>
     {(title || action) && (
       <div className="flex justify-between items-center mb-4 border-b border-gold/10 pb-2">
         {title && <h3 className="text-lg font-cinzel font-semibold text-gold tracking-wide">{title}</h3>}
@@ -57,9 +56,9 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const Input: React.FC<InputProps> = ({ label, className = '', ...props }) => (
   <div className="mb-3">
-    {label && <label className="block text-xs font-cinzel text-gold/80 mb-1 tracking-wide">{label}</label>}
+    {label && <label className="block text-xs font-cinzel text-gold mb-1 tracking-wide font-semibold">{label}</label>}
     <input
-      className={`flex h-9 w-full rounded-sm border border-twilight/50 bg-obsidian/50 px-3 py-1 text-sm text-silver placeholder:text-twilight focus:outline-none focus:border-violet focus:ring-1 focus:ring-violet/50 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
+      className={`flex h-10 w-full rounded-sm border border-twilight/50 bg-obsidian/50 px-3 py-1 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
       {...props}
     />
   </div>
@@ -72,9 +71,9 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 
 export const Textarea: React.FC<TextareaProps> = ({ label, className = '', ...props }) => (
   <div className="mb-3">
-    {label && <label className="block text-xs font-cinzel text-gold/80 mb-1 tracking-wide">{label}</label>}
+    {label && <label className="block text-xs font-cinzel text-gold mb-1 tracking-wide font-semibold">{label}</label>}
     <textarea
-      className={`flex min-h-[80px] w-full rounded-sm border border-twilight/50 bg-obsidian/50 px-3 py-2 text-sm text-silver placeholder:text-twilight focus:outline-none focus:border-violet focus:ring-1 focus:ring-violet/50 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
+      className={`flex min-h-[80px] w-full rounded-sm border border-twilight/50 bg-obsidian/50 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 font-sans ${className}`}
       {...props}
     />
   </div>

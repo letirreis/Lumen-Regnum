@@ -18,11 +18,11 @@
             colors: {
               // Paleta Primária
               obsidian: '#0E0E11',    // Antracito Obsidiana (Background)
-              shadow: '#1A1A22',      // Tinta de Sombra (Cards/Panels)
+              shadow: '#16161C',      // Tinta de Sombra (Cards/Panels) - Darker for contrast
               
               // Luz Arcana (Accents)
               gold: {
-                DEFAULT: '#C2A86C',   // Ouro Nebuloso
+                DEFAULT: '#D4B875',   // Ouro Nebuloso - Brighter/More Metallic
                 dim: '#8A7545',
                 glow: '#F0D696'
               },
@@ -31,7 +31,7 @@
                 dark: '#4A3275',
                 light: '#9176C7'
               },
-              silver: '#B8BCC4',      // Prata Espectral (Text)
+              silver: '#E2E4E9',      // Platina (Text) - Much brighter for readability
               
               // Mistério
               twilight: '#2D3F57',    // Azul Crepúsculo
@@ -42,7 +42,7 @@
             },
             boxShadow: {
               'arcane': '0 0 15px -3px rgba(110, 81, 163, 0.3)', // Violet glow
-              'gold': '0 0 10px -2px rgba(194, 168, 108, 0.15)', // Gold glow
+              'gold': '0 0 10px -2px rgba(212, 184, 117, 0.2)', // Gold glow
             },
             backgroundImage: {
               'vignette': 'radial-gradient(circle at center, transparent 0%, #0E0E11 120%)',
@@ -54,7 +54,7 @@
     <style>
       body {
         background-color: #0E0E11; /* obsidian */
-        color: #B8BCC4; /* silver */
+        color: #E2E4E9; /* silver/platinum */
         font-family: 'Inter', sans-serif;
       }
       
@@ -87,9 +87,9 @@
       
       /* Glass Utility */
       .glass-panel {
-        background: rgba(26, 26, 34, 0.7);
+        background: rgba(22, 22, 28, 0.95); /* Higher opacity for readability */
         backdrop-filter: blur(8px);
-        border: 1px solid rgba(194, 168, 108, 0.15); /* Gold low opacity */
+        border: 1px solid rgba(212, 184, 117, 0.2); /* Gold low opacity */
       }
     </style>
   <script type="importmap">
