@@ -364,6 +364,8 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If Supabase is not configured yet (no env vars, no local storage),
+    // we still finish loading to let SupabaseSetup render.
     if(!supabase) {
         setLoading(false);
         return;
@@ -378,25 +380,30 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   if (loading) {
-    return <div className="min-h-screen bg-obsidian flex items-center justify-center text-gold font-cinzel">Loading Arcane Scripts...</div>;
+    return (
+        <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center text-gold font-cinzel gap-4">
+            <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
+            <span className="animate-pulse">Accessing Lumen Regnum Archives...</span>
+        </div>
+    );
   }
 
-  // If Supabase is NOT configured (no URL/Key), allow access to Setup Screen (handled in SupabaseSetup)
-  // But usually, we want to block main app if configured but not logged in.
-  // Note: SupabaseSetup is always rendered to allow configuring if missing.
-  
   return (
     <HashRouter>
         <SupabaseSetup />
         
-        {/* If no session, show Auth Page (unless still configuring DB) */}
-        {!session ? (
+        {/* If supabase is not configured, we show setup. If configured but no session, we show auth. */}
+        {!supabase ? (
+            /* SupabaseSetup handles the UI if not configured */
+            <div className="min-h-screen bg-obsidian" /> 
+        ) : !session ? (
             <Routes>
                 <Route path="*" element={<Auth onLoginSuccess={() => {}} />} />
             </Routes>

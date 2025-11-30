@@ -33,9 +33,11 @@ const api = {
         const { data, error } = await query;
         if (error) {
             console.error(`Error listing ${table}`, error);
+            // CRITICAL FIX: Return empty array instead of causing crash if error occurs
             return [];
         }
-        return data as T[];
+        // CRITICAL FIX: Return empty array if data is null (Supabase sometimes returns null for empty tables)
+        return (data || []) as T[];
     },
     add: async <T>(table: string, item: T): Promise<void> => {
         if (!supabase) return;

@@ -21,10 +21,19 @@ export const isSupabaseConfigured = () => {
     return supabaseUrl && supabaseUrl.startsWith('http') && supabaseKey;
 };
 
-// 4. Safe Client Creation
-export const supabase: SupabaseClient | null = isSupabaseConfigured()
-  ? createClient(supabaseUrl.trim(), supabaseKey.trim())
-  : null;
+// 4. Safe Client Creation with Crash Protection
+let client: SupabaseClient | null = null;
+
+if (isSupabaseConfigured()) {
+    try {
+        client = createClient(supabaseUrl.trim(), supabaseKey.trim());
+    } catch (error) {
+        console.error("Failed to initialize Supabase client:", error);
+        // We leave client as null so the UI can prompt for new credentials instead of crashing
+    }
+}
+
+export const supabase = client;
 
 // 5. Configuration Setter
 export const saveSupabaseConfig = (url: string, key: string) => {
