@@ -41,6 +41,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
   // Edit/Create State
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null); // If null, we are creating
+  const [isSaving, setIsSaving] = useState(false); // Prevents double submit
 
   // Delete State
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -74,46 +75,61 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
 
   const handleSave = async () => {
     if (!campaignId) return;
+    setIsSaving(true);
     
-    // Construct base object
-    const payload = {
-        ...editingItem,
-        campaign_id: campaignId,
-    };
+    try {
+        // Construct base object
+        const payload = {
+            ...editingItem,
+            campaign_id: campaignId,
+        };
 
-    // Initialize complex objects if new or missing
-    if (entityType === 'character' || entityType === 'npc' || entityType === 'monster') {
-         if(!payload.attributes) payload.attributes = { str:10, dex:10, con:10, int:10, wis:10, cha:10 };
-    }
-    if (entityType === 'character') {
-         if(!payload.passives) payload.passives = { perception:10, insight:10, investigation:10 };
-    }
+        // Sanitize Payload: Convert empty strings in ID fields to null to avoid UUID errors
+        Object.keys(payload).forEach(key => {
+            if ((key.endsWith('_id') || key === 'found_at_location_id') && payload[key] === "") {
+                payload[key] = null;
+            }
+        });
 
-    // If ID exists, update. Else add.
-    if (editingItem.id) {
-        switch(entityType) {
-            case 'npc': await db.npcs.update(payload); break;
-            case 'monster': await db.monsters.update(payload); break;
-            case 'location': await db.locations.update(payload); break;
-            case 'faction': await db.factions.update(payload); break;
-            case 'item': await db.items.update(payload); break;
-            case 'character': await db.characters.update(payload); break;
-            case 'session': await db.sessions.update(payload); break;
+        // Initialize complex objects if new or missing
+        if (entityType === 'character' || entityType === 'npc' || entityType === 'monster') {
+             if(!payload.attributes) payload.attributes = { str:10, dex:10, con:10, int:10, wis:10, cha:10 };
         }
-    } else {
-        payload.id = generateId();
-        switch(entityType) {
-            case 'npc': await db.npcs.add(payload); break;
-            case 'monster': await db.monsters.add(payload); break;
-            case 'location': await db.locations.add(payload); break;
-            case 'faction': await db.factions.add(payload); break;
-            case 'item': await db.items.add(payload); break;
-            case 'character': await db.characters.add(payload); break;
-            case 'session': await db.sessions.add(payload); break;
+        if (entityType === 'character') {
+             if(!payload.passives) payload.passives = { perception:10, insight:10, investigation:10 };
         }
+
+        // If ID exists, update. Else add.
+        if (editingItem.id) {
+            switch(entityType) {
+                case 'npc': await db.npcs.update(payload); break;
+                case 'monster': await db.monsters.update(payload); break;
+                case 'location': await db.locations.update(payload); break;
+                case 'faction': await db.factions.update(payload); break;
+                case 'item': await db.items.update(payload); break;
+                case 'character': await db.characters.update(payload); break;
+                case 'session': await db.sessions.update(payload); break;
+            }
+        } else {
+            payload.id = generateId();
+            switch(entityType) {
+                case 'npc': await db.npcs.add(payload); break;
+                case 'monster': await db.monsters.add(payload); break;
+                case 'location': await db.locations.add(payload); break;
+                case 'faction': await db.factions.add(payload); break;
+                case 'item': await db.items.add(payload); break;
+                case 'character': await db.characters.add(payload); break;
+                case 'session': await db.sessions.add(payload); break;
+            }
+        }
+        setModalOpen(false);
+        loadItems();
+    } catch (error) {
+        console.error("Failed to save item:", error);
+        alert("Failed to save. Check console for details.");
+    } finally {
+        setIsSaving(false);
     }
-    setModalOpen(false);
-    loadItems();
   };
 
   const requestDelete = (id: string) => {
@@ -122,17 +138,22 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
 
   const confirmDelete = async () => {
     if(!deleteId) return;
-    switch(entityType) {
-        case 'npc': await db.npcs.delete(deleteId); break;
-        case 'monster': await db.monsters.delete(deleteId); break;
-        case 'location': await db.locations.delete(deleteId); break;
-        case 'faction': await db.factions.delete(deleteId); break;
-        case 'item': await db.items.delete(deleteId); break;
-        case 'character': await db.characters.delete(deleteId); break;
-        case 'session': await db.sessions.delete(deleteId); break;
+    setIsSaving(true);
+    try {
+        switch(entityType) {
+            case 'npc': await db.npcs.delete(deleteId); break;
+            case 'monster': await db.monsters.delete(deleteId); break;
+            case 'location': await db.locations.delete(deleteId); break;
+            case 'faction': await db.factions.delete(deleteId); break;
+            case 'item': await db.items.delete(deleteId); break;
+            case 'character': await db.characters.delete(deleteId); break;
+            case 'session': await db.sessions.delete(deleteId); break;
+        }
+        setDeleteId(null);
+        loadItems();
+    } finally {
+        setIsSaving(false);
     }
-    setDeleteId(null);
-    loadItems();
   };
 
   const openNew = () => {
@@ -580,7 +601,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={editingItem?.id ? `Edit ${title}` : `New ${title}`}>
+      <Modal isOpen={isModalOpen} onClose={() => !isSaving && setModalOpen(false)} title={editingItem?.id ? `Edit ${title}` : `New ${title}`}>
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             {fields.map(field => {
                 if (field.type === 'stats') {
@@ -596,8 +617,10 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                                             type="number" 
                                             className="w-full h-9 rounded-md border border-zinc-700 bg-zinc-950 px-1 text-center text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
                                             value={stats[stat]}
+                                            onFocus={(e) => e.target.select()}
                                             onChange={e => {
-                                                const newStats = { ...stats, [stat]: parseInt(e.target.value) || 10 };
+                                                const val = e.target.value;
+                                                const newStats = { ...stats, [stat]: val === '' ? '' : parseInt(val) };
                                                 setEditingItem({ ...editingItem, [field.key]: newStats });
                                             }}
                                         />
@@ -642,7 +665,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                          <Input
                             type="number" 
                             label={field.label}
-                            value={editingItem?.[field.key] || ''}
+                            value={editingItem?.[field.key] ?? ''}
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => setEditingItem({...editingItem, [field.key]: Number(e.target.value)})}
                         />
                     ) : (
@@ -655,17 +679,19 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 </div>
             )})}
             <div className="flex justify-end pt-4">
-                <Button onClick={handleSave}>Save {title}</Button>
+                <Button onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? 'Saving...' : `Save ${title}`}
+                </Button>
             </div>
         </div>
       </Modal>
 
       <ConfirmModal 
             isOpen={!!deleteId} 
-            onClose={() => setDeleteId(null)} 
+            onClose={() => !isSaving && setDeleteId(null)} 
             onConfirm={confirmDelete} 
             title={`Delete ${title.slice(0, -1)}`} 
-            message="Are you sure you want to delete this item? This action cannot be undone."
+            message={isSaving ? "Deleting..." : "Are you sure you want to delete this item? This action cannot be undone."}
       />
     </div>
   );
