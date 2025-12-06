@@ -39,12 +39,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
   };
 
   const handleDeleteAccount = async () => {
-      try {
-          await deleteAccount();
-          window.location.reload();
-      } catch (err: any) {
-          alert(`Failed to delete account: ${err.message}`);
-      }
+    try {
+      await deleteAccount();
+      // Redireciona para página inicial
+      navigate('/');
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+    }
   };
 
   const navItems = [
