@@ -98,3 +98,33 @@ export const getCurrentUser = async (): Promise<User | null> => {
     const { data: { user } } = await supabase.auth.getUser();
     return user;
 };
+
+export const resetPassword = async (email: string) => {
+    if (!supabase) throw new Error("Supabase not configured");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/#/reset-password`,
+    });
+    if (error) throw error;
+};
+
+export const updatePassword = async (newPassword: string) => {
+    if (!supabase) throw new Error("Supabase not configured");
+    const { error } = await supabase.auth.updateUser({
+        password: newPassword
+    });
+    if (error) throw error;
+};
+
+export const deleteAccount = async () => {
+    if (!supabase) throw new Error("Supabase not configured");
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("No user logged in");
+    
+    // Usar a API de admin via RPC function ou deletar dados primeiro
+    // Por segurança, vamos fazer signOut após tentar a deleção
+    const { error } = await supabase.rpc('delete_user');
+    if (error) throw error;
+    
+    await signOut();
+};

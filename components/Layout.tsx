@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import { LayoutDashboard, Users, User, Map, Flag, Box, Swords, BookOpen, LogOut, Dices, Ghost, Menu, X, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, User, Map, Flag, Box, Swords, BookOpen, LogOut, Dices, Ghost, Menu, X, Settings, Trash2 } from 'lucide-react';
 import { Campaign } from '../types';
 import { DiceRoller } from './DiceRoller';
-import { getCurrentUser, signOut } from '../services/supabase';
+import { getCurrentUser, signOut, deleteAccount } from '../services/supabase';
+import { ConfirmModal } from './ui';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
   const [isDiceRollerOpen, setIsDiceRollerOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     // Get current user for sidebar display
@@ -32,6 +34,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
   const handleSignOut = async () => {
       await signOut();
       window.location.reload(); // Force reload to trigger auth state check in App.tsx
+  };
+
+  const handleDeleteAccount = async () => {
+      try {
+          await deleteAccount();
+          window.location.reload();
+      } catch (err: any) {
+          alert(`Failed to delete account: ${err.message}`);
+      }
   };
 
   const navItems = [
@@ -98,10 +109,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
           </button>
           <button
             onClick={handleSignOut}
-            className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-red-400/70 hover:text-red-400 hover:bg-red-950/20 w-full transition-colors"
+            className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-red-400/70 hover:text-red-400 hover:bg-red-950/20 w-full transition-colors mb-1"
           >
             <LogOut className="mr-3 h-3 w-3" />
             Sign Out
+          </button>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-red-500/70 hover:text-red-500 hover:bg-red-950/30 w-full transition-colors border-t border-red-900/20 mt-1 pt-2"
+          >
+            <Trash2 className="mr-3 h-3 w-3" />
+            Delete Account
           </button>
         </div>
     </>
@@ -114,9 +132,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-zinc-500">{userEmail}</span>
                     <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 text-xs uppercase font-bold border border-red-900/30 px-3 py-1 rounded bg-red-950/20">Sign Out</button>
+                    <button onClick={() => setShowDeleteConfirm(true)} className="text-red-500 hover:text-red-400 text-xs uppercase font-bold border border-red-900/30 px-3 py-1 rounded bg-red-950/30 flex items-center gap-1">
+                        <Trash2 className="w-3 h-3" />
+                        Delete Account
+                    </button>
                 </div>
             </div>
             {children}
+            
+            {/* Delete Account Confirmation */}
+            <ConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={handleDeleteAccount}
+                title="Delete Account"
+                message="Are you absolutely sure you want to delete your account? This will permanently remove your authentication credentials. All campaign data will remain in the database but will become orphaned. This action cannot be undone."
+                confirmText="Delete Account"
+            />
         </main>
     );
   }
@@ -180,6 +212,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
 
       {/* Global Dice Roller */}
       <DiceRoller isOpen={isDiceRollerOpen} onToggle={() => setIsDiceRollerOpen(!isDiceRollerOpen)} />
+      
+      {/* Delete Account Confirmation */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        message="Are you absolutely sure you want to delete your account? This will permanently remove your authentication credentials. All campaign data will remain in the database but will become orphaned. This action cannot be undone."
+        confirmText="Delete Account"
+      />
     </div>
   );
 };
