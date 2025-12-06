@@ -121,8 +121,8 @@ export const deleteAccount = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("No user logged in");
     
-    // Usar a API de admin via RPC function ou deletar dados primeiro
-    // Por segurança, vamos fazer signOut após tentar a deleção
+    // Use admin API via RPC function to delete the user
+    // Sign out after deletion for security
     const { error } = await supabase.rpc('delete_user');
     if (error) throw error;
     

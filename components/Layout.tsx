@@ -12,6 +12,8 @@ interface LayoutProps {
   activeCampaign?: Campaign | null;
 }
 
+const DELETE_ACCOUNT_WARNING = "Are you absolutely sure you want to delete your account? This will permanently remove your authentication credentials. All campaign data will remain in the database but will become orphaned. This action cannot be undone.";
+
 export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
   const navigate = useNavigate();
   const { id: campaignId } = useParams();
@@ -146,7 +148,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
                 onClose={() => setShowDeleteConfirm(false)}
                 onConfirm={handleDeleteAccount}
                 title="Delete Account"
-                message="Are you absolutely sure you want to delete your account? This will permanently remove your authentication credentials. All campaign data will remain in the database but will become orphaned. This action cannot be undone."
+                message={DELETE_ACCOUNT_WARNING}
                 confirmText="Delete Account"
             />
         </main>
@@ -219,7 +221,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteAccount}
         title="Delete Account"
-        message="Are you absolutely sure you want to delete your account? This will permanently remove your authentication credentials. All campaign data will remain in the database but will become orphaned. This action cannot be undone."
+        message={DELETE_ACCOUNT_WARNING}
         confirmText="Delete Account"
       />
     </div>
