@@ -24,18 +24,37 @@ BEGIN
     RAISE EXCEPTION 'No authenticated user found';
   END IF;
   
-  -- Delete user data from application tables
-  -- Note: Add your application-specific table deletions here
+  -- Delete user data from application tables FIRST
+  -- This prevents orphaned data if auth.users deletion succeeds but app data fails
+  -- Note: Customize these deletions for your application's schema
   -- Example: DELETE FROM public.user_logs WHERE user_id = current_user_id;
-  -- Example: DELETE FROM public.dmos_campaigns WHERE owner_id = current_user_id;
   
-  -- Delete user's campaigns (if they exist in the schema)
-  DELETE FROM public.dmos_campaigns WHERE owner_id = current_user_id;
+  -- Delete user's campaigns (with error handling for missing table)
+  -- IMPORTANT: Customize this section for your application's tables
+  BEGIN
+    DELETE FROM public.dmos_campaigns WHERE owner_id = current_user_id;
+  EXCEPTION
+    WHEN undefined_table THEN
+      -- Table doesn't exist in this schema, skip
+      NULL;
+    WHEN undefined_column THEN
+      -- Column doesn't exist, skip
+      NULL;
+  END;
   
-  -- Delete the user from auth.users (requires service role or SECURITY DEFINER)
+  -- Add more application table deletions here as needed:
+  -- BEGIN
+  --   DELETE FROM public.your_table WHERE user_id = current_user_id;
+  -- EXCEPTION
+  --   WHEN undefined_table THEN NULL;
+  -- END;
+  
+  -- Delete the user from auth.users LAST (requires SECURITY DEFINER privilege)
+  -- This should be the final operation to prevent orphaned data
   DELETE FROM auth.users WHERE id = current_user_id;
   
   -- Log the deletion (optional - only if you have an audit log table)
+  -- This should run BEFORE deleting from auth.users if you want to keep the log
   -- INSERT INTO public.user_deletion_log (user_id, deleted_at) 
   -- VALUES (current_user_id, pg_catalog.now());
   

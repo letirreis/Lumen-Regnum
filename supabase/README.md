@@ -95,17 +95,47 @@ const deleteAccount = async () => {
 3. Deletes user data from application tables (e.g., campaigns)
 4. Deletes the user from `auth.users`
 
-## Customization
+## Customization (Important!)
 
-If your application has additional tables that store user data, you need to add DELETE statements to the function:
+⚠️ **You MUST customize the function for your application's schema.**
+
+The provided migration includes a hardcoded reference to `dmos_campaigns` table, which may not exist in your schema or may have different column names. You need to:
+
+1. **Review your database schema** and identify all tables that store user data
+2. **Edit the migration SQL** before applying it
+3. **Add DELETE statements** for each table that references users
+
+### Example Customization:
 
 ```sql
--- Add inside the delete_user function's BEGIN block:
-DELETE FROM public.your_table_name WHERE user_id = current_user_id;
-DELETE FROM public.another_table WHERE user_id = current_user_id;
+-- Add inside the delete_user function's BEGIN block, BEFORE the auth.users deletion:
+
+-- Pattern: Wrap each deletion in error handling for safety
+BEGIN
+  DELETE FROM public.your_table_name WHERE user_id = current_user_id;
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
+END;
+
+BEGIN
+  DELETE FROM public.another_table WHERE user_foreign_key = current_user_id;
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
+END;
 ```
 
-Re-run the migration after making changes.
+### Why Error Handling?
+
+The error handling (`EXCEPTION WHEN undefined_table/undefined_column`) makes the function resilient to schema changes and allows it to work across different environments where table structures might vary.
+
+### Operation Order Matters!
+
+1. **First**: Delete from application tables (campaigns, logs, etc.)
+2. **Last**: Delete from `auth.users`
+
+This order prevents orphaned data if application deletions fail.
 
 ## Password Recovery Setup
 

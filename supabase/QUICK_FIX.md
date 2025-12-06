@@ -19,11 +19,22 @@ The function lacks an explicit `search_path`, which can lead to:
 2. Click on **SQL Editor** in the left sidebar
 3. Click **New Query**
 
-### Step 2: Copy & Paste This SQL
+### Step 2: Review & Customize the SQL
 
-Copy the entire contents of `migrations/001_fix_delete_user_security.sql` and paste into the SQL Editor.
+⚠️ **IMPORTANT**: Before running, you MUST customize the function for your database schema!
 
-Or copy this directly:
+The migration file includes a reference to `dmos_campaigns` table. You need to:
+1. Check if this table exists in your schema
+2. Add deletions for any other tables that store user data
+3. Update column names if they differ (e.g., `user_id` vs `owner_id`)
+
+See the full `migrations/001_fix_delete_user_security.sql` file for the complete version with comments.
+
+### Step 3: Copy & Paste This SQL
+
+**Option A**: Copy the entire contents of `migrations/001_fix_delete_user_security.sql` (recommended - includes all error handling)
+
+**Option B**: Use this simplified version (customize the table deletions):
 
 ```sql
 -- Drop the old insecure function
@@ -45,14 +56,18 @@ BEGIN
     RAISE EXCEPTION 'No authenticated user found';
   END IF;
   
-  -- Delete user's data from application tables
+  -- Delete user's data from application tables FIRST
+  -- CUSTOMIZE THIS SECTION for your tables!
   BEGIN
     DELETE FROM public.dmos_campaigns WHERE owner_id = current_user_id;
   EXCEPTION
     WHEN undefined_table THEN NULL;
+    WHEN undefined_column THEN NULL;
   END;
   
-  -- Delete from auth.users
+  -- Add more table deletions here as needed
+  
+  -- Delete from auth.users LAST
   DELETE FROM auth.users WHERE id = current_user_id;
 END;
 $$;
@@ -62,11 +77,11 @@ REVOKE ALL ON FUNCTION public.delete_user() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.delete_user() TO authenticated;
 ```
 
-### Step 3: Run the Query
+### Step 4: Run the Query
 
 Click the **Run** button (or press Cmd/Ctrl + Enter)
 
-### Step 4: Verify It Worked
+### Step 5: Verify It Worked
 
 Run this verification query:
 

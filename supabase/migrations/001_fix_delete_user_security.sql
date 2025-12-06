@@ -32,23 +32,35 @@ BEGIN
     RAISE EXCEPTION 'No authenticated user found';
   END IF;
   
-  -- Delete user data from application tables
-  -- Add your application-specific table deletions here as needed
-  -- Example pattern:
-  -- DELETE FROM public.table_name WHERE user_id = current_user_id;
+  -- Delete user data from application tables FIRST
+  -- This prevents orphaned data if auth.users deletion succeeds but app data fails
+  -- IMPORTANT: Customize these deletions for your application's schema
   
-  -- Delete user's campaigns (adjust table name based on your schema)
-  -- This will fail silently if the table doesn't exist - you may want to handle this
+  -- Delete user's campaigns (with error handling for schema variations)
+  -- Note: This handles both missing tables and missing columns gracefully
   BEGIN
     DELETE FROM public.dmos_campaigns WHERE owner_id = current_user_id;
   EXCEPTION
     WHEN undefined_table THEN
-      -- Table doesn't exist, continue
+      -- Table doesn't exist in this schema, skip
+      NULL;
+    WHEN undefined_column THEN
+      -- Column doesn't exist (e.g., different foreign key name), skip
       NULL;
   END;
   
-  -- Delete the user from auth.users
-  -- This requires SECURITY DEFINER as regular users can't delete from auth.users
+  -- Add more application table deletions here as needed:
+  -- Pattern: Wrap each DELETE in a BEGIN/EXCEPTION block for safety
+  -- BEGIN
+  --   DELETE FROM public.your_table WHERE user_id = current_user_id;
+  -- EXCEPTION
+  --   WHEN undefined_table THEN NULL;
+  --   WHEN undefined_column THEN NULL;
+  -- END;
+  
+  -- Delete the user from auth.users LAST
+  -- This should be the final operation to prevent orphaned application data
+  -- Requires SECURITY DEFINER as regular users can't delete from auth.users
   DELETE FROM auth.users WHERE id = current_user_id;
   
 END;
