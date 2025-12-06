@@ -15,6 +15,7 @@ import { CampaignDashboard } from './pages/CampaignDashboard';
 import { CombatTracker } from './pages/CombatTracker';
 import { GenericList } from './pages/GenericList';
 import { SessionsCalendar } from './pages/SessionsCalendar';
+import { ResetPassword } from './pages/ResetPassword';
 
 // Configuration for Generic Pages
 const SCHEMAS = {
@@ -405,6 +406,7 @@ function App() {
             <div className="min-h-screen bg-obsidian" /> 
         ) : !session ? (
             <Routes>
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="*" element={<Auth onLoginSuccess={() => {}} />} />
             </Routes>
         ) : (
