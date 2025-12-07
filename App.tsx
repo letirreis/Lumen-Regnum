@@ -17,6 +17,18 @@ import { GenericList } from './pages/GenericList';
 import { SessionsCalendar } from './pages/SessionsCalendar';
 import { ResetPassword } from './pages/ResetPassword';
 
+// Codex Pages
+import { MainArc } from './pages/codex/MainArc';
+import { MajorPlots } from './pages/codex/MajorPlots';
+import { WorldLore } from './pages/codex/WorldLore';
+import { MagicTech } from './pages/codex/MagicTech';
+import { PoliticsFactions } from './pages/codex/PoliticsFactions';
+import { Secrets } from './pages/codex/Secrets';
+import { ToneAesthetic } from './pages/codex/ToneAesthetic';
+import { WorldTimeline } from './pages/codex/WorldTimeline';
+import { HomeRules } from './pages/codex/HomeRules';
+import { NotesAndScraps } from './pages/codex/NotesAndScraps';
+
 // Configuration for Generic Pages
 const SCHEMAS = {
     character: [
@@ -356,6 +368,18 @@ const CampaignRouteWrapper: React.FC = () => {
              <Route path="/items" element={<GenericList entityType="item" title="Magic Items" fields={SCHEMAS.item as any} />} />
              <Route path="/sessions" element={<SessionsCalendar />} />
              <Route path="/combat" element={<CombatTracker />} />
+             
+             {/* Codex Routes */}
+             <Route path="/codex/main-arc" element={<MainArc />} />
+             <Route path="/codex/major-plots" element={<MajorPlots />} />
+             <Route path="/codex/world-lore" element={<WorldLore />} />
+             <Route path="/codex/magic-tech" element={<MagicTech />} />
+             <Route path="/codex/politics-factions" element={<PoliticsFactions />} />
+             <Route path="/codex/secrets" element={<Secrets />} />
+             <Route path="/codex/tone-aesthetic" element={<ToneAesthetic />} />
+             <Route path="/codex/world-timeline" element={<WorldTimeline />} />
+             <Route path="/codex/home-rules" element={<HomeRules />} />
+             <Route path="/codex/notes" element={<NotesAndScraps />} />
         </Routes>
     );
 }

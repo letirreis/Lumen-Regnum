@@ -307,4 +307,61 @@ export interface Campaign {
   notes: string;
 }
 
+// Campaign Codex (Worldbuilding & Narrative)
+export interface CampaignCodex {
+  id: UUID;
+  campaign_id: UUID;
+  main_arc: {
+    premise?: string;
+    core_conflict?: string;
+    primary_antagonist?: string;
+    themes?: string;
+    arc_status?: 'Beginning' | 'Rising Conflict' | 'Climax' | 'Resolution';
+    final_goal?: string;
+  };
+  major_plots: Array<{
+    id: string;
+    name: string;
+    description: string;
+    involved_npcs?: string;
+    involved_factions?: string;
+    status: 'Active' | 'Future' | 'Resolved' | 'Dropped';
+  }>;
+  world_lore: {
+    overview?: string;
+    history_highlights?: string;
+    races_cultures?: string;
+    religion_cosmology?: string;
+  };
+  magic_and_technology: {
+    magic_nature?: string;
+    magic_commonality?: string;
+    costs_risks?: string;
+    technology_level?: string;
+  };
+  politics_and_factions: {
+    political_landscape?: string;
+    major_powers?: string;
+    tensions_conflicts?: string;
+  };
+  secrets_of_world: string;
+  tone_and_aesthetic: {
+    emotional_palette?: string;
+    inspirations?: string;
+    pacing?: string;
+    hard_limits?: string;
+  };
+  world_timeline: Array<{
+    id: string;
+    event_name: string;
+    era_date?: string;
+    description: string;
+    impact?: string;
+  }>;
+  home_rules: string;
+  notes_and_scraps: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export type EntityType = 'npc' | 'location' | 'faction' | 'item' | 'character' | 'session' | 'monster';
