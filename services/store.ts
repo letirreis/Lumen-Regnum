@@ -19,7 +19,7 @@ const TABLES = {
   ENCOUNTERS: 'dmos_encounters',
   SESSIONS: 'dmos_sessions',
   NOTES: 'dmos_notes',
-  CODEX: 'campaign_codex',
+  CODEX: 'dmos_campaign_codex',
 };
 
 // Generic Helper for basic CRUD
