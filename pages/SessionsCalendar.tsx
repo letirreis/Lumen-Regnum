@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { db, generateId } from '../services/store';
 import { Session } from '../types';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal, Badge } from '../components/ui';
@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Trash2 } fr
 
 export const SessionsCalendar: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<Session[]>([]);
   
   // Calendar State
@@ -60,8 +61,8 @@ export const SessionsCalendar: React.FC = () => {
   };
 
   const openEditSession = (session: Session) => {
-      setEditingSession({ ...session });
-      setModalOpen(true);
+      // Navigate to SessionDetail page instead of opening modal
+      navigate(`/campaign/${campaignId}/sessions/${session.id}`);
   };
 
   const saveSession = async () => {

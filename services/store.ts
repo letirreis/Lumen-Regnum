@@ -1,6 +1,6 @@
 
 import { supabase } from './supabase';
-import { Campaign, Character, NPC, Location, Faction, MagicItem, Encounter, Session, Note, Monster, UUID, CampaignCodex } from '../types';
+import { Campaign, Character, NPC, Location, Faction, MagicItem, Encounter, Session, Note, Monster, UUID, CampaignCodex, SessionScene } from '../types';
 
 // Utility to generate IDs client-side (Supabase can do this, but we keep it for optimistic UI updates if needed)
 export const generateId = (): UUID => {
@@ -20,18 +20,20 @@ const TABLES = {
   SESSIONS: 'dmos_sessions',
   NOTES: 'dmos_notes',
   CODEX: 'dmos_campaign_codex',
+  SCENES: 'dmos_session_scenes',
 };
 
 // Generic Helper for basic CRUD
 const api = {
-    list: async <T>(table: string, campaignId?: string): Promise<T[]> => {
+    list: async <T>(table: string, campaignId?: string, filterColumn?: string): Promise<T[]> => {
         if (!supabase) { console.warn('Supabase not configured'); return []; }
         
         let query = supabase.from(table).select('*');
         if (campaignId) {
-            query = query.eq('campaign_id', campaignId);
+            const column = filterColumn || 'campaign_id';
+            query = query.eq(column, campaignId);
         }
-        const { data, error } = await query;
+        const { data, error } = await query.order('order_index', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true });
         if (error) {
             console.error(`Error listing ${table}`, error);
             // CRITICAL FIX: Return empty array instead of causing crash if error occurs
@@ -179,5 +181,11 @@ export const db = {
         .eq('id', codex.id);
       if (error) console.error('Error updating codex', error);
     },
+  },
+  scenes: {
+    list: (sessionId: UUID) => api.list<SessionScene>(TABLES.SCENES, sessionId, 'session_id'),
+    add: (scene: SessionScene) => api.add(TABLES.SCENES, scene),
+    update: (scene: SessionScene) => api.update(TABLES.SCENES, scene),
+    delete: (id: UUID) => api.delete(TABLES.SCENES, id),
   }
 };
