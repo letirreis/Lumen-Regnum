@@ -1,6 +1,6 @@
 
 import { supabase } from './supabase';
-import { Campaign, Character, NPC, Location, Faction, MagicItem, Encounter, Session, Note, Monster, UUID } from '../types';
+import { Campaign, Character, NPC, Location, Faction, MagicItem, Encounter, Session, Note, Monster, UUID, CampaignCodex } from '../types';
 
 // Utility to generate IDs client-side (Supabase can do this, but we keep it for optimistic UI updates if needed)
 export const generateId = (): UUID => {
@@ -19,6 +19,7 @@ const TABLES = {
   ENCOUNTERS: 'dmos_encounters',
   SESSIONS: 'dmos_sessions',
   NOTES: 'dmos_notes',
+  CODEX: 'campaign_codex',
 };
 
 // Generic Helper for basic CRUD
@@ -118,5 +119,60 @@ export const db = {
     add: (c: Note) => api.add(TABLES.NOTES, c),
     update: (c: Note) => api.update(TABLES.NOTES, c),
     delete: (id: UUID) => api.delete(TABLES.NOTES, id),
+  },
+  codex: {
+    // Get or create codex for a campaign
+    get: async (campaignId: UUID): Promise<CampaignCodex | null> => {
+      if (!supabase) { console.warn('Supabase not configured'); return null; }
+      
+      const { data, error } = await supabase
+        .from(TABLES.CODEX)
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned, create a new codex entry
+          const newCodex: Partial<CampaignCodex> = {
+            campaign_id: campaignId,
+            main_arc: {},
+            major_plots: [],
+            world_lore: {},
+            magic_and_technology: {},
+            politics_and_factions: {},
+            secrets_of_world: '',
+            tone_and_aesthetic: {},
+            world_timeline: [],
+            home_rules: '',
+            notes_and_scraps: '',
+          };
+          
+          const { data: created, error: createError } = await supabase
+            .from(TABLES.CODEX)
+            .insert(newCodex)
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error('Error creating codex', createError);
+            return null;
+          }
+          return created as CampaignCodex;
+        }
+        console.error('Error fetching codex', error);
+        return null;
+      }
+      
+      return data as CampaignCodex;
+    },
+    update: async (codex: CampaignCodex): Promise<void> => {
+      if (!supabase) return;
+      const { error } = await supabase
+        .from(TABLES.CODEX)
+        .update(codex)
+        .eq('id', codex.id);
+      if (error) console.error('Error updating codex', error);
+    },
   }
 };

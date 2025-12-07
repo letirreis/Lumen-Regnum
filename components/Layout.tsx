@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import { LayoutDashboard, Users, User, Map, Flag, Box, Swords, BookOpen, LogOut, Dices, Ghost, Menu, X, Settings, Trash2 } from 'lucide-react';
+import { NavLink, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Users, User, Map, Flag, Box, Swords, BookOpen, LogOut, Dices, Ghost, Menu, X, Settings, Trash2, ChevronDown, ChevronRight, Book } from 'lucide-react';
 import { Campaign } from '../types';
 import { DiceRoller } from './DiceRoller';
 import { getCurrentUser, signOut, deleteAccount } from '../services/supabase';
@@ -16,11 +16,13 @@ const DELETE_ACCOUNT_WARNING = "Are you absolutely sure you want to delete your 
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id: campaignId } = useParams();
   const [isDiceRollerOpen, setIsDiceRollerOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isCodexExpanded, setIsCodexExpanded] = useState(false);
 
   useEffect(() => {
     // Get current user for sidebar display
@@ -32,6 +34,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
     window.addEventListener('open-dice-roller', handleOpenDiceRoller);
     return () => window.removeEventListener('open-dice-roller', handleOpenDiceRoller);
   }, []);
+
+  // Auto-expand Codex if on a codex route
+  useEffect(() => {
+    if (location.pathname.includes('/codex')) {
+      setIsCodexExpanded(true);
+    }
+  }, [location.pathname]);
 
   const handleSignOut = async () => {
       await signOut();
@@ -60,8 +69,33 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
     { icon: BookOpen, label: 'Sessions', path: `/campaign/${campaignId}/sessions` },
   ];
 
+  const codexSubItems = [
+    { label: 'Main Arc', path: `/campaign/${campaignId}/codex/main-arc` },
+    { label: 'Major Plots', path: `/campaign/${campaignId}/codex/major-plots` },
+    { label: 'World Lore', path: `/campaign/${campaignId}/codex/world-lore` },
+    { label: 'Magic & Technology', path: `/campaign/${campaignId}/codex/magic-tech` },
+    { label: 'Politics & Factions', path: `/campaign/${campaignId}/codex/politics-factions` },
+    { label: 'Secrets of the World', path: `/campaign/${campaignId}/codex/secrets` },
+    { label: 'Tone & Aesthetic', path: `/campaign/${campaignId}/codex/tone-aesthetic` },
+    { label: 'World Timeline', path: `/campaign/${campaignId}/codex/world-timeline` },
+    { label: 'Home Rules', path: `/campaign/${campaignId}/codex/home-rules` },
+    { label: 'Notes & Scraps', path: `/campaign/${campaignId}/codex/notes` },
+  ];
+
+  const handleCodexClick = () => {
+    if (!isCodexExpanded) {
+      setIsCodexExpanded(true);
+      navigate(`/campaign/${campaignId}/codex/main-arc`);
+    } else {
+      setIsCodexExpanded(!isCodexExpanded);
+    }
+  };
+
   // Helper to render navigation content to avoid duplication between Desktop and Mobile
-  const renderNavContent = () => (
+  const renderNavContent = () => {
+    const isCodexActive = location.pathname.includes('/codex');
+    
+    return (
     <>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
@@ -82,6 +116,48 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
               {item.label}
             </NavLink>
           ))}
+          
+          {/* Codex Menu with Submenu */}
+          <div className="py-1">
+            <button
+              onClick={handleCodexClick}
+              className={`flex items-center w-full px-3 py-2 text-sm font-cinzel tracking-wide rounded-sm transition-all duration-300 ${
+                isCodexActive
+                  ? 'bg-violet/10 text-violet-light border-l-2 border-violet shadow-[0_0_10px_-5px_rgba(110,81,163,0.5)]'
+                  : 'text-silver/60 hover:bg-shadow hover:text-gold hover:border-l-2 hover:border-gold/50'
+              }`}
+            >
+              <Book className="mr-3 h-4 w-4 flex-shrink-0 opacity-70" />
+              <span className="flex-1 text-left">Codex</span>
+              {isCodexExpanded ? (
+                <ChevronDown className="h-3 w-3 opacity-70" />
+              ) : (
+                <ChevronRight className="h-3 w-3 opacity-70" />
+              )}
+            </button>
+            
+            {/* Codex Submenu */}
+            {isCodexExpanded && (
+              <div className="ml-4 mt-1 space-y-0.5 border-l border-gold/10 pl-2">
+                {codexSubItems.map((subItem) => (
+                  <NavLink
+                    key={subItem.path}
+                    to={subItem.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center px-3 py-1.5 text-xs font-cinzel tracking-wide rounded-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-violet/10 text-violet-light border-l-2 border-violet'
+                          : 'text-silver/50 hover:bg-shadow hover:text-gold hover:border-l-2 hover:border-gold/30'
+                      }`
+                    }
+                  >
+                    {subItem.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
           
           <div className="pt-4 mt-4 border-t border-gold/10">
              <button
@@ -127,6 +203,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
         </div>
     </>
   );
+  };
 
   if (!campaignId) {
     return (
