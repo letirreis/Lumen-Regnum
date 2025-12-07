@@ -134,7 +134,6 @@ export const db = {
       if (error) {
         if (error.code === 'PGRST116') {
           // No rows returned, create a new codex entry
-          console.log('No codex found, auto-creating for campaign:', campaignId);
           return await db.codex.create(campaignId);
         }
         console.error('Error fetching codex', error);
@@ -170,7 +169,6 @@ export const db = {
         console.error('Error creating codex:', createError);
         return null;
       }
-      console.log('Codex created successfully');
       return created as CampaignCodex;
     },
     update: async (codex: CampaignCodex): Promise<void> => {
