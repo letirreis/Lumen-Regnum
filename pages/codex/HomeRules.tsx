@@ -22,9 +22,15 @@ export const HomeRules: React.FC = () => {
     if (!campaignId) return;
     setLoading(true);
     const data = await db.codex.get(campaignId);
-    if (data) {
-      setCodex(data);
-    }
+    setCodex(data);
+    setLoading(false);
+  };
+
+  const handleCreateCodex = async () => {
+    if (!campaignId) return;
+    setLoading(true);
+    const data = await db.codex.create(campaignId);
+    setCodex(data);
     setLoading(false);
   };
 
@@ -56,8 +62,11 @@ export const HomeRules: React.FC = () => {
 
   if (!codex) {
     return (
-      <div className="text-center text-zinc-500 py-12">
-        Failed to load codex data.
+      <div className="text-center py-12">
+        <p className="text-zinc-500 mb-4">No codex data found for this campaign.</p>
+        <Button onClick={handleCreateCodex}>
+          Create Codex
+        </Button>
       </div>
     );
   }
