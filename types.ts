@@ -286,6 +286,32 @@ export interface Session {
   consequences: string;
   next_hooks: string;
   notes: string;
+  // Session Planning/Prep fields
+  session_number?: number;
+  title?: string;
+  goal_dm?: string;
+  focus_players?: string;
+  synopsis?: string;
+  expected_start_state?: string;
+  expected_end_state?: string;
+}
+
+// Session Scenes (for session planning/prep)
+export interface SessionScene {
+  id: UUID;
+  session_id: UUID;
+  title: string;
+  type: 'Social' | 'Combat' | 'Exploration' | 'Investigation' | 'Flashback' | 'Downtime' | 'Travel' | 'Other';
+  description: string;
+  objective: string;
+  location_id?: UUID;
+  npcs: string[];
+  beats: string[];
+  branches: string;
+  hooks: string;
+  order_index: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Quick Notes (Dashboard)
