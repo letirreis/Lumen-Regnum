@@ -134,37 +134,42 @@ export const db = {
       if (error) {
         if (error.code === 'PGRST116') {
           // No rows returned, create a new codex entry
-          const newCodex: Partial<CampaignCodex> = {
-            campaign_id: campaignId,
-            main_arc: {},
-            major_plots: [],
-            world_lore: {},
-            magic_and_technology: {},
-            politics_and_factions: {},
-            secrets_of_world: '',
-            tone_and_aesthetic: {},
-            world_timeline: [],
-            home_rules: '',
-            notes_and_scraps: '',
-          };
-          
-          const { data: created, error: createError } = await supabase
-            .from(TABLES.CODEX)
-            .insert(newCodex)
-            .select()
-            .single();
-          
-          if (createError) {
-            console.error('Error creating codex', createError);
-            return null;
-          }
-          return created as CampaignCodex;
+          return await db.codex.create(campaignId);
         }
         console.error('Error fetching codex', error);
         return null;
       }
       
       return data as CampaignCodex;
+    },
+    create: async (campaignId: UUID): Promise<CampaignCodex | null> => {
+      if (!supabase) { console.warn('Supabase not configured'); return null; }
+      
+      const newCodex: Partial<CampaignCodex> = {
+        campaign_id: campaignId,
+        main_arc: {},
+        major_plots: [],
+        world_lore: {},
+        magic_and_technology: {},
+        politics_and_factions: {},
+        secrets_of_world: '',
+        tone_and_aesthetic: {},
+        world_timeline: [],
+        home_rules: '',
+        notes_and_scraps: '',
+      };
+      
+      const { data: created, error: createError } = await supabase
+        .from(TABLES.CODEX)
+        .insert(newCodex)
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error('Error creating codex:', createError);
+        return null;
+      }
+      return created as CampaignCodex;
     },
     update: async (codex: CampaignCodex): Promise<void> => {
       if (!supabase) return;
