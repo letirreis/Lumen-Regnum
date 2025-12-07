@@ -33,7 +33,11 @@ const api = {
             const column = filterColumn || 'campaign_id';
             query = query.eq(column, campaignId);
         }
-        const { data, error } = await query.order('order_index', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true });
+        // Only order by order_index for tables that have it (scenes table)
+        if (table === TABLES.SCENES) {
+            query = query.order('order_index', { ascending: true, nullsFirst: false });
+        }
+        const { data, error } = await query;
         if (error) {
             console.error(`Error listing ${table}`, error);
             // CRITICAL FIX: Return empty array instead of causing crash if error occurs
