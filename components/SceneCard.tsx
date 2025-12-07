@@ -16,6 +16,11 @@ const SCENE_TYPES = ['Social', 'Combat', 'Exploration', 'Investigation', 'Flashb
 export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete, isExpanded, onToggleExpand }) => {
   const [localScene, setLocalScene] = useState(scene);
 
+  // Sync local state when scene prop changes
+  React.useEffect(() => {
+    setLocalScene(scene);
+  }, [scene]);
+
   const handleChange = (field: keyof SessionScene, value: any) => {
     const updated = { ...localScene, [field]: value };
     setLocalScene(updated);

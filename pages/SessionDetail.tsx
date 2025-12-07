@@ -39,25 +39,26 @@ export const SessionDetail: React.FC = () => {
     setScenes(scenesList);
   };
 
-  // Debounced autosave
-  const autosave = useCallback(
-    debounce(async () => {
-      if (session) {
-        setSaving(true);
-        await db.sessions.update(session);
-        setSaving(false);
-        setSaveMessage('Saved ✓');
-        setTimeout(() => setSaveMessage(''), 2000);
-      }
-    }, 500),
-    [session]
-  );
+  // Debounced autosave - keep reference stable
+  const autosaveRef = React.useRef<((s: Session) => void) | null>(null);
+  
+  React.useEffect(() => {
+    autosaveRef.current = debounce(async (sessionData: Session) => {
+      setSaving(true);
+      await db.sessions.update(sessionData);
+      setSaving(false);
+      setSaveMessage('Saved ✓');
+      setTimeout(() => setSaveMessage(''), 2000);
+    }, 500);
+  }, []);
 
   const handleSessionChange = (field: keyof Session, value: any) => {
     if (session) {
       const updated = { ...session, [field]: value };
       setSession(updated);
-      autosave();
+      if (autosaveRef.current) {
+        autosaveRef.current(updated);
+      }
     }
   };
 
@@ -91,16 +92,13 @@ export const SessionDetail: React.FC = () => {
   const handleDeleteScene = async (sceneId: UUID) => {
     if (!confirm('Delete this scene?')) return;
     await db.scenes.delete(sceneId);
-    setScenes(scenes.filter(s => s.id !== sceneId));
     
-    // Reindex remaining scenes
-    const reindexed = scenes
-      .filter(s => s.id !== sceneId)
-      .map((s, idx) => ({ ...s, order_index: idx }));
+    // Reindex remaining scenes (filter once and batch updates)
+    const remainingScenes = scenes.filter(s => s.id !== sceneId);
+    const reindexed = remainingScenes.map((s, idx) => ({ ...s, order_index: idx }));
     
-    for (const scene of reindexed) {
-      await db.scenes.update(scene);
-    }
+    // Batch update reindexed scenes
+    await Promise.all(reindexed.map(scene => db.scenes.update(scene)));
     setScenes(reindexed);
   };
 
@@ -188,7 +186,7 @@ export const SessionDetail: React.FC = () => {
                   label="Session Number"
                   type="number"
                   value={session.session_number ?? ''}
-                  onChange={e => handleSessionChange('session_number', parseInt(e.target.value) || 0)}
+                  onChange={e => handleSessionChange('session_number', e.target.value ? parseInt(e.target.value) : undefined)}
                   placeholder="0"
                 />
                 <Input 
