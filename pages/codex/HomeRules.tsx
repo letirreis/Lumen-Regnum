@@ -11,6 +11,7 @@ export const HomeRules: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (campaignId) {
@@ -29,8 +30,14 @@ export const HomeRules: React.FC = () => {
   const handleCreateCodex = async () => {
     if (!campaignId) return;
     setLoading(true);
+    setError(null);
     const data = await db.codex.create(campaignId);
-    setCodex(data);
+    if (data) {
+      setCodex(data);
+    } else {
+      setError('Failed to create codex. Please check the console for details or contact support.');
+      console.error('Codex creation failed for campaign:', campaignId);
+    }
     setLoading(false);
   };
 
@@ -64,6 +71,11 @@ export const HomeRules: React.FC = () => {
     return (
       <div className="text-center py-12">
         <p className="text-zinc-500 mb-4">No codex data found for this campaign.</p>
+        {error && (
+          <div className="mb-4 p-4 bg-red-950/30 border border-red-900/50 rounded text-red-400 text-sm max-w-md mx-auto">
+            {error}
+          </div>
+        )}
         <Button onClick={handleCreateCodex}>
           Create Codex
         </Button>
