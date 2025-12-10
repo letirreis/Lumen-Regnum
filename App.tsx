@@ -127,7 +127,8 @@ const SCHEMAS = {
         { key: 'region', label: 'Region / Biome', type: 'text' },
         { key: 'accent_color', label: 'Card Color', type: 'select', options: ['None', 'Red', 'Blue', 'Green', 'Purple', 'Orange', 'Yellow'] },
         { key: 'tags', label: 'Custom Tags (comma separated)', type: 'text' },
-        { key: 'faction_influence', label: 'Faction Influence', type: 'text' },
+        { key: 'faction_ids', label: 'Facções (conectar)', type: 'faction-multi-select' }, // New: multi-select factions
+        { key: 'faction_influence', label: 'Faction Influence (texto livre)', type: 'text' }, // Legacy field for compatibility
         { key: 'importance', label: 'Importance', type: 'select', options: ['Irrelevant', 'Relevant', 'Important', 'Critical', 'Epic'] },
 
         // 2. Description Essential
@@ -170,6 +171,7 @@ const SCHEMAS = {
     ],
     faction: [
         { key: 'name', label: 'Name', type: 'text' },
+        { key: 'tag_ids', label: 'Tags (type & status)', type: 'tags-select' }, // New: tag selector
         { key: 'goal', label: 'Goal', type: 'text' },
         { key: 'resources', label: 'Resources', type: 'textarea' },
         { key: 'conflicts', label: 'Conflicts', type: 'textarea' },

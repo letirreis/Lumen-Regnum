@@ -1,6 +1,6 @@
 
 import { supabase } from './supabase';
-import { Campaign, Character, NPC, Location, Faction, MagicItem, Encounter, Session, Note, Monster, UUID, CampaignCodex, SessionScene } from '../types';
+import { Campaign, Character, NPC, Location, Faction, MagicItem, Encounter, Session, Note, Monster, UUID, CampaignCodex, SessionScene, Tag } from '../types';
 
 // Utility to generate IDs client-side (Supabase can do this, but we keep it for optimistic UI updates if needed)
 export const generateId = (): UUID => {
@@ -8,6 +8,8 @@ export const generateId = (): UUID => {
 };
 
 // Database Schema Keys (Tables)
+// NOTE: dmos_tags and dmos_faction_tags tables must be created via SQL migrations 
+// (see SQL_MIGRATIONS_REFERENCE.md) before using tag features
 const TABLES = {
   CAMPAIGNS: 'dmos_campaigns',
   CHARACTERS: 'dmos_characters',
@@ -21,6 +23,8 @@ const TABLES = {
   NOTES: 'dmos_notes',
   CODEX: 'dmos_campaign_codex',
   SCENES: 'dmos_session_scenes',
+  TAGS: 'dmos_tags', // Normalized tags (type, status, etc.)
+  FACTION_TAGS: 'dmos_faction_tags', // Pivot table: faction_id, tag_id
 };
 
 // Generic Helper for basic CRUD
@@ -191,5 +195,55 @@ export const db = {
     add: (scene: SessionScene) => api.add(TABLES.SCENES, scene),
     update: (scene: SessionScene) => api.update(TABLES.SCENES, scene),
     delete: (id: UUID) => api.delete(TABLES.SCENES, id),
+  },
+  // Tags API (requires dmos_tags table created via SQL migrations)
+  tags: {
+    list: (campaignId: UUID) => api.list<Tag>(TABLES.TAGS, campaignId),
+    add: (tag: Tag) => api.add(TABLES.TAGS, tag),
+    update: (tag: Tag) => api.update(TABLES.TAGS, tag),
+    delete: (id: UUID) => api.delete(TABLES.TAGS, id),
+  },
+  // Faction-Tags Pivot Table API (requires dmos_faction_tags table created via SQL migrations)
+  faction_tags: {
+    // List all tags for a faction
+    list: async (factionId: UUID): Promise<any[]> => {
+      if (!supabase) { console.warn('Supabase not configured'); return []; }
+      const { data, error } = await supabase
+        .from(TABLES.FACTION_TAGS)
+        .select('*')
+        .eq('faction_id', factionId);
+      if (error) {
+        console.error('Error listing faction tags', error);
+        return [];
+      }
+      return data || [];
+    },
+    // Add a tag association to a faction
+    add: async (factionId: UUID, tagId: UUID): Promise<void> => {
+      if (!supabase) return;
+      const { error } = await supabase
+        .from(TABLES.FACTION_TAGS)
+        .insert({ faction_id: factionId, tag_id: tagId });
+      if (error) console.error('Error adding faction tag', error);
+    },
+    // Remove a tag association from a faction
+    delete: async (factionId: UUID, tagId: UUID): Promise<void> => {
+      if (!supabase) return;
+      const { error } = await supabase
+        .from(TABLES.FACTION_TAGS)
+        .delete()
+        .eq('faction_id', factionId)
+        .eq('tag_id', tagId);
+      if (error) console.error('Error deleting faction tag', error);
+    },
+    // Delete all tags for a faction (useful when updating)
+    deleteAll: async (factionId: UUID): Promise<void> => {
+      if (!supabase) return;
+      const { error } = await supabase
+        .from(TABLES.FACTION_TAGS)
+        .delete()
+        .eq('faction_id', factionId);
+      if (error) console.error('Error deleting all faction tags', error);
+    },
   }
 };
