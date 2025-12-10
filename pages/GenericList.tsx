@@ -4,12 +4,14 @@ import { useParams } from 'react-router-dom';
 import { db, generateId } from '../services/store';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal } from '../components/ui';
 import { Plus, Search, Trash2, Edit, Filter, MapPin, Sparkles, AlertCircle, Cloud, Skull, Scroll, Zap, ShieldAlert } from 'lucide-react';
-import { Location } from '../types';
+import { Location, Faction, Tag } from '../types';
+import { MultiFactionSelect } from '../components/MultiFactionSelect';
+import { TagSelector } from '../components/TagSelector';
 
 interface SchemaField {
   key: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'select' | 'stats';
+  type: 'text' | 'textarea' | 'number' | 'select' | 'stats' | 'faction-multi-select' | 'tags-select';
   options?: string[]; // For select
 }
 
@@ -23,6 +25,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
   const { id: campaignId } = useParams<{ id: string }>();
   const [items, setItems] = useState<any[]>([]);
   const [locations, setLocations] = useState<Location[]>([]); // For dynamic lookups
+  const [availableFactions, setAvailableFactions] = useState<Faction[]>([]); // For faction multi-select
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]); // For tag selector
   
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,6 +77,23 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
     }
   };
 
+  // Load available factions and tags when modal opens (for location and faction forms)
+  const loadFormDependencies = async () => {
+    if (!campaignId) return;
+    
+    // Load factions for location form
+    if (entityType === 'location') {
+      const factions = await db.factions.list(campaignId);
+      setAvailableFactions(factions);
+    }
+    
+    // Load tags for faction form
+    if (entityType === 'faction') {
+      const tags = await db.tags.list(campaignId);
+      setAvailableTags(tags);
+    }
+  };
+
   const handleSave = async () => {
     if (!campaignId) return;
     setIsSaving(true);
@@ -91,6 +112,14 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             }
         });
 
+        // Ensure tag_ids and faction_ids are arrays (not strings)
+        if (payload.tag_ids && !Array.isArray(payload.tag_ids)) {
+            payload.tag_ids = [];
+        }
+        if (payload.faction_ids && !Array.isArray(payload.faction_ids)) {
+            payload.faction_ids = [];
+        }
+
         // Initialize complex objects if new or missing
         if (entityType === 'character' || entityType === 'npc' || entityType === 'monster') {
              if(!payload.attributes) payload.attributes = { str:10, dex:10, con:10, int:10, wis:10, cha:10 };
@@ -99,8 +128,21 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
              if(!payload.passives) payload.passives = { perception:10, insight:10, investigation:10 };
         }
 
+        // For compatibility: set faction_influence to empty string if faction_ids is used
+        if (entityType === 'location' && payload.faction_ids && payload.faction_ids.length > 0) {
+            if (!payload.faction_influence) {
+                payload.faction_influence = '';
+            }
+        }
+
         // If ID exists, update. Else add.
-        if (editingItem.id) {
+        const isUpdate = !!editingItem.id;
+        if (!isUpdate) {
+            payload.id = generateId();
+        }
+
+        // Save main entity
+        if (isUpdate) {
             switch(entityType) {
                 case 'npc': await db.npcs.update(payload); break;
                 case 'monster': await db.monsters.update(payload); break;
@@ -111,7 +153,6 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 case 'session': await db.sessions.update(payload); break;
             }
         } else {
-            payload.id = generateId();
             switch(entityType) {
                 case 'npc': await db.npcs.add(payload); break;
                 case 'monster': await db.monsters.add(payload); break;
@@ -122,6 +163,18 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 case 'session': await db.sessions.add(payload); break;
             }
         }
+
+        // Sync faction_tags pivot table if entity is faction and has tag_ids
+        if (entityType === 'faction' && payload.tag_ids) {
+            // Delete all existing tags for this faction
+            await db.faction_tags.deleteAll(payload.id);
+            
+            // Add new tag associations
+            for (const tagId of payload.tag_ids) {
+                await db.faction_tags.add(payload.id, tagId);
+            }
+        }
+
         setModalOpen(false);
         loadItems();
     } catch (error) {
@@ -156,12 +209,14 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
     }
   };
 
-  const openNew = () => {
+  const openNew = async () => {
+      await loadFormDependencies();
       setEditingItem({});
       setModalOpen(true);
   };
 
-  const openEdit = (item: any) => {
+  const openEdit = async (item: any) => {
+      await loadFormDependencies();
       setEditingItem({...item});
       setModalOpen(true);
   };
@@ -604,6 +659,42 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
       <Modal isOpen={isModalOpen} onClose={() => !isSaving && setModalOpen(false)} title={editingItem?.id ? `Edit ${title}` : `New ${title}`}>
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             {fields.map(field => {
+                // Handle faction-multi-select field type
+                if (field.type === 'faction-multi-select') {
+                    return (
+                        <div key={field.key} className="mb-2">
+                            <label className="block text-xs font-medium text-zinc-400 mb-1">{field.label}</label>
+                            <MultiFactionSelect
+                                factions={availableFactions}
+                                selectedIds={editingItem?.[field.key] || []}
+                                onChange={(ids) => setEditingItem({ ...editingItem, [field.key]: ids })}
+                            />
+                        </div>
+                    );
+                }
+
+                // Handle tags-select field type
+                if (field.type === 'tags-select') {
+                    return (
+                        <div key={field.key} className="mb-2">
+                            <label className="block text-xs font-medium text-zinc-400 mb-1">{field.label}</label>
+                            <TagSelector
+                                campaignId={campaignId!}
+                                tags={availableTags}
+                                selectedIds={editingItem?.[field.key] || []}
+                                onChange={(ids) => setEditingItem({ ...editingItem, [field.key]: ids })}
+                                onTagsReload={async () => {
+                                    // Reload tags after creating a new one
+                                    if (campaignId) {
+                                        const tags = await db.tags.list(campaignId);
+                                        setAvailableTags(tags);
+                                    }
+                                }}
+                            />
+                        </div>
+                    );
+                }
+
                 if (field.type === 'stats') {
                     const stats = editingItem?.[field.key] || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
                     return (

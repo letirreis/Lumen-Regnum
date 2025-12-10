@@ -143,7 +143,8 @@ export interface Location {
   name: string;
   type: string; // city, village, dungeon, etc.
   region: string; // Biome
-  faction_influence: string;
+  faction_influence: string; // Legacy field - kept for compatibility
+  faction_ids?: UUID[]; // New: connected factions (requires dmos_location_factions pivot table or stored as array)
   importance: string; // Irrelevant, Relevant, Critical, Epic
   accent_color?: string; // Custom Color
   tags?: string; // Custom Tags
@@ -198,6 +199,18 @@ export interface Faction {
   conflicts: string;
   influence: string;
   notes: string;
+  tag_ids?: UUID[]; // New: associated tags (type & status) via dmos_faction_tags pivot table
+}
+
+// Tags for normalized metadata (requires dmos_tags table)
+export interface Tag {
+  id: UUID;
+  campaign_id: UUID;
+  name: string;
+  color?: string; // Hex color or preset name
+  tag_type?: string; // e.g., 'type', 'status', 'custom'
+  created_by?: UUID;
+  created_at?: string;
 }
 
 // RF5: Magic Items (Lumen Regnum Structure)

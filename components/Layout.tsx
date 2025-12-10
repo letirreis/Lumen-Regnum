@@ -63,7 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
     { icon: Users, label: 'NPCs', path: `/campaign/${campaignId}/npcs` },
     { icon: Ghost, label: 'Monsters', path: `/campaign/${campaignId}/monsters` },
     { icon: Map, label: 'Locations', path: `/campaign/${campaignId}/locations` },
-    { icon: Flag, label: 'Factions', path: `/campaign/${campaignId}/factions` },
+    { icon: Flag, label: 'Families & Factions', path: `/campaign/${campaignId}/factions` },
     { icon: Box, label: 'Items', path: `/campaign/${campaignId}/items` },
     { icon: Swords, label: 'Combat', path: `/campaign/${campaignId}/combat` },
     { icon: BookOpen, label: 'Sessions', path: `/campaign/${campaignId}/sessions` },
