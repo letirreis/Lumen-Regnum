@@ -68,11 +68,23 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
       setNewTagColor('#6366f1');
       setNewTagType('type');
       setIsCreating(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating tag:', error);
-      // Note: Consider replacing with toast notification for better UX
-      // For now, using alert to match existing error handling pattern in the codebase
-      alert('Erro ao criar tag. Verifique se a tabela dmos_tags existe no banco de dados.');
+      
+      // Provide more detailed error message based on the error type
+      let errorMessage = 'Erro ao criar tag. ';
+      
+      if (error?.message?.includes('relation') || error?.message?.includes('does not exist')) {
+        errorMessage += 'A tabela dmos_tags não existe no banco de dados. Execute a migration 004_create_tags.sql (veja supabase/migrations/README.md).';
+      } else if (error?.message?.includes('policy') || error?.code === '42501' || error?.message?.includes('permission')) {
+        errorMessage += 'Problema com permissões (RLS policies). Verifique se as RLS policies da tabela dmos_tags foram criadas corretamente. Execute a migration 004_create_tags.sql (veja supabase/migrations/README.md).';
+      } else if (error?.message?.includes('duplicate') || error?.code === '23505') {
+        errorMessage += 'Uma tag com esse nome já existe nesta campanha.';
+      } else {
+        errorMessage += `Erro: ${error?.message || 'Erro desconhecido'}. Verifique o console para mais detalhes.`;
+      }
+      
+      alert(errorMessage);
     }
   };
 
