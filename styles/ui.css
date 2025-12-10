@@ -1,0 +1,84 @@
+/* ============================================
+   Lumen Regnum - UI Auxiliary Styles
+   ============================================
+   Fancy gradient borders and accessible focus styles
+   for polished UI components.
+============================================ */
+
+/* Fancy Gradient Border Effect
+   ------------------------------
+   Creates a hairline gradient border using a pseudo-element
+   with mask to achieve a refined, high-end look.
+   
+   Usage: Add class="fancy-border" to any element.
+*/
+.fancy-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.fancy-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px; /* Border width */
+  background: linear-gradient(
+    135deg,
+    rgba(212, 184, 117, 0.4) 0%,   /* gold */
+    rgba(110, 81, 163, 0.6) 50%,   /* violet */
+    rgba(212, 184, 117, 0.4) 100%  /* gold */
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.fancy-border:hover::before {
+  opacity: 1;
+}
+
+/* Accessible Focus Style
+   ----------------------
+   Provides a consistent, high-contrast focus ring
+   for keyboard navigation accessibility.
+   
+   Usage: Add class="lr-focus" to focusable elements.
+*/
+.lr-focus:focus,
+.lr-focus:focus-visible {
+  outline: 2px solid rgba(212, 184, 117, 0.8); /* gold */
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(110, 81, 163, 0.2); /* violet glow */
+}
+
+.lr-focus:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Loading Spinner Animation
+   -------------------------
+   Smooth rotation for loading indicators.
+*/
+@keyframes lr-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lr-spin {
+  animation: lr-spin 1s linear infinite;
+}

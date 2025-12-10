@@ -17,6 +17,7 @@ import { GenericList } from './pages/GenericList';
 import { SessionsCalendar } from './pages/SessionsCalendar';
 import { SessionDetail } from './pages/SessionDetail';
 import { ResetPassword } from './pages/ResetPassword';
+import { UiDemo } from './pages/UiDemo';
 
 // Codex Pages
 import { MainArc } from './pages/codex/MainArc';
@@ -382,6 +383,9 @@ const CampaignRouteWrapper: React.FC = () => {
              <Route path="/sessions" element={<SessionsCalendar />} />
              <Route path="/sessions/:sessionId" element={<SessionDetail />} />
              <Route path="/combat" element={<CombatTracker />} />
+             
+             {/* UI Demo */}
+             <Route path="/ui-demo" element={<UiDemo />} />
              
              {/* Codex Routes */}
              <Route path="/codex/main-arc" element={<MainArc />} />
