@@ -1,28 +1,42 @@
 -- Migration 004: Create Tags System
 -- This migration creates dmos_tags and dmos_faction_tags tables for categorizing factions
 --
--- IMPORTANT: Before running this migration, verify the data types in your existing tables:
---   1. Check dmos_campaigns.id type with: 
---      SELECT data_type FROM information_schema.columns WHERE table_name = 'dmos_campaigns' AND column_name = 'id';
---   2. Check dmos_factions.id type with:
---      SELECT data_type FROM information_schema.columns WHERE table_name = 'dmos_factions' AND column_name = 'id';
---   3. Check auth.users.id type with:
---      SELECT data_type FROM information_schema.columns WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'id';
+-- ⚠️ CRITICAL: VERIFY DATA TYPES BEFORE RUNNING THIS MIGRATION ⚠️
 --
--- This migration assumes TEXT types for campaign_id, faction_id, and created_by based on common Supabase patterns.
--- If your schema uses different types (e.g., UUID), adjust the column types below accordingly.
+-- This migration uses TEXT types for foreign key columns (campaign_id, faction_id, created_by).
+-- These types were chosen to match reported database schema issues where UUID foreign keys
+-- caused "incompatible foreign key" errors.
+--
+-- BEFORE RUNNING: Execute these queries in your Supabase SQL Editor to verify actual types:
+--
+--   1. Check dmos_campaigns.id type:
+--      SELECT data_type FROM information_schema.columns 
+--      WHERE table_name = 'dmos_campaigns' AND column_name = 'id';
+--
+--   2. Check dmos_factions.id type:
+--      SELECT data_type FROM information_schema.columns 
+--      WHERE table_name = 'dmos_factions' AND column_name = 'id';
+--
+--   3. Check auth.users.id type:
+--      SELECT data_type FROM information_schema.columns 
+--      WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = 'id';
+--
+-- If any of these return 'uuid' instead of 'text' or 'character varying', you MUST:
+--   - Change the corresponding column type in this migration from TEXT to UUID
+--   - For example: if dmos_campaigns.id is UUID, change line ~20 to use UUID instead of TEXT
+--   - If auth.users.id is UUID, change line ~25 to use UUID instead of TEXT
 --
 -- RECOMMENDATION: Always backup your database before running migrations.
 
 -- 1. Create dmos_tags table
 CREATE TABLE IF NOT EXISTS dmos_tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id TEXT NOT NULL REFERENCES dmos_campaigns(id) ON DELETE CASCADE,
+  campaign_id TEXT NOT NULL REFERENCES dmos_campaigns(id) ON DELETE CASCADE, -- Change to UUID if dmos_campaigns.id is UUID
   name TEXT NOT NULL,
   color TEXT DEFAULT '#6366f1', -- Default indigo color
   type TEXT DEFAULT 'custom', -- 'type', 'status', or 'custom'
   description TEXT DEFAULT '',
-  created_by TEXT REFERENCES auth.users(id),
+  created_by TEXT REFERENCES auth.users(id), -- NOTE: auth.users.id is UUID by default in Supabase; change to UUID if needed
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(campaign_id, name) -- Prevent duplicate tag names within a campaign
@@ -30,7 +44,7 @@ CREATE TABLE IF NOT EXISTS dmos_tags (
 
 -- 2. Create dmos_faction_tags pivot table (many-to-many relationship)
 CREATE TABLE IF NOT EXISTS dmos_faction_tags (
-  faction_id TEXT NOT NULL REFERENCES dmos_factions(id) ON DELETE CASCADE,
+  faction_id TEXT NOT NULL REFERENCES dmos_factions(id) ON DELETE CASCADE, -- Change to UUID if dmos_factions.id is UUID
   tag_id UUID NOT NULL REFERENCES dmos_tags(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY (faction_id, tag_id)
