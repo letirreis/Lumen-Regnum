@@ -58,22 +58,24 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
       created_at: new Date().toISOString(),
     };
 
-    try {
-      await db.tags.add(newTag);
-      await onTagsReload(); // Reload tags from database
-      onChange([...selectedIds, newTag.id]); // Auto-select newly created tag
-      
-      // Reset form
-      setNewTagName('');
-      setNewTagColor('#6366f1');
-      setNewTagType('type');
-      setIsCreating(false);
-    } catch (error) {
-      console.error('Error creating tag:', error);
+    const result = await db.tags.add(newTag);
+    
+    if (result.error) {
+      console.error('Error creating tag:', result.error);
       // Note: Consider replacing with toast notification for better UX
       // For now, using alert to match existing error handling pattern in the codebase
       alert('Erro ao criar tag. Verifique se a tabela dmos_tags existe no banco de dados.');
+      return;
     }
+    
+    await onTagsReload(); // Reload tags from database
+    onChange([...selectedIds, newTag.id]); // Auto-select newly created tag
+    
+    // Reset form
+    setNewTagName('');
+    setNewTagColor('#6366f1');
+    setNewTagType('type');
+    setIsCreating(false);
   };
 
   // Get tag type options from existing tags

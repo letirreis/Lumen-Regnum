@@ -50,29 +50,29 @@ const api = {
         // CRITICAL FIX: Return empty array if data is null (Supabase sometimes returns null for empty tables)
         return (data || []) as T[];
     },
-    add: async <T>(table: string, item: T): Promise<void> => {
-        if (!supabase) return;
-        const { error } = await supabase.from(table).insert(item);
+    add: async <T>(table: string, item: T): Promise<{ data: T | null; error: any }> => {
+        if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+        const { data, error } = await supabase.from(table).insert(item).select().maybeSingle();
         if (error) {
             console.error(`Error adding to ${table}`, error);
-            throw error;
         }
+        return { data: data as T | null, error };
     },
-    update: async <T extends { id: string }>(table: string, item: T): Promise<void> => {
-        if (!supabase) return;
-        const { error } = await supabase.from(table).update(item).eq('id', item.id);
+    update: async <T extends { id: string }>(table: string, item: T): Promise<{ data: T | null; error: any }> => {
+        if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+        const { data, error } = await supabase.from(table).update(item).eq('id', item.id).select().maybeSingle();
         if (error) {
             console.error(`Error updating ${table}`, error);
-            throw error;
         }
+        return { data: data as T | null, error };
     },
-    delete: async (table: string, id: string): Promise<void> => {
-        if (!supabase) return;
-        const { error } = await supabase.from(table).delete().eq('id', id);
+    delete: async (table: string, id: string): Promise<{ data: any; error: any }> => {
+        if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+        const { data, error } = await supabase.from(table).delete().eq('id', id);
         if (error) {
             console.error(`Error deleting from ${table}`, error);
-            throw error;
         }
+        return { data, error };
     }
 }
 
@@ -190,16 +190,18 @@ export const db = {
       }
       return created as CampaignCodex;
     },
-    update: async (codex: CampaignCodex): Promise<void> => {
-      if (!supabase) return;
-      const { error } = await supabase
+    update: async (codex: CampaignCodex): Promise<{ data: CampaignCodex | null; error: any }> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+      const { data, error } = await supabase
         .from(TABLES.CODEX)
         .update(codex)
-        .eq('id', codex.id);
+        .eq('id', codex.id)
+        .select()
+        .maybeSingle();
       if (error) {
         console.error('Error updating codex', error);
-        throw error;
       }
+      return { data: data as CampaignCodex | null, error };
     },
   },
   scenes: {
@@ -218,7 +220,7 @@ export const db = {
   // Faction-Tags Pivot Table API (requires dmos_faction_tags table created via SQL migrations)
   faction_tags: {
     // List all tags for a faction
-    list: async (factionId: UUID): Promise<any[]> => {
+    listForFaction: async (factionId: UUID): Promise<any[]> => {
       if (!supabase) { console.warn('Supabase not configured'); return []; }
       const { data, error } = await supabase
         .from(TABLES.FACTION_TAGS)
@@ -230,41 +232,75 @@ export const db = {
       }
       return data || [];
     },
-    // Add a tag association to a faction
-    add: async (factionId: UUID, tagId: UUID): Promise<void> => {
-      if (!supabase) return;
-      const { error } = await supabase
+    // Set tags for a faction (replaces all existing tags)
+    setForFaction: async (factionId: UUID, tagIds: UUID[]): Promise<{ data: any; error: any }> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+      
+      // Delete all existing tags for this faction
+      const { error: deleteError } = await supabase
         .from(TABLES.FACTION_TAGS)
-        .insert({ faction_id: factionId, tag_id: tagId });
+        .delete()
+        .eq('faction_id', factionId);
+      
+      if (deleteError) {
+        console.error('Error deleting existing faction tags', deleteError);
+        return { data: null, error: deleteError };
+      }
+      
+      // If no tags to add, return success
+      if (!tagIds || tagIds.length === 0) {
+        return { data: [], error: null };
+      }
+      
+      // Add new tag associations
+      const links = tagIds.map(tagId => ({ faction_id: factionId, tag_id: tagId }));
+      const { data, error } = await supabase
+        .from(TABLES.FACTION_TAGS)
+        .insert(links)
+        .select();
+      
+      if (error) {
+        console.error('Error adding faction tags', error);
+      }
+      
+      return { data, error };
+    },
+    // Add a single tag association to a faction
+    addLink: async (factionId: UUID, tagId: UUID): Promise<{ data: any; error: any }> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+      const { data, error } = await supabase
+        .from(TABLES.FACTION_TAGS)
+        .insert({ faction_id: factionId, tag_id: tagId })
+        .select();
       if (error) {
         console.error('Error adding faction tag', error);
-        throw error;
       }
+      return { data, error };
     },
-    // Remove a tag association from a faction
-    delete: async (factionId: UUID, tagId: UUID): Promise<void> => {
-      if (!supabase) return;
-      const { error } = await supabase
+    // Remove a single tag association from a faction
+    deleteLink: async (factionId: UUID, tagId: UUID): Promise<{ data: any; error: any }> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+      const { data, error } = await supabase
         .from(TABLES.FACTION_TAGS)
         .delete()
         .eq('faction_id', factionId)
         .eq('tag_id', tagId);
       if (error) {
         console.error('Error deleting faction tag', error);
-        throw error;
       }
+      return { data, error };
     },
-    // Delete all tags for a faction (useful when updating)
-    deleteAll: async (factionId: UUID): Promise<void> => {
-      if (!supabase) return;
-      const { error } = await supabase
+    // Delete all tags for a faction (useful when deleting faction)
+    deleteAll: async (factionId: UUID): Promise<{ data: any; error: any }> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+      const { data, error } = await supabase
         .from(TABLES.FACTION_TAGS)
         .delete()
         .eq('faction_id', factionId);
       if (error) {
         console.error('Error deleting all faction tags', error);
-        throw error;
       }
+      return { data, error };
     },
   }
 };
