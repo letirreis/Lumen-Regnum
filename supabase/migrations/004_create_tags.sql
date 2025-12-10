@@ -23,8 +23,12 @@
 --
 -- If any of these return 'uuid' instead of 'text' or 'character varying', you MUST:
 --   - Change the corresponding column type in this migration from TEXT to UUID
---   - For example: if dmos_campaigns.id is UUID, change line ~20 to use UUID instead of TEXT
---   - If auth.users.id is UUID, change line ~25 to use UUID instead of TEXT
+--   - For example: if dmos_campaigns.id is UUID, change line ~34 to use UUID instead of TEXT
+--   - If auth.users.id is UUID (default in Supabase), change line ~39 to use UUID instead of TEXT
+--
+-- QUICK FIX: If using standard Supabase auth (most common):
+--   Line 39: Change 'created_by TEXT' to 'created_by UUID'
+--   This is the most likely needed change since auth.users.id is UUID by default
 --
 -- RECOMMENDATION: Always backup your database before running migrations.
 
