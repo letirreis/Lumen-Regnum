@@ -181,6 +181,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         setModalOpen(false);
         loadItems();
     } catch (error) {
+        // Catch any unexpected errors not handled by db method error returns
+        // (e.g., network errors, JSON parsing errors, etc.)
         console.error("Failed to save item:", error);
         alert("Failed to save. Check console for details.");
     } finally {
@@ -216,6 +218,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         setDeleteId(null);
         loadItems();
     } catch (error) {
+        // Catch any unexpected errors not handled by db method error returns
+        // (e.g., network errors, JSON parsing errors, etc.)
         console.error("Failed to delete item:", error);
         alert("Failed to delete. Check console for details.");
     } finally {
