@@ -99,9 +99,14 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
     setIsSaving(true);
     
     try {
-        // Construct base object
+        // Extract client-only fields (tag_ids, faction_ids) before constructing payload
+        const { tag_ids, faction_ids, ...basePayload } = editingItem;
+        const tagIds = tag_ids || [];
+        const factionIds = faction_ids || [];
+        
+        // Construct payload without client-only fields
         const payload = {
-            ...editingItem,
+            ...basePayload,
             campaign_id: campaignId,
         };
 
@@ -112,17 +117,6 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             }
         });
 
-        // Ensure tag_ids and faction_ids are arrays (not strings)
-        // If they exist but are not arrays, initialize as empty arrays (prevents type errors)
-        if (payload.tag_ids !== undefined && !Array.isArray(payload.tag_ids)) {
-            console.warn('tag_ids was not an array, resetting to empty array:', payload.tag_ids);
-            payload.tag_ids = [];
-        }
-        if (payload.faction_ids !== undefined && !Array.isArray(payload.faction_ids)) {
-            console.warn('faction_ids was not an array, resetting to empty array:', payload.faction_ids);
-            payload.faction_ids = [];
-        }
-
         // Initialize complex objects if new or missing
         if (entityType === 'character' || entityType === 'npc' || entityType === 'monster') {
              if(!payload.attributes) payload.attributes = { str:10, dex:10, con:10, int:10, wis:10, cha:10 };
@@ -132,7 +126,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         }
 
         // For compatibility: set faction_influence to empty string if faction_ids is used
-        if (entityType === 'location' && payload.faction_ids && payload.faction_ids.length > 0) {
+        if (entityType === 'location' && factionIds.length > 0) {
             if (!payload.faction_influence) {
                 payload.faction_influence = '';
             }
@@ -144,43 +138,51 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             payload.id = generateId();
         }
 
-        // Save main entity
+        // Save main entity and handle new { data, error } return format
+        let result: { data: any; error: any } = { data: null, error: null };
         if (isUpdate) {
             switch(entityType) {
-                case 'npc': await db.npcs.update(payload); break;
-                case 'monster': await db.monsters.update(payload); break;
-                case 'location': await db.locations.update(payload); break;
-                case 'faction': await db.factions.update(payload); break;
-                case 'item': await db.items.update(payload); break;
-                case 'character': await db.characters.update(payload); break;
-                case 'session': await db.sessions.update(payload); break;
+                case 'npc': result = await db.npcs.update(payload); break;
+                case 'monster': result = await db.monsters.update(payload); break;
+                case 'location': result = await db.locations.update(payload); break;
+                case 'faction': result = await db.factions.update(payload); break;
+                case 'item': result = await db.items.update(payload); break;
+                case 'character': result = await db.characters.update(payload); break;
+                case 'session': result = await db.sessions.update(payload); break;
             }
         } else {
             switch(entityType) {
-                case 'npc': await db.npcs.add(payload); break;
-                case 'monster': await db.monsters.add(payload); break;
-                case 'location': await db.locations.add(payload); break;
-                case 'faction': await db.factions.add(payload); break;
-                case 'item': await db.items.add(payload); break;
-                case 'character': await db.characters.add(payload); break;
-                case 'session': await db.sessions.add(payload); break;
+                case 'npc': result = await db.npcs.add(payload); break;
+                case 'monster': result = await db.monsters.add(payload); break;
+                case 'location': result = await db.locations.add(payload); break;
+                case 'faction': result = await db.factions.add(payload); break;
+                case 'item': result = await db.items.add(payload); break;
+                case 'character': result = await db.characters.add(payload); break;
+                case 'session': result = await db.sessions.add(payload); break;
             }
         }
 
+        // Check for errors in main entity save
+        if (result.error) {
+            console.error("Error saving entity:", result.error);
+            alert(`Failed to save ${entityType}. ${result.error.message || 'Check console for details.'}`);
+            return;
+        }
+
         // Sync faction_tags pivot table if entity is faction and has tag_ids
-        if (entityType === 'faction' && payload.tag_ids) {
-            // Delete all existing tags for this faction
-            await db.faction_tags.deleteAll(payload.id);
-            
-            // Add new tag associations
-            for (const tagId of payload.tag_ids) {
-                await db.faction_tags.add(payload.id, tagId);
+        if (entityType === 'faction' && Array.isArray(tagIds)) {
+            const syncResult = await db.faction_tags.setForFaction(payload.id, tagIds);
+            if (syncResult.error) {
+                console.error("Error syncing faction tags:", syncResult.error);
+                alert(`${entityType} saved, but failed to sync tags. ${syncResult.error.message || 'Check console for details.'}`);
             }
         }
 
         setModalOpen(false);
         loadItems();
     } catch (error) {
+        // Catch any unexpected errors not handled by db method error returns
+        // (e.g., network errors, JSON parsing errors, etc.)
         console.error("Failed to save item:", error);
         alert("Failed to save. Check console for details.");
     } finally {
@@ -196,17 +198,30 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
     if(!deleteId) return;
     setIsSaving(true);
     try {
+        let result: { data: any; error: any } = { data: null, error: null };
         switch(entityType) {
-            case 'npc': await db.npcs.delete(deleteId); break;
-            case 'monster': await db.monsters.delete(deleteId); break;
-            case 'location': await db.locations.delete(deleteId); break;
-            case 'faction': await db.factions.delete(deleteId); break;
-            case 'item': await db.items.delete(deleteId); break;
-            case 'character': await db.characters.delete(deleteId); break;
-            case 'session': await db.sessions.delete(deleteId); break;
+            case 'npc': result = await db.npcs.delete(deleteId); break;
+            case 'monster': result = await db.monsters.delete(deleteId); break;
+            case 'location': result = await db.locations.delete(deleteId); break;
+            case 'faction': result = await db.factions.delete(deleteId); break;
+            case 'item': result = await db.items.delete(deleteId); break;
+            case 'character': result = await db.characters.delete(deleteId); break;
+            case 'session': result = await db.sessions.delete(deleteId); break;
         }
+        
+        if (result.error) {
+            console.error("Error deleting entity:", result.error);
+            alert(`Failed to delete ${entityType}. ${result.error.message || 'Check console for details.'}`);
+            return;
+        }
+        
         setDeleteId(null);
         loadItems();
+    } catch (error) {
+        // Catch any unexpected errors not handled by db method error returns
+        // (e.g., network errors, JSON parsing errors, etc.)
+        console.error("Failed to delete item:", error);
+        alert("Failed to delete. Check console for details.");
     } finally {
         setIsSaving(false);
     }

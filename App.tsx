@@ -269,7 +269,12 @@ const CampaignSelector: React.FC = () => {
         status: 'active',
         notes: ''
     };
-    await db.campaigns.add(newCamp);
+    const result = await db.campaigns.add(newCamp);
+    if (result.error) {
+        console.error('Error creating campaign:', result.error);
+        alert(`Failed to create campaign. ${result.error.message || 'Check console for details.'}`);
+        return;
+    }
     setCampaigns([...campaigns, newCamp]);
     setModalOpen(false);
     setNewCampaignName('');
@@ -283,7 +288,12 @@ const CampaignSelector: React.FC = () => {
 
   const confirmDelete = async () => {
       if (deleteId) {
-          await db.campaigns.delete(deleteId);
+          const result = await db.campaigns.delete(deleteId);
+          if (result.error) {
+              console.error('Error deleting campaign:', result.error);
+              alert(`Failed to delete campaign. ${result.error.message || 'Check console for details.'}`);
+              return;
+          }
           setCampaigns(campaigns.filter(c => c.id !== deleteId));
           setDeleteId(null);
       }
