@@ -93,7 +93,7 @@
   animation: lr-spin 1s linear infinite;
 }
 
-/* Arcane Snow Animation from index.html */
+/* Arcane Snow Animation */
 @keyframes arcaneSnow {
   0% { background-position: 0 0, 0 0, 0 0; }
   100% { background-position: 0 500px, 0 400px, 0 300px; }

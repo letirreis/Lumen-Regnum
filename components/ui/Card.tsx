@@ -33,7 +33,7 @@ export const Card: React.FC<CardProps> = ({
   hover = true 
 }) => {
   const hoverClasses = hover 
-    ? 'hover:-translate-y-0.5 hover:shadow-lg hover:shadow-violet/20' 
+    ? 'hover:-translate-y-0.5 hover:shadow-lg hover:shadow-violet-light/20' 
     : '';
   
   const clickableClasses = onClick 
@@ -46,7 +46,7 @@ export const Card: React.FC<CardProps> = ({
         fancy-border
         bg-[#13141A]/98 
         backdrop-blur-sm 
-        rounded-lg 
+        rounded-card 
         p-4 
         shadow-md
         transition-all 

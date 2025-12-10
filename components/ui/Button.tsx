@@ -59,7 +59,7 @@ export const Button: React.FC<ButtonProps> = ({
     inline-flex 
     items-center 
     justify-center 
-    rounded-lg 
+    rounded-card 
     font-cinzel 
     font-medium 
     transition-all 
@@ -72,22 +72,22 @@ export const Button: React.FC<ButtonProps> = ({
   
   const variants = {
     primary: `
-      bg-violet/20 
+      bg-violet-DEFAULT/20 
       border 
-      border-violet/50 
+      border-violet-DEFAULT/50 
       text-violet-light 
-      hover:bg-violet/30 
-      hover:border-violet 
+      hover:bg-violet-DEFAULT/30 
+      hover:border-violet-DEFAULT 
       hover:shadow-arcane 
       hover:text-white
     `,
     secondary: `
       bg-[#09090B] 
       border 
-      border-gold/30 
-      text-gold 
-      hover:border-gold 
-      hover:bg-gold/10 
+      border-gold-DEFAULT/30 
+      text-gold-DEFAULT 
+      hover:border-gold-DEFAULT 
+      hover:bg-gold-DEFAULT/10 
       hover:shadow-gold
     `,
     danger: `
@@ -101,7 +101,7 @@ export const Button: React.FC<ButtonProps> = ({
     ghost: `
       hover:bg-shadow 
       text-white/70 
-      hover:text-gold
+      hover:text-gold-DEFAULT
       border
       border-transparent
     `,

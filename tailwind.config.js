@@ -40,7 +40,7 @@ export default {
         sans: ['Inter', 'sans-serif'],
       },
       borderRadius: {
-        lg: '12px',
+        'card': '12px',  // Custom radius for cards
       },
       boxShadow: {
         'arcane': '0 0 15px -3px rgba(110, 81, 163, 0.3)', // Violet glow
