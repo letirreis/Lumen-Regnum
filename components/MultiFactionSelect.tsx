@@ -85,7 +85,7 @@ export const MultiFactionSelect: React.FC<MultiFactionSelectProps> = ({
 
       {selectedFactions.length === 0 && availableFactions.length === 0 && (
         <p className="text-xs text-zinc-500 italic">
-          Nenhuma facção disponível. Crie facções na aba "Families &amp; Factions" primeiro.
+          Nenhuma facção disponível. Crie facções na aba "Families & Factions" primeiro.
         </p>
       )}
     </div>

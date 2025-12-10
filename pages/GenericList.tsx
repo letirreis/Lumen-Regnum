@@ -113,10 +113,13 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         });
 
         // Ensure tag_ids and faction_ids are arrays (not strings)
-        if (payload.tag_ids && !Array.isArray(payload.tag_ids)) {
+        // If they exist but are not arrays, initialize as empty arrays (prevents type errors)
+        if (payload.tag_ids !== undefined && !Array.isArray(payload.tag_ids)) {
+            console.warn('tag_ids was not an array, resetting to empty array:', payload.tag_ids);
             payload.tag_ids = [];
         }
-        if (payload.faction_ids && !Array.isArray(payload.faction_ids)) {
+        if (payload.faction_ids !== undefined && !Array.isArray(payload.faction_ids)) {
+            console.warn('faction_ids was not an array, resetting to empty array:', payload.faction_ids);
             payload.faction_ids = [];
         }
 

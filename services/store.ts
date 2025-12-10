@@ -8,7 +8,8 @@ export const generateId = (): UUID => {
 };
 
 // Database Schema Keys (Tables)
-// NOTE: dmos_tags and dmos_faction_tags tables must be created via SQL migrations before using tag features
+// NOTE: dmos_tags and dmos_faction_tags tables must be created via SQL migrations 
+// (see SQL_MIGRATIONS_REFERENCE.md) before using tag features
 const TABLES = {
   CAMPAIGNS: 'dmos_campaigns',
   CHARACTERS: 'dmos_characters',

@@ -199,7 +199,7 @@ export interface Faction {
   conflicts: string;
   influence: string;
   notes: string;
-  tag_ids?: UUID[]; // New: associated tags (type & status) via dmos_faction_tags pivot table
+  tag_ids?: UUID[]; // New: associated tags via dmos_faction_tags pivot table (tags can be of any type: type, status, custom, etc.)
 }
 
 // Tags for normalized metadata (requires dmos_tags table)

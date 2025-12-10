@@ -70,6 +70,8 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
       setIsCreating(false);
     } catch (error) {
       console.error('Error creating tag:', error);
+      // Note: Consider replacing with toast notification for better UX
+      // For now, using alert to match existing error handling pattern in the codebase
       alert('Erro ao criar tag. Verifique se a tabela dmos_tags existe no banco de dados.');
     }
   };
