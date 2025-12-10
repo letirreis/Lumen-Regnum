@@ -6,12 +6,13 @@
 -- ============================================================================
 
 -- Tabela para armazenar tags normalizadas (type, status, custom tags)
--- Substitui o campo texto "tags" por um sistema estruturado
+-- Substitui o campo texto "tags" usado anteriormente em várias entidades (factions, etc.)
+-- por um sistema estruturado com tabela própria e relacionamento many-to-many
 CREATE TABLE IF NOT EXISTS public.dmos_tags (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID NOT NULL REFERENCES public.dmos_campaigns(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    color TEXT, -- Hex color code ou nome de cor preset (ex: '#6366f1' ou 'indigo')
+    color TEXT, -- Hex color code or preset color name (ex: '#6366f1' or 'indigo')
     tag_type TEXT, -- Tipo da tag: 'type', 'status', 'custom', etc.
     created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),

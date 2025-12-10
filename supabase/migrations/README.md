@@ -89,9 +89,11 @@ AND table_name IN ('dmos_tags', 'dmos_faction_tags')
 ORDER BY table_name, ordinal_position;
 ```
 
-Expected result: 
+Expected result (as of migration 004): 
 - `dmos_tags` should have 7 columns: id, campaign_id, name, color, tag_type, created_by, created_at
 - `dmos_faction_tags` should have 3 columns: faction_id, tag_id, created_at
+
+**Note**: If migration 004 is updated, verify against the actual migration file for current structure.
 
 ### Verify RLS Policies
 
