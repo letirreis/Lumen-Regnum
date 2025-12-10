@@ -53,17 +53,26 @@ const api = {
     add: async <T>(table: string, item: T): Promise<void> => {
         if (!supabase) return;
         const { error } = await supabase.from(table).insert(item);
-        if (error) console.error(`Error adding to ${table}`, error);
+        if (error) {
+            console.error(`Error adding to ${table}`, error);
+            throw error;
+        }
     },
     update: async <T extends { id: string }>(table: string, item: T): Promise<void> => {
         if (!supabase) return;
         const { error } = await supabase.from(table).update(item).eq('id', item.id);
-        if (error) console.error(`Error updating ${table}`, error);
+        if (error) {
+            console.error(`Error updating ${table}`, error);
+            throw error;
+        }
     },
     delete: async (table: string, id: string): Promise<void> => {
         if (!supabase) return;
         const { error } = await supabase.from(table).delete().eq('id', id);
-        if (error) console.error(`Error deleting from ${table}`, error);
+        if (error) {
+            console.error(`Error deleting from ${table}`, error);
+            throw error;
+        }
     }
 }
 
@@ -187,7 +196,10 @@ export const db = {
         .from(TABLES.CODEX)
         .update(codex)
         .eq('id', codex.id);
-      if (error) console.error('Error updating codex', error);
+      if (error) {
+        console.error('Error updating codex', error);
+        throw error;
+      }
     },
   },
   scenes: {
@@ -224,7 +236,10 @@ export const db = {
       const { error } = await supabase
         .from(TABLES.FACTION_TAGS)
         .insert({ faction_id: factionId, tag_id: tagId });
-      if (error) console.error('Error adding faction tag', error);
+      if (error) {
+        console.error('Error adding faction tag', error);
+        throw error;
+      }
     },
     // Remove a tag association from a faction
     delete: async (factionId: UUID, tagId: UUID): Promise<void> => {
@@ -234,7 +249,10 @@ export const db = {
         .delete()
         .eq('faction_id', factionId)
         .eq('tag_id', tagId);
-      if (error) console.error('Error deleting faction tag', error);
+      if (error) {
+        console.error('Error deleting faction tag', error);
+        throw error;
+      }
     },
     // Delete all tags for a faction (useful when updating)
     deleteAll: async (factionId: UUID): Promise<void> => {
@@ -243,7 +261,10 @@ export const db = {
         .from(TABLES.FACTION_TAGS)
         .delete()
         .eq('faction_id', factionId);
-      if (error) console.error('Error deleting all faction tags', error);
+      if (error) {
+        console.error('Error deleting all faction tags', error);
+        throw error;
+      }
     },
   }
 };
