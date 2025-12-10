@@ -99,19 +99,16 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
     setIsSaving(true);
     
     try {
-        // Construct base object
+        // Extract client-only fields (tag_ids, faction_ids) before constructing payload
+        const { tag_ids, faction_ids, ...basePayload } = editingItem;
+        const tagIds = tag_ids || [];
+        const factionIds = faction_ids || [];
+        
+        // Construct payload without client-only fields
         const payload = {
-            ...editingItem,
+            ...basePayload,
             campaign_id: campaignId,
         };
-
-        // Extract client-only fields (tag_ids, faction_ids) before sending to main tables
-        const tagIds = payload.tag_ids || [];
-        const factionIds = payload.faction_ids || [];
-        
-        // Remove client-only fields from payload to avoid sending them to main tables
-        delete payload.tag_ids;
-        delete payload.faction_ids;
 
         // Sanitize Payload: Convert empty strings in ID fields to null to avoid UUID errors
         Object.keys(payload).forEach(key => {
