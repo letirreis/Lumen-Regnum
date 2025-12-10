@@ -235,7 +235,17 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
 
   const openEdit = async (item: any) => {
       await loadFormDependencies();
-      setEditingItem({...item});
+      
+      // Load tag_ids from pivot table if editing a faction
+      let itemWithTags = {...item};
+      if (entityType === 'faction' && item.id) {
+          const factionTagLinks = await db.faction_tags.listForFaction(item.id);
+          // factionTagLinks is array of { faction_id, tag_id, created_at } from dmos_faction_tags
+          // Extract tag_id from each link to populate tag_ids field
+          itemWithTags.tag_ids = factionTagLinks.map((link: { tag_id: string }) => link.tag_id);
+      }
+      
+      setEditingItem(itemWithTags);
       setModalOpen(true);
   };
 
