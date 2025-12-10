@@ -239,15 +239,10 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
       // Load tag_ids from pivot table if editing a faction
       let itemWithTags = {...item};
       if (entityType === 'faction' && item.id) {
-          try {
-              const factionTagLinks = await db.faction_tags.listForFaction(item.id);
-              // Extract tag_id from each link and store as array
-              itemWithTags.tag_ids = factionTagLinks.map((link: any) => link.tag_id);
-          } catch (error) {
-              console.error('Error loading faction tags:', error);
-              // Default to empty array if loading fails
-              itemWithTags.tag_ids = [];
-          }
+          const factionTagLinks = await db.faction_tags.listForFaction(item.id);
+          // Extract tag_id from each link and store as array
+          // listForFaction returns empty array on error, so this is safe
+          itemWithTags.tag_ids = factionTagLinks.map((link: { tag_id: string }) => link.tag_id);
       }
       
       setEditingItem(itemWithTags);
