@@ -31,6 +31,12 @@ CREATE INDEX IF NOT EXISTS idx_dmos_tags_type ON public.dmos_tags(tag_type);
 -- Enable RLS
 ALTER TABLE public.dmos_tags ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Users can view tags from their campaigns" ON public.dmos_tags;
+DROP POLICY IF EXISTS "Users can create tags in their campaigns" ON public.dmos_tags;
+DROP POLICY IF EXISTS "Users can update tags from their campaigns" ON public.dmos_tags;
+DROP POLICY IF EXISTS "Users can delete tags from their campaigns" ON public.dmos_tags;
+
 -- Policy: Usuários podem ver tags das suas campanhas
 CREATE POLICY "Users can view tags from their campaigns"
     ON public.dmos_tags
@@ -100,6 +106,11 @@ CREATE INDEX IF NOT EXISTS idx_dmos_faction_tags_tag_id ON public.dmos_faction_t
 
 -- Enable RLS
 ALTER TABLE public.dmos_faction_tags ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Users can view faction-tag associations from their campaigns" ON public.dmos_faction_tags;
+DROP POLICY IF EXISTS "Users can create faction-tag associations in their campaigns" ON public.dmos_faction_tags;
+DROP POLICY IF EXISTS "Users can delete faction-tag associations from their campaigns" ON public.dmos_faction_tags;
 
 -- Policy: Usuários podem ver associações de factions das suas campanhas
 CREATE POLICY "Users can view faction-tag associations from their campaigns"

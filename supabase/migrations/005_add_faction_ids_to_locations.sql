@@ -5,7 +5,7 @@
 -- ADD FACTION_IDS COLUMN TO LOCATIONS
 -- ============================================================================
 
--- Adiciona suporte para múltiplas facções associadas a uma location
+-- Adiciona suporte para múltiplas fações associadas a uma location
 -- Implementado como array de UUIDs para simplicidade
 ALTER TABLE public.dmos_locations 
 ADD COLUMN IF NOT EXISTS faction_ids UUID[];
