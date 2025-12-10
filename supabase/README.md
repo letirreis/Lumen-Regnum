@@ -60,9 +60,26 @@ Expected output should show:
 
 ### Migrations
 - **`migrations/001_fix_delete_user_security.sql`** - Fixes the security vulnerability in the delete_user function
+- **`migrations/002_create_campaign_codex.sql`** - Creates the campaign codex system
+- **`migrations/003_session_planning.sql`** - Creates session planning and scenes tables
+- **`migrations/004_create_tags.sql`** - Creates the normalized tags system (dmos_tags, dmos_faction_tags)
+- **`migrations/005_add_faction_ids_to_locations.sql`** - Adds multi-faction support to locations
+- **`migrations/README.md`** - Detailed guide on how to apply migrations
 
 ### Functions
 - **`functions/delete_user.sql`** - The secure implementation of the delete_user function with detailed comments
+
+## Applying Migrations
+
+For detailed instructions on how to apply database migrations, see **`migrations/README.md`**.
+
+Quick summary:
+1. Go to Supabase Dashboard → SQL Editor
+2. Copy and paste each migration file content (in numerical order)
+3. Click Run to execute
+4. Verify success with the verification queries
+
+⚠️ **Important**: Migrations 004 and 005 are required for the Tags and Multi-Faction features to work.
 
 ## Function Documentation
 

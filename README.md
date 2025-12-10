@@ -95,6 +95,12 @@ Please review the [supabase/README.md](./supabase/README.md) for security best p
 
 ## Troubleshooting
 
+### Tags System: "Não reconhece a tabela dmos_tags"
+If you get an error when creating tags, see the comprehensive troubleshooting guide:
+[docs/TROUBLESHOOTING_TAGS.md](./docs/TROUBLESHOOTING_TAGS.md)
+
+Quick fix: Apply migrations from `supabase/migrations/` (see [supabase/migrations/README.md](./supabase/migrations/README.md))
+
 ### Password Recovery Not Working
 See the "Password Recovery Setup" section in [supabase/README.md](./supabase/README.md)
 
