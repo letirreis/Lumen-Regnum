@@ -240,8 +240,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
       let itemWithTags = {...item};
       if (entityType === 'faction' && item.id) {
           const factionTagLinks = await db.faction_tags.listForFaction(item.id);
-          // Extract tag_id from each link and store as array
-          // listForFaction returns empty array on error, so this is safe
+          // factionTagLinks is array of { faction_id, tag_id, created_at } from dmos_faction_tags
+          // Extract tag_id from each link to populate tag_ids field
           itemWithTags.tag_ids = factionTagLinks.map((link: { tag_id: string }) => link.tag_id);
       }
       
