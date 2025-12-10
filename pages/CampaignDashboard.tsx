@@ -86,12 +86,20 @@ export const CampaignDashboard: React.FC = () => {
   const saveNote = async () => {
       if (!editingNote || !id) return;
 
+      let result: { data: any; error: any };
       if (editingNote.id) {
-          await db.notes.update(editingNote);
+          result = await db.notes.update(editingNote);
       } else {
           const newNote = { ...editingNote, id: generateId(), campaign_id: id };
-          await db.notes.add(newNote);
+          result = await db.notes.add(newNote);
       }
+      
+      if (result.error) {
+          console.error('Error saving note:', result.error);
+          alert(`Failed to save note. ${result.error.message || 'Check console for details.'}`);
+          return;
+      }
+      
       setNoteModalOpen(false);
       const updatedNotes = await db.notes.list(id);
       setNotesList(updatedNotes);
@@ -99,7 +107,12 @@ export const CampaignDashboard: React.FC = () => {
 
   const confirmDeleteNote = async () => {
       if (deleteNoteId && id) {
-          await db.notes.delete(deleteNoteId);
+          const result = await db.notes.delete(deleteNoteId);
+          if (result.error) {
+              console.error('Error deleting note:', result.error);
+              alert(`Failed to delete note. ${result.error.message || 'Check console for details.'}`);
+              return;
+          }
           setDeleteNoteId(null);
           const updatedNotes = await db.notes.list(id);
           setNotesList(updatedNotes);
