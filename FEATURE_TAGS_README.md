@@ -200,18 +200,29 @@ faction_ids UUID[] - Array de UUIDs referenciando dmos_factions
 
 ## 🚨 Importante: Requisitos de Banco de Dados
 
-**ANTES DE USAR ESTA FEATURE**, o usuário **DEVE** executar as migrations SQL fornecidas no arquivo:
+**ANTES DE USAR ESTA FEATURE**, o usuário **DEVE** executar as migrations SQL localizadas em:
 
-📄 **`SQL_MIGRATIONS_REFERENCE.md`**
+📁 **`supabase/migrations/`**
 
-As migrations criam:
-1. Tabela `dmos_tags`
-2. Tabela `dmos_faction_tags`
-3. Coluna `faction_ids` em `dmos_locations` (opcional)
-4. Todas as policies RLS necessárias
-5. Índices para performance
+As migrations necessárias são:
+1. **`004_create_tags.sql`** - Cria tabelas dmos_tags e dmos_faction_tags com RLS policies
+2. **`005_add_faction_ids_to_locations.sql`** - Adiciona coluna faction_ids à tabela dmos_locations
+
+### Como Aplicar as Migrations
+
+Veja o guia detalhado em: **`supabase/migrations/README.md`**
+
+Resumo rápido:
+1. Acesse o painel do Supabase (https://supabase.com)
+2. Navegue até SQL Editor
+3. Execute os scripts SQL em ordem (004, depois 005)
+4. Verifique que as tabelas foram criadas com sucesso
 
 **Sem estas migrations, as novas features não funcionarão.**
+
+### Arquivo de Referência Adicional
+
+O arquivo **`SQL_MIGRATIONS_REFERENCE.md`** contém documentação adicional e explicações sobre as migrations, mas você deve usar os arquivos em `supabase/migrations/` para aplicar as mudanças.
 
 ## ✅ Testes Recomendados
 
@@ -249,9 +260,33 @@ As migrations criam:
 
 ### "Erro ao criar tag. Verifique se a tabela dmos_tags existe no banco de dados."
 
-**Causa**: Migrations SQL não foram executadas.
+**Possíveis Causas**:
+1. Migrations SQL não foram executadas
+2. Tabela existe mas RLS policies não foram criadas
+3. Usuário não tem permissão para inserir na tabela
 
-**Solução**: Execute as migrations em `SQL_MIGRATIONS_REFERENCE.md`
+**Solução**:
+
+1. **Verificar se tabela existe**: No Supabase SQL Editor, execute:
+   ```sql
+   SELECT table_name FROM information_schema.tables 
+   WHERE table_schema = 'public' AND table_name = 'dmos_tags';
+   ```
+   Se retornar vazio, execute migration `004_create_tags.sql`
+
+2. **Verificar RLS policies**: Execute:
+   ```sql
+   SELECT policyname FROM pg_policies WHERE tablename = 'dmos_tags';
+   ```
+   Deve retornar 4 policies (SELECT, INSERT, UPDATE, DELETE)
+   Se retornar vazio ou menos policies, re-execute migration `004_create_tags.sql`
+
+3. **Verificar permissões do usuário**: Certifique-se que:
+   - Usuário está autenticado (logged in)
+   - Usuário é dono da campanha (user_id = auth.uid())
+   - Verifique no console do navegador o erro exato retornado pelo Supabase
+
+4. **Aplicar migrations**: Vá para `supabase/migrations/` e siga o README.md para aplicar as migrations corretas
 
 ### Tags não aparecem ao editar faction
 
