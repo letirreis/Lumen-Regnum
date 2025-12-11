@@ -1,0 +1,156 @@
+/* ============================================
+   Lumen Regnum - Main Styles
+   ============================================
+   Tailwind CSS base styles and utilities
+============================================ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   Lumen Regnum - UI Auxiliary Styles
+   ============================================
+   Fancy gradient borders and accessible focus styles
+   for polished UI components.
+============================================ */
+
+/* Fancy Gradient Border Effect
+   ------------------------------
+   Creates a hairline gradient border using a pseudo-element
+   with mask to achieve a refined, high-end look.
+   
+   Usage: Add class="fancy-border" to any element.
+*/
+.fancy-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.fancy-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px; /* Border width */
+  background: linear-gradient(
+    135deg,
+    rgba(212, 184, 117, 0.4) 0%,   /* gold */
+    rgba(110, 81, 163, 0.6) 50%,   /* violet */
+    rgba(212, 184, 117, 0.4) 100%  /* gold */
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.fancy-border:hover::before {
+  opacity: 1;
+}
+
+/* Accessible Focus Style
+   ----------------------
+   Provides a consistent, high-contrast focus ring
+   for keyboard navigation accessibility.
+   
+   Usage: Add class="lr-focus" to focusable elements.
+*/
+.lr-focus:focus,
+.lr-focus:focus-visible {
+  outline: 2px solid rgba(212, 184, 117, 0.8); /* gold */
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(110, 81, 163, 0.2); /* violet glow */
+}
+
+.lr-focus:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Loading Spinner Animation
+   -------------------------
+   Smooth rotation for loading indicators.
+*/
+@keyframes lr-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lr-spin {
+  animation: lr-spin 1s linear infinite;
+}
+
+/* Arcane Snow Animation */
+@keyframes arcaneSnow {
+  0% { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 0 500px, 0 400px, 0 300px; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #1A1B23; 
+}
+::-webkit-scrollbar-thumb {
+  background: #2D3F57;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6E51A3;
+}
+
+::selection {
+  background: #6E51A3;
+  color: white;
+}
+
+/* Base styles */
+body {
+  background-color: #1A1B23;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* The Falling Flakes Texture */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4; 
+  /* Three layers of dots: White (Snow), Gold (Magic), Violet (Arcane) */
+  background-image: 
+      radial-gradient(2px 2px at 20% 30%, #ffffff 50%, transparent 100%),
+      radial-gradient(2px 2px at 40% 70%, #ffffff 50%, transparent 100%),
+      radial-gradient(2px 2px at 60% 20%, #ffffff 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 80% 40%, #C2A86C 50%, transparent 100%),
+      radial-gradient(2px 2px at 10% 80%, #6E51A3 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 90% 10%, #C2A86C 50%, transparent 100%);
+  background-size: 500px 500px, 400px 400px, 300px 300px;
+  animation: arcaneSnow 30s linear infinite;
+  z-index: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.05em;
+}
+
