@@ -14,6 +14,7 @@ interface SchemaField {
   label: string;
   type: 'text' | 'textarea' | 'number' | 'select' | 'stats' | 'faction-multi-select' | 'tags-select' | 'member-multi-select';
   options?: string[]; // For select
+  conditionalOn?: { key: string; value: string }; // For conditional fields
 }
 
 interface GenericListProps {
@@ -114,11 +115,16 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
     setIsSaving(true);
     
     try {
-        // Extract client-only fields (tag_ids, faction_ids, member_ids) before constructing payload
-        const { tag_ids, faction_ids, member_ids, ...basePayload } = editingItem;
+        // Extract client-only fields (tag_ids, faction_ids, member_ids, race_custom) before constructing payload
+        const { tag_ids, faction_ids, member_ids, race_custom, ...basePayload } = editingItem;
         const tagIds = tag_ids || [];
         const factionIds = faction_ids || [];
         const memberIds = member_ids || [];
+        
+        // Handle race_custom field: if race is 'Other' and race_custom exists, use race_custom as race
+        if (basePayload.race === 'Other' && race_custom) {
+            basePayload.race = race_custom;
+        }
         
         // Construct payload without client-only fields
         const payload = {
@@ -286,6 +292,15 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
           const factionMemberLinks = await db.faction_members.listForFaction(item.id);
           // factionMemberLinks is array of { faction_id, member_id, member_type, created_at }
           itemWithExtras.member_ids = factionMemberLinks.map((link: { member_id: string }) => link.member_id);
+      }
+      
+      // Handle custom races: if race is not in standard list, treat as custom
+      if ((entityType === 'npc' || entityType === 'character') && item.race) {
+          const standardRaces = ['Dragonborn', 'Dwarf', 'Elf', 'Gnome', 'Half-Elf', 'Half-Orc', 'Halfling', 'Human', 'Tiefling'];
+          if (!standardRaces.includes(item.race)) {
+              itemWithExtras.race_custom = item.race;
+              itemWithExtras.race = 'Other';
+          }
       }
       
       setEditingItem(itemWithExtras);
@@ -556,6 +571,18 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     {/* Tags */}
                     {renderTags(item.tags)}
 
+                    {/* Race and Class Badges (for NPCs and Characters) */}
+                    {(entityType === 'npc' || entityType === 'character') && item.race && (
+                        <span className="text-[10px] uppercase font-bold bg-yellow-900/10 text-yellow-600 border border-yellow-900/30 px-1.5 py-0.5 rounded tracking-wider">
+                            🎭 {item.race}
+                        </span>
+                    )}
+                    {(entityType === 'npc' || entityType === 'character') && item.class && (
+                        <span className="text-[10px] uppercase font-bold bg-indigo-900/20 text-indigo-300 border border-indigo-800/50 px-1.5 py-0.5 rounded tracking-wider">
+                            ⚔️ {item.class}
+                        </span>
+                    )}
+
                     {/* Generic Type Tags */}
                     {item.type && entityType !== 'location' && entityType !== 'item' && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{item.type}</span>}
                     {item.npc_type && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{item.npc_type}</span>}
@@ -730,6 +757,14 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
       <Modal isOpen={isModalOpen} onClose={() => !isSaving && setModalOpen(false)} title={editingItem?.id ? `Edit ${title}` : `New ${title}`}>
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             {fields.map(field => {
+                // Check if this field is conditional and should be hidden
+                if (field.conditionalOn) {
+                    const { key, value } = field.conditionalOn;
+                    if (editingItem?.[key] !== value) {
+                        return null; // Hide this field if condition not met
+                    }
+                }
+                
                 // Handle faction-multi-select field type
                 if (field.type === 'faction-multi-select') {
                     return (

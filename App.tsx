@@ -35,8 +35,16 @@ import { NotesAndScraps } from './pages/codex/NotesAndScraps';
 const SCHEMAS = {
     character: [
         { key: 'name', label: 'Name', type: 'text' },
-        { key: 'race', label: 'Race', type: 'text' },
-        { key: 'class', label: 'Class', type: 'text' },
+        { key: 'race', label: 'Race', type: 'select', options: [
+            'Dragonborn', 'Dwarf', 'Elf', 'Gnome', 'Half-Elf', 
+            'Half-Orc', 'Halfling', 'Human', 'Tiefling', 'Other'
+        ] },
+        { key: 'race_custom', label: 'Custom Race', type: 'text', conditionalOn: { key: 'race', value: 'Other' } },
+        { key: 'class', label: 'Class', type: 'select', options: [
+            'Artificer', 'Barbarian', 'Bard', 'Cleric', 'Druid', 
+            'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 
+            'Sorcerer', 'Warlock', 'Wizard'
+        ] },
         { key: 'level', label: 'Level', type: 'number' },
         { key: 'faction_id', label: 'Faction', type: 'select', options: [] }, // Options populated dynamically in GenericList
         { key: 'attributes', label: 'Attributes', type: 'stats' },
@@ -48,6 +56,16 @@ const SCHEMAS = {
         // Identity
         { key: 'name', label: 'Name', type: 'text' },
         { key: 'title', label: 'Title / Honorific', type: 'text' },
+        { key: 'race', label: 'Race', type: 'select', options: [
+            'Dragonborn', 'Dwarf', 'Elf', 'Gnome', 'Half-Elf', 
+            'Half-Orc', 'Halfling', 'Human', 'Tiefling', 'Other'
+        ] },
+        { key: 'race_custom', label: 'Custom Race', type: 'text', conditionalOn: { key: 'race', value: 'Other' } },
+        { key: 'class', label: 'Class', type: 'select', options: [
+            'Artificer', 'Barbarian', 'Bard', 'Cleric', 'Druid', 
+            'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 
+            'Sorcerer', 'Warlock', 'Wizard'
+        ] },
         { key: 'npc_type', label: 'Type', type: 'select', options: [
             'Citizen', 'Merchant', 'Guard', 'Soldier', 'Noble', 
             'Thief', 'Criminal', 'Politician', 'Cultist', 
