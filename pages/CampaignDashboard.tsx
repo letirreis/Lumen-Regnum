@@ -1,14 +1,16 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { db, generateId } from '../services/store';
-import { Campaign, Session, Note } from '../types';
+import { Campaign, Session, Note, CampaignCodex } from '../types';
 import { Card, Badge, Button, Textarea, Input, Modal, ConfirmModal } from '../components/ui';
-import { Calendar, MapPin, Users, Plus, Trash2, Edit2, FileText, Dices } from 'lucide-react';
+import { Calendar, MapPin, Users, Plus, Trash2, Edit2, FileText, Dices, ExternalLink } from 'lucide-react';
 
 export const CampaignDashboard: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [codex, setCodex] = useState<CampaignCodex | null>(null);
   const [stats, setStats] = useState({ npcs: 0, locations: 0, sessions: 0 });
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
   const [nextSessionDate, setNextSessionDate] = useState<string>('TBD');
@@ -32,11 +34,12 @@ export const CampaignDashboard: React.FC = () => {
         setCampaign(found);
         
         // Parallel data fetching for performance
-        const [sessions, npcs, locations, notes] = await Promise.all([
+        const [sessions, npcs, locations, notes, codexData] = await Promise.all([
             db.sessions.list(campaignId),
             db.npcs.list(campaignId),
             db.locations.list(campaignId),
-            db.notes.list(campaignId)
+            db.notes.list(campaignId),
+            db.codex.get(campaignId)
         ]);
 
         setStats({
@@ -64,6 +67,7 @@ export const CampaignDashboard: React.FC = () => {
         }
 
         setNotesList(notes);
+        setCodex(codexData);
     }
   };
 
@@ -145,8 +149,20 @@ export const CampaignDashboard: React.FC = () => {
                 </div>
             </div>
             <div className="bg-zinc-950/50 p-4 rounded-md border border-zinc-800/50">
-                <h3 className="text-xs font-bold uppercase text-zinc-500 mb-2">Main Arc</h3>
-                <p className="text-sm text-zinc-300">{campaign.main_arc || "No main arc defined yet."}</p>
+                <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-xs font-bold uppercase text-zinc-500">Main Arc</h3>
+                    <button 
+                        onClick={() => navigate(`/campaign/${id}/codex/main-arc`)}
+                        className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                        title="Edit in Codex"
+                    >
+                        <ExternalLink className="w-3 h-3" />
+                        Edit in Codex
+                    </button>
+                </div>
+                <p className="text-sm text-zinc-300 whitespace-pre-wrap">
+                    {codex?.main_arc?.premise || "No main arc defined yet."}
+                </p>
             </div>
           </Card>
 
