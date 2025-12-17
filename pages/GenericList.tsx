@@ -126,8 +126,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         if (basePayload.race === 'Other' && race_custom && race_custom.trim() !== '') {
             basePayload.race = race_custom.trim();
         } else if (basePayload.race === 'Other') {
-            // If 'Other' is selected but no custom race provided, clear the race field
-            basePayload.race = '';
+            // If 'Other' is selected but no custom race provided, set to null
+            basePayload.race = null;
         }
         
         // Construct payload without client-only fields
@@ -300,9 +300,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
       
       // Handle custom races: if race is not in standard list, treat as custom
       if ((entityType === 'npc' || entityType === 'character') && item.race) {
-          // Remove 'Other' from the list when checking if it's a standard race
-          const standardRaces = DND_RACES.filter(r => r !== 'Other');
-          if (!standardRaces.includes(item.race)) {
+          // Check if the race is a custom one (not in DND_RACES or is 'Other')
+          if (!DND_RACES.includes(item.race) || item.race === 'Other') {
               itemWithExtras.race_custom = item.race;
               itemWithExtras.race = 'Other';
           }
