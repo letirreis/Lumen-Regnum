@@ -23,6 +23,7 @@ CREATE INDEX IF NOT EXISTS idx_dmos_tags_type ON public.dmos_tags(tag_type);
 ALTER TABLE public.dmos_tags ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view tags from their campaigns
+DROP POLICY IF EXISTS "Users can view tags from their campaigns" ON public.dmos_tags;
 CREATE POLICY "Users can view tags from their campaigns"
     ON public.dmos_tags
     FOR SELECT
@@ -34,6 +35,7 @@ CREATE POLICY "Users can view tags from their campaigns"
     );
 
 -- Policy: Users can create tags in their campaigns
+DROP POLICY IF EXISTS "Users can create tags in their campaigns" ON public.dmos_tags;
 CREATE POLICY "Users can create tags in their campaigns"
     ON public.dmos_tags
     FOR INSERT
@@ -45,6 +47,7 @@ CREATE POLICY "Users can create tags in their campaigns"
     );
 
 -- Policy: Users can update tags from their campaigns
+DROP POLICY IF EXISTS "Users can update tags from their campaigns" ON public.dmos_tags;
 CREATE POLICY "Users can update tags from their campaigns"
     ON public.dmos_tags
     FOR UPDATE
@@ -56,6 +59,7 @@ CREATE POLICY "Users can update tags from their campaigns"
     );
 
 -- Policy: Users can delete tags from their campaigns
+DROP POLICY IF EXISTS "Users can delete tags from their campaigns" ON public.dmos_tags;
 CREATE POLICY "Users can delete tags from their campaigns"
     ON public.dmos_tags
     FOR DELETE
@@ -84,6 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_dmos_faction_tags_tag_id ON public.dmos_faction_t
 ALTER TABLE public.dmos_faction_tags ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view faction-tag associations from their campaigns
+DROP POLICY IF EXISTS "Users can view faction-tag associations from their campaigns" ON public.dmos_faction_tags;
 CREATE POLICY "Users can view faction-tag associations from their campaigns"
     ON public.dmos_faction_tags
     FOR SELECT
@@ -98,6 +103,7 @@ CREATE POLICY "Users can view faction-tag associations from their campaigns"
     );
 
 -- Policy: Users can create faction-tag associations in their campaigns
+DROP POLICY IF EXISTS "Users can create faction-tag associations in their campaigns" ON public.dmos_faction_tags;
 CREATE POLICY "Users can create faction-tag associations in their campaigns"
     ON public.dmos_faction_tags
     FOR INSERT
@@ -112,6 +118,7 @@ CREATE POLICY "Users can create faction-tag associations in their campaigns"
     );
 
 -- Policy: Users can delete faction-tag associations from their campaigns
+DROP POLICY IF EXISTS "Users can delete faction-tag associations from their campaigns" ON public.dmos_faction_tags;
 CREATE POLICY "Users can delete faction-tag associations from their campaigns"
     ON public.dmos_faction_tags
     FOR DELETE
