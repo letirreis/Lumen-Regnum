@@ -3,7 +3,7 @@
 
 -- Pivot table for many-to-many relationship between factions and members
 CREATE TABLE IF NOT EXISTS public.dmos_faction_members (
-    faction_id UUID NOT NULL REFERENCES public.dmos_factions(id) ON DELETE CASCADE,
+    faction_id TEXT NOT NULL REFERENCES public.dmos_factions(id) ON DELETE CASCADE,
     member_id UUID NOT NULL,
     member_type TEXT NOT NULL CHECK (member_type IN ('npc', 'character')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS public.dmos_faction_members (
 );
 
 -- Indexes for better query performance
-CREATE INDEX idx_dmos_faction_members_faction_id ON public.dmos_faction_members(faction_id);
-CREATE INDEX idx_dmos_faction_members_member_id ON public.dmos_faction_members(member_id);
-CREATE INDEX idx_dmos_faction_members_member_type ON public.dmos_faction_members(member_type);
+CREATE INDEX IF NOT EXISTS idx_dmos_faction_members_faction_id ON public.dmos_faction_members(faction_id);
+CREATE INDEX IF NOT EXISTS idx_dmos_faction_members_member_id ON public.dmos_faction_members(member_id);
+CREATE INDEX IF NOT EXISTS idx_dmos_faction_members_member_type ON public.dmos_faction_members(member_type);
 
 -- Row Level Security (RLS)
 ALTER TABLE public.dmos_faction_members ENABLE ROW LEVEL SECURITY;

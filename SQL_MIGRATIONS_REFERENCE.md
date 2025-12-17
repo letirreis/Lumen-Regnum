@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS public.dmos_tags (
 );
 
 -- Índices para melhor performance
-CREATE INDEX idx_dmos_tags_campaign_id ON public.dmos_tags(campaign_id);
-CREATE INDEX idx_dmos_tags_type ON public.dmos_tags(tag_type);
+CREATE INDEX IF NOT EXISTS idx_dmos_tags_campaign_id ON public.dmos_tags(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_dmos_tags_type ON public.dmos_tags(tag_type);
 
 -- Row Level Security (RLS)
 ALTER TABLE public.dmos_tags ENABLE ROW LEVEL SECURITY;
@@ -95,7 +95,7 @@ CREATE POLICY "Users can delete tags from their campaigns"
 -- Permite que uma faction tenha múltiplas tags e uma tag seja usada por múltiplas factions
 
 CREATE TABLE IF NOT EXISTS public.dmos_faction_tags (
-    faction_id UUID NOT NULL REFERENCES public.dmos_factions(id) ON DELETE CASCADE,
+    faction_id TEXT NOT NULL REFERENCES public.dmos_factions(id) ON DELETE CASCADE,
     tag_id UUID NOT NULL REFERENCES public.dmos_tags(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     
@@ -104,8 +104,8 @@ CREATE TABLE IF NOT EXISTS public.dmos_faction_tags (
 );
 
 -- Índices para melhor performance em queries
-CREATE INDEX idx_dmos_faction_tags_faction_id ON public.dmos_faction_tags(faction_id);
-CREATE INDEX idx_dmos_faction_tags_tag_id ON public.dmos_faction_tags(tag_id);
+CREATE INDEX IF NOT EXISTS idx_dmos_faction_tags_faction_id ON public.dmos_faction_tags(faction_id);
+CREATE INDEX IF NOT EXISTS idx_dmos_faction_tags_tag_id ON public.dmos_faction_tags(tag_id);
 
 -- Row Level Security (RLS)
 ALTER TABLE public.dmos_faction_tags ENABLE ROW LEVEL SECURITY;
