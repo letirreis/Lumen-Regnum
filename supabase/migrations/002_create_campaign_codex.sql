@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS dmos_campaign_codex (
 ALTER TABLE dmos_campaign_codex ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view codex for their own campaigns
+DROP POLICY IF EXISTS "Users can view their campaign codex" ON dmos_campaign_codex;
 CREATE POLICY "Users can view their campaign codex"
   ON dmos_campaign_codex FOR SELECT
   USING (
@@ -32,6 +33,7 @@ CREATE POLICY "Users can view their campaign codex"
   );
 
 -- Policy: Users can insert codex for their own campaigns
+DROP POLICY IF EXISTS "Users can insert their campaign codex" ON dmos_campaign_codex;
 CREATE POLICY "Users can insert their campaign codex"
   ON dmos_campaign_codex FOR INSERT
   WITH CHECK (
@@ -41,6 +43,7 @@ CREATE POLICY "Users can insert their campaign codex"
   );
 
 -- Policy: Users can update codex for their own campaigns
+DROP POLICY IF EXISTS "Users can update their campaign codex" ON dmos_campaign_codex;
 CREATE POLICY "Users can update their campaign codex"
   ON dmos_campaign_codex FOR UPDATE
   USING (
@@ -50,6 +53,7 @@ CREATE POLICY "Users can update their campaign codex"
   );
 
 -- Policy: Users can delete codex for their own campaigns
+DROP POLICY IF EXISTS "Users can delete their campaign codex" ON dmos_campaign_codex;
 CREATE POLICY "Users can delete their campaign codex"
   ON dmos_campaign_codex FOR DELETE
   USING (
@@ -72,6 +76,7 @@ END;
 $$;
 
 -- Trigger to call the function before update
+DROP TRIGGER IF EXISTS trigger_update_dmos_campaign_codex_updated_at ON dmos_campaign_codex;
 CREATE TRIGGER trigger_update_dmos_campaign_codex_updated_at
   BEFORE UPDATE ON dmos_campaign_codex
   FOR EACH ROW

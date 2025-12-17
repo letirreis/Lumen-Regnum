@@ -35,6 +35,7 @@ ALTER TABLE dmos_session_scenes ENABLE ROW LEVEL SECURITY;
 -- 4. RLS Policies for dmos_session_scenes
 
 -- Policy: Users can view their session scenes
+DROP POLICY IF EXISTS "Users can view their session scenes" ON dmos_session_scenes;
 CREATE POLICY "Users can view their session scenes"
   ON dmos_session_scenes FOR SELECT
   USING (
@@ -46,6 +47,7 @@ CREATE POLICY "Users can view their session scenes"
   );
 
 -- Policy: Users can insert their session scenes
+DROP POLICY IF EXISTS "Users can insert their session scenes" ON dmos_session_scenes;
 CREATE POLICY "Users can insert their session scenes"
   ON dmos_session_scenes FOR INSERT
   WITH CHECK (
@@ -57,6 +59,7 @@ CREATE POLICY "Users can insert their session scenes"
   );
 
 -- Policy: Users can update their session scenes
+DROP POLICY IF EXISTS "Users can update their session scenes" ON dmos_session_scenes;
 CREATE POLICY "Users can update their session scenes"
   ON dmos_session_scenes FOR UPDATE
   USING (
@@ -68,6 +71,7 @@ CREATE POLICY "Users can update their session scenes"
   );
 
 -- Policy: Users can delete their session scenes
+DROP POLICY IF EXISTS "Users can delete their session scenes" ON dmos_session_scenes;
 CREATE POLICY "Users can delete their session scenes"
   ON dmos_session_scenes FOR DELETE
   USING (
@@ -92,6 +96,7 @@ END;
 $$;
 
 -- 6. Create trigger to automatically update updated_at
+DROP TRIGGER IF EXISTS trigger_update_dmos_session_scenes_updated_at ON dmos_session_scenes;
 CREATE TRIGGER trigger_update_dmos_session_scenes_updated_at
   BEFORE UPDATE ON dmos_session_scenes
   FOR EACH ROW

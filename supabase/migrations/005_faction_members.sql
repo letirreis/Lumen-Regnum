@@ -21,6 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_dmos_faction_members_member_type ON public.dmos_f
 ALTER TABLE public.dmos_faction_members ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view faction members from their campaigns
+DROP POLICY IF EXISTS "Users can view faction members from their campaigns" ON public.dmos_faction_members;
 CREATE POLICY "Users can view faction members from their campaigns"
     ON public.dmos_faction_members
     FOR SELECT
@@ -35,6 +36,7 @@ CREATE POLICY "Users can view faction members from their campaigns"
     );
 
 -- Policy: Users can create associations for factions in their campaigns
+DROP POLICY IF EXISTS "Users can create faction members in their campaigns" ON public.dmos_faction_members;
 CREATE POLICY "Users can create faction members in their campaigns"
     ON public.dmos_faction_members
     FOR INSERT
@@ -49,6 +51,7 @@ CREATE POLICY "Users can create faction members in their campaigns"
     );
 
 -- Policy: Users can delete associations from factions in their campaigns
+DROP POLICY IF EXISTS "Users can delete faction members from their campaigns" ON public.dmos_faction_members;
 CREATE POLICY "Users can delete faction members from their campaigns"
     ON public.dmos_faction_members
     FOR DELETE
