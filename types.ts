@@ -10,6 +10,7 @@ export interface Character {
   class: string;
   subclass?: string;
   level: number;
+  faction_id?: UUID; // Associated faction
   ac: number;
   max_hp: number;
   current_hp?: number; // Runtime tracking
@@ -200,6 +201,7 @@ export interface Faction {
   influence: string;
   notes: string;
   tag_ids?: UUID[]; // New: associated tags via dmos_faction_tags pivot table (tags can be of any type: type, status, custom, etc.)
+  member_ids?: UUID[]; // New: IDs of NPCs/Characters associated (transient, not persisted directly)
 }
 
 // Tags for normalized metadata (requires dmos_tags table)

@@ -4,14 +4,15 @@ import { useParams } from 'react-router-dom';
 import { db, generateId } from '../services/store';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal } from '../components/ui';
 import { Plus, Search, Trash2, Edit, Filter, MapPin, Sparkles, AlertCircle, Cloud, Skull, Scroll, Zap, ShieldAlert } from 'lucide-react';
-import { Location, Faction, Tag } from '../types';
+import { Location, Faction, Tag, NPC, Character } from '../types';
 import { MultiFactionSelect } from '../components/MultiFactionSelect';
 import { TagSelector } from '../components/TagSelector';
+import { MultiMemberSelect } from '../components/MultiMemberSelect';
 
 interface SchemaField {
   key: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'select' | 'stats' | 'faction-multi-select' | 'tags-select';
+  type: 'text' | 'textarea' | 'number' | 'select' | 'stats' | 'faction-multi-select' | 'tags-select' | 'member-multi-select';
   options?: string[]; // For select
 }
 
@@ -27,6 +28,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
   const [locations, setLocations] = useState<Location[]>([]); // For dynamic lookups
   const [availableFactions, setAvailableFactions] = useState<Faction[]>([]); // For faction multi-select
   const [availableTags, setAvailableTags] = useState<Tag[]>([]); // For tag selector
+  const [availableNPCs, setAvailableNPCs] = useState<NPC[]>([]); // For member multi-select
+  const [availableCharacters, setAvailableCharacters] = useState<Character[]>([]); // For member multi-select
   
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,16 +84,28 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
   const loadFormDependencies = async () => {
     if (!campaignId) return;
     
+    // Load factions for NPC/Character forms
+    if (entityType === 'npc' || entityType === 'character') {
+      const factions = await db.factions.list(campaignId);
+      setAvailableFactions(factions);
+    }
+    
     // Load factions for location form
     if (entityType === 'location') {
       const factions = await db.factions.list(campaignId);
       setAvailableFactions(factions);
     }
     
-    // Load tags for faction form
+    // Load tags and NPCs/Characters for faction form
     if (entityType === 'faction') {
       const tags = await db.tags.list(campaignId);
       setAvailableTags(tags);
+      
+      // Load NPCs and Characters for member selection
+      const npcs = await db.npcs.list(campaignId);
+      const characters = await db.characters.list(campaignId);
+      setAvailableNPCs(npcs);
+      setAvailableCharacters(characters);
     }
   };
 
@@ -99,10 +114,11 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
     setIsSaving(true);
     
     try {
-        // Extract client-only fields (tag_ids, faction_ids) before constructing payload
-        const { tag_ids, faction_ids, ...basePayload } = editingItem;
+        // Extract client-only fields (tag_ids, faction_ids, member_ids) before constructing payload
+        const { tag_ids, faction_ids, member_ids, ...basePayload } = editingItem;
         const tagIds = tag_ids || [];
         const factionIds = faction_ids || [];
+        const memberIds = member_ids || [];
         
         // Construct payload without client-only fields
         const payload = {
@@ -178,6 +194,28 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             }
         }
 
+        // Sync faction_members pivot table if entity is faction and has member_ids
+        if (entityType === 'faction' && memberIds.length > 0) {
+            // Determine member types (need to check which are NPCs vs Characters)
+            const memberTypes: string[] = memberIds.map((mid: string) => {
+                const isCharacter = availableCharacters.some(c => c.id === mid);
+                const isNPC = availableNPCs.some(n => n.id === mid);
+                
+                if (!isCharacter && !isNPC) {
+                    console.warn(`Member ID ${mid} not found in available NPCs or Characters`);
+                    return 'npc'; // Default to NPC if not found
+                }
+                
+                return isCharacter ? 'character' : 'npc';
+            });
+            
+            const syncResult = await db.faction_members.setForFaction(payload.id, memberIds, memberTypes);
+            if (syncResult.error) {
+                console.error("Error syncing faction members:", syncResult.error);
+                alert(`${entityType} saved, but failed to sync members. ${syncResult.error.message || 'Check console for details.'}`);
+            }
+        }
+
         setModalOpen(false);
         loadItems();
     } catch (error) {
@@ -236,16 +274,21 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
   const openEdit = async (item: any) => {
       await loadFormDependencies();
       
-      // Load tag_ids from pivot table if editing a faction
-      let itemWithTags = {...item};
+      // Load tag_ids and member_ids from pivot tables if editing a faction
+      let itemWithExtras = {...item};
       if (entityType === 'faction' && item.id) {
           const factionTagLinks = await db.faction_tags.listForFaction(item.id);
           // factionTagLinks is array of { faction_id, tag_id, created_at } from dmos_faction_tags
           // Extract tag_id from each link to populate tag_ids field
-          itemWithTags.tag_ids = factionTagLinks.map((link: { tag_id: string }) => link.tag_id);
+          itemWithExtras.tag_ids = factionTagLinks.map((link: { tag_id: string }) => link.tag_id);
+          
+          // Load member_ids from faction_members pivot table
+          const factionMemberLinks = await db.faction_members.listForFaction(item.id);
+          // factionMemberLinks is array of { faction_id, member_id, member_type, created_at }
+          itemWithExtras.member_ids = factionMemberLinks.map((link: { member_id: string }) => link.member_id);
       }
       
-      setEditingItem(itemWithTags);
+      setEditingItem(itemWithExtras);
       setModalOpen(true);
   };
 
@@ -723,6 +766,21 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     );
                 }
 
+                // Handle member-multi-select field type
+                if (field.type === 'member-multi-select') {
+                    return (
+                        <div key={field.key} className="mb-2">
+                            <label className="block text-xs font-medium text-zinc-400 mb-1">{field.label}</label>
+                            <MultiMemberSelect
+                                npcs={availableNPCs}
+                                characters={availableCharacters}
+                                selectedIds={editingItem?.[field.key] || []}
+                                onChange={(ids) => setEditingItem({ ...editingItem, [field.key]: ids })}
+                            />
+                        </div>
+                    );
+                }
+
                 if (field.type === 'stats') {
                     const stats = editingItem?.[field.key] || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
                     return (
@@ -749,11 +807,18 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                          </div>
                     );
                 } else if (field.type === 'select') {
-                    // Logic to handle dynamic location dropdown
+                    // Logic to handle dynamic dropdowns
                     const isLocationField = field.key === 'location_id' || field.key === 'found_at_location_id';
-                    const options = isLocationField 
-                        ? locations.map(l => ({ value: l.id, label: l.name })) 
-                        : field.options?.map(o => ({ value: o, label: o }));
+                    const isFactionField = field.key === 'faction_id';
+                    
+                    let options;
+                    if (isLocationField) {
+                        options = locations.map(l => ({ value: l.id, label: l.name }));
+                    } else if (isFactionField) {
+                        options = availableFactions.map(f => ({ value: f.id, label: f.name }));
+                    } else {
+                        options = field.options?.map(o => ({ value: o, label: o }));
+                    }
 
                     return (
                         <div key={field.key} className="mb-2">

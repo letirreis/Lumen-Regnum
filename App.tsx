@@ -38,6 +38,7 @@ const SCHEMAS = {
         { key: 'race', label: 'Race', type: 'text' },
         { key: 'class', label: 'Class', type: 'text' },
         { key: 'level', label: 'Level', type: 'number' },
+        { key: 'faction_id', label: 'Faction', type: 'select', options: [] }, // Options populated dynamically in GenericList
         { key: 'attributes', label: 'Attributes', type: 'stats' },
         { key: 'ac', label: 'Armor Class', type: 'number' },
         { key: 'max_hp', label: 'Max HP', type: 'number' },
@@ -173,6 +174,7 @@ const SCHEMAS = {
     faction: [
         { key: 'name', label: 'Name', type: 'text' },
         { key: 'tag_ids', label: 'Tags (type & status)', type: 'tags-select' }, // New: tag selector
+        { key: 'member_ids', label: 'Membros (NPCs/PCs)', type: 'member-multi-select' }, // New: member selector
         { key: 'goal', label: 'Goal', type: 'text' },
         { key: 'resources', label: 'Resources', type: 'textarea' },
         { key: 'conflicts', label: 'Conflicts', type: 'textarea' },
