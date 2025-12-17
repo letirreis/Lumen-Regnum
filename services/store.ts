@@ -25,6 +25,7 @@ const TABLES = {
   SCENES: 'dmos_session_scenes',
   TAGS: 'dmos_tags', // Normalized tags (type, status, etc.)
   FACTION_TAGS: 'dmos_faction_tags', // Pivot table: faction_id, tag_id
+  FACTION_MEMBERS: 'dmos_faction_members', // Pivot table: faction_id, member_id, member_type
 };
 
 // Generic Helper for basic CRUD
@@ -299,6 +300,73 @@ export const db = {
         .eq('faction_id', factionId);
       if (error) {
         console.error('Error deleting all faction tags', error);
+      }
+      return { data, error };
+    },
+  },
+  // Faction-Members Pivot Table API (requires dmos_faction_members table created via SQL migrations)
+  faction_members: {
+    // List all members for a faction
+    listForFaction: async (factionId: UUID): Promise<any[]> => {
+      if (!supabase) { console.warn('Supabase not configured'); return []; }
+      const { data, error } = await supabase
+        .from(TABLES.FACTION_MEMBERS)
+        .select('*')
+        .eq('faction_id', factionId);
+      if (error) {
+        console.error('Error listing faction members', error);
+        return [];
+      }
+      return data || [];
+    },
+    
+    // Set members for a faction (replaces all existing members)
+    setForFaction: async (factionId: UUID, memberIds: UUID[], memberTypes: string[]): Promise<{ data: any; error: any }> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+      
+      // Delete all existing members for this faction
+      const { error: deleteError } = await supabase
+        .from(TABLES.FACTION_MEMBERS)
+        .delete()
+        .eq('faction_id', factionId);
+      
+      if (deleteError) {
+        console.error('Error deleting existing faction members', deleteError);
+        return { data: null, error: deleteError };
+      }
+      
+      // If no members to add, return success
+      if (!memberIds || memberIds.length === 0) {
+        return { data: [], error: null };
+      }
+      
+      // Add new member associations
+      const links = memberIds.map((memberId, idx) => ({ 
+        faction_id: factionId, 
+        member_id: memberId,
+        member_type: memberTypes[idx]
+      }));
+      const { data, error } = await supabase
+        .from(TABLES.FACTION_MEMBERS)
+        .insert(links)
+        .select();
+      
+      if (error) {
+        console.error('Error adding faction members', error);
+      }
+      
+      return { data, error };
+    },
+    
+    // Delete all members for a faction (useful when deleting faction)
+    deleteAll: async (factionId: UUID): Promise<{ data: any; error: any }> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+      const { data, error } = await supabase
+        .from(TABLES.FACTION_MEMBERS)
+        .delete()
+        .eq('faction_id', factionId);
+      if (error) {
+        console.error('Error deleting all faction members', error);
       }
       return { data, error };
     },
