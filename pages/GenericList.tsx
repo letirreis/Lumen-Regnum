@@ -195,10 +195,17 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         }
 
         // Sync faction_members pivot table if entity is faction and has member_ids
-        if (entityType === 'faction' && memberIds.length >= 0) {
+        if (entityType === 'faction' && memberIds.length > 0) {
             // Determine member types (need to check which are NPCs vs Characters)
             const memberTypes: string[] = memberIds.map((mid: string) => {
                 const isCharacter = availableCharacters.some(c => c.id === mid);
+                const isNPC = availableNPCs.some(n => n.id === mid);
+                
+                if (!isCharacter && !isNPC) {
+                    console.warn(`Member ID ${mid} not found in available NPCs or Characters`);
+                    return 'npc'; // Default to NPC if not found
+                }
+                
                 return isCharacter ? 'character' : 'npc';
             });
             
