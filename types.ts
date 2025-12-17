@@ -6,8 +6,8 @@ export interface Character {
   id: UUID;
   campaign_id: UUID;
   name: string;
-  race: string;
-  class: string;
+  race?: string;
+  class?: string;
   subclass?: string;
   level: number;
   faction_id?: UUID; // Associated faction
@@ -43,6 +43,8 @@ export interface NPC {
   name: string;
   title: string;
   npc_type: string; // e.g. Merchant, Citizen
+  race?: string; // D&D race (Dragonborn, Dwarf, Elf, etc.)
+  class?: string; // D&D class (Artificer, Barbarian, Bard, etc.)
   status: string; // Ally, Neutral, Hostile
   magic_level: string; // None, Low, High
   alignment: string;

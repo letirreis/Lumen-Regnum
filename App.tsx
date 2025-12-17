@@ -31,12 +31,25 @@ import { WorldTimeline } from './pages/codex/WorldTimeline';
 import { HomeRules } from './pages/codex/HomeRules';
 import { NotesAndScraps } from './pages/codex/NotesAndScraps';
 
+// D&D 5e Race and Class Options
+export const DND_RACES = [
+    'Dragonborn', 'Dwarf', 'Elf', 'Gnome', 'Half-Elf', 
+    'Half-Orc', 'Halfling', 'Human', 'Tiefling', 'Other'
+];
+
+export const DND_CLASSES = [
+    'Artificer', 'Barbarian', 'Bard', 'Cleric', 'Druid', 
+    'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 
+    'Sorcerer', 'Warlock', 'Wizard'
+];
+
 // Configuration for Generic Pages
 const SCHEMAS = {
     character: [
         { key: 'name', label: 'Name', type: 'text' },
-        { key: 'race', label: 'Race', type: 'text' },
-        { key: 'class', label: 'Class', type: 'text' },
+        { key: 'race', label: 'Race', type: 'select', options: DND_RACES },
+        { key: 'race_custom', label: 'Custom Race', type: 'text', conditionalOn: { key: 'race', value: 'Other' } },
+        { key: 'class', label: 'Class', type: 'select', options: DND_CLASSES },
         { key: 'level', label: 'Level', type: 'number' },
         { key: 'faction_id', label: 'Faction', type: 'select', options: [] }, // Options populated dynamically in GenericList
         { key: 'attributes', label: 'Attributes', type: 'stats' },
@@ -48,6 +61,9 @@ const SCHEMAS = {
         // Identity
         { key: 'name', label: 'Name', type: 'text' },
         { key: 'title', label: 'Title / Honorific', type: 'text' },
+        { key: 'race', label: 'Race', type: 'select', options: DND_RACES },
+        { key: 'race_custom', label: 'Custom Race', type: 'text', conditionalOn: { key: 'race', value: 'Other' } },
+        { key: 'class', label: 'Class', type: 'select', options: DND_CLASSES },
         { key: 'npc_type', label: 'Type', type: 'select', options: [
             'Citizen', 'Merchant', 'Guard', 'Soldier', 'Noble', 
             'Thief', 'Criminal', 'Politician', 'Cultist', 
