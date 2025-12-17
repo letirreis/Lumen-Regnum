@@ -6,8 +6,8 @@ export interface Character {
   id: UUID;
   campaign_id: UUID;
   name: string;
-  race: string;
-  class: string;
+  race?: string;
+  class?: string;
   subclass?: string;
   level: number;
   faction_id?: UUID; // Associated faction

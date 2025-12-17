@@ -8,6 +8,7 @@ import { Location, Faction, Tag, NPC, Character } from '../types';
 import { MultiFactionSelect } from '../components/MultiFactionSelect';
 import { TagSelector } from '../components/TagSelector';
 import { MultiMemberSelect } from '../components/MultiMemberSelect';
+import { DND_RACES } from '../App';
 
 interface SchemaField {
   key: string;
@@ -121,9 +122,12 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         const factionIds = faction_ids || [];
         const memberIds = member_ids || [];
         
-        // Handle race_custom field: if race is 'Other' and race_custom exists, use race_custom as race
-        if (basePayload.race === 'Other' && race_custom) {
-            basePayload.race = race_custom;
+        // Handle race_custom field: if race is 'Other' and race_custom exists and is non-empty, use race_custom as race
+        if (basePayload.race === 'Other' && race_custom && race_custom.trim() !== '') {
+            basePayload.race = race_custom.trim();
+        } else if (basePayload.race === 'Other') {
+            // If 'Other' is selected but no custom race provided, clear the race field
+            basePayload.race = '';
         }
         
         // Construct payload without client-only fields
@@ -296,7 +300,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
       
       // Handle custom races: if race is not in standard list, treat as custom
       if ((entityType === 'npc' || entityType === 'character') && item.race) {
-          const standardRaces = ['Dragonborn', 'Dwarf', 'Elf', 'Gnome', 'Half-Elf', 'Half-Orc', 'Halfling', 'Human', 'Tiefling'];
+          // Remove 'Other' from the list when checking if it's a standard race
+          const standardRaces = DND_RACES.filter(r => r !== 'Other');
           if (!standardRaces.includes(item.race)) {
               itemWithExtras.race_custom = item.race;
               itemWithExtras.race = 'Other';
