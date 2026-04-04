@@ -1,8 +1,8 @@
 
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 
-// Helper to safely get env vars (Vercel injects these automatically)
-const getEnv = (key: string) => (import.meta as any).env?.[key];
+// Vite exposes env vars via import.meta.env (typed via vite/client)
+const getEnv = (key: string): string => (import.meta.env?.[key] as string) ?? '';
 
 // 1. Try Environment Variables (Priority for Vercel)
 let supabaseUrl = getEnv('VITE_SUPABASE_URL');
@@ -66,8 +66,8 @@ export const checkConnection = async (): Promise<{ success: boolean; message?: s
             return { success: false, message: error.message };
         }
         return { success: true };
-    } catch (e: any) {
-         return { success: false, message: e.message };
+    } catch (e: unknown) {
+         return { success: false, message: e instanceof Error ? e.message : String(e) };
     }
 };
 
