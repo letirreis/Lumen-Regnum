@@ -2,13 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, generateId } from '../services/store';
+import type { DbResult } from '../services/store';
 import { Campaign, Session, Note, CampaignCodex } from '../types';
 import { Card, Badge, Button, Textarea, Input, Modal, ConfirmModal } from '../components/ui';
 import { Calendar, MapPin, Users, Plus, Trash2, Edit2, FileText, Dices, ExternalLink } from 'lucide-react';
+import { useToast } from '../components/Toast';
 
 export const CampaignDashboard: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [codex, setCodex] = useState<CampaignCodex | null>(null);
   const [stats, setStats] = useState({ npcs: 0, locations: 0, sessions: 0 });
@@ -90,7 +93,7 @@ export const CampaignDashboard: React.FC = () => {
   const saveNote = async () => {
       if (!editingNote || !id) return;
 
-      let result: { data: any; error: any };
+      let result: DbResult<Note>;
       if (editingNote.id) {
           result = await db.notes.update(editingNote);
       } else {
@@ -100,7 +103,7 @@ export const CampaignDashboard: React.FC = () => {
       
       if (result.error) {
           console.error('Error saving note:', result.error);
-          alert(`Failed to save note. ${result.error.message || 'Check console for details.'}`);
+          showToast(`Failed to save note. ${result.error.message || 'Please try again.'}`, 'error');
           return;
       }
       
@@ -114,7 +117,7 @@ export const CampaignDashboard: React.FC = () => {
           const result = await db.notes.delete(deleteNoteId);
           if (result.error) {
               console.error('Error deleting note:', result.error);
-              alert(`Failed to delete note. ${result.error.message || 'Check console for details.'}`);
+              showToast(`Failed to delete note. ${result.error.message || 'Please try again.'}`, 'error');
               return;
           }
           setDeleteNoteId(null);
@@ -127,7 +130,12 @@ export const CampaignDashboard: React.FC = () => {
       window.dispatchEvent(new CustomEvent('open-dice-roller'));
   };
 
-  if (!campaign) return <div>Loading...</div>;
+  if (!campaign) return (
+    <div className="flex items-center justify-center py-20 text-gold font-cinzel gap-3">
+      <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+      Loading campaign...
+    </div>
+  );
 
   return (
     <div className="space-y-6">

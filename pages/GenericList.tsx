@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { db, generateId } from '../services/store';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal } from '../components/ui';
@@ -9,6 +9,7 @@ import { MultiFactionSelect } from '../components/MultiFactionSelect';
 import { TagSelector } from '../components/TagSelector';
 import { MultiMemberSelect } from '../components/MultiMemberSelect';
 import { DND_RACES } from '../App';
+import { useToast } from '../components/Toast';
 
 interface SchemaField {
   key: string;
@@ -26,7 +27,8 @@ interface GenericListProps {
 
 export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fields }) => {
   const { id: campaignId } = useParams<{ id: string }>();
-  const [items, setItems] = useState<any[]>([]);
+  const { showToast } = useToast();
+  const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [locations, setLocations] = useState<Location[]>([]); // For dynamic lookups
   const [availableFactions, setAvailableFactions] = useState<Faction[]>([]); // For faction multi-select
   const [availableTags, setAvailableTags] = useState<Tag[]>([]); // For tag selector
@@ -49,7 +51,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
   
   // Edit/Create State
   const [isModalOpen, setModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null); // If null, we are creating
+  const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null); // If null, we are creating
   const [isSaving, setIsSaving] = useState(false); // Prevents double submit
 
   // Delete State
@@ -191,7 +193,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         // Check for errors in main entity save
         if (result.error) {
             console.error("Error saving entity:", result.error);
-            alert(`Failed to save ${entityType}. ${result.error.message || 'Check console for details.'}`);
+            showToast(`Failed to save ${entityType}. ${result.error.message || 'Please try again.'}`, 'error');
             return;
         }
 
@@ -200,7 +202,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             const syncResult = await db.faction_tags.setForFaction(payload.id, tagIds);
             if (syncResult.error) {
                 console.error("Error syncing faction tags:", syncResult.error);
-                alert(`${entityType} saved, but failed to sync tags. ${syncResult.error.message || 'Check console for details.'}`);
+                showToast(`${entityType} saved, but failed to sync tags. ${syncResult.error.message || 'Please try again.'}`, 'warning');
             }
         }
 
@@ -222,7 +224,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             const syncResult = await db.faction_members.setForFaction(payload.id, memberIds, memberTypes);
             if (syncResult.error) {
                 console.error("Error syncing faction members:", syncResult.error);
-                alert(`${entityType} saved, but failed to sync members. ${syncResult.error.message || 'Check console for details.'}`);
+                showToast(`${entityType} saved, but failed to sync members. ${syncResult.error.message || 'Please try again.'}`, 'warning');
             }
         }
 
@@ -232,7 +234,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         // Catch any unexpected errors not handled by db method error returns
         // (e.g., network errors, JSON parsing errors, etc.)
         console.error("Failed to save item:", error);
-        alert("Failed to save. Check console for details.");
+        showToast("Failed to save. Please try again.", 'error');
     } finally {
         setIsSaving(false);
     }
@@ -259,7 +261,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         
         if (result.error) {
             console.error("Error deleting entity:", result.error);
-            alert(`Failed to delete ${entityType}. ${result.error.message || 'Check console for details.'}`);
+            showToast(`Failed to delete ${entityType}. ${result.error.message || 'Please try again.'}`, 'error');
             return;
         }
         
@@ -269,7 +271,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         // Catch any unexpected errors not handled by db method error returns
         // (e.g., network errors, JSON parsing errors, etc.)
         console.error("Failed to delete item:", error);
-        alert("Failed to delete. Check console for details.");
+        showToast("Failed to delete. Please try again.", 'error');
     } finally {
         setIsSaving(false);
     }
@@ -351,7 +353,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
        return (
            <div className="flex flex-wrap gap-1 mt-1">
                {tags.map((tag, idx) => (
-                   <span key={idx} className="text-[9px] uppercase font-bold bg-zinc-700/50 text-zinc-300 border border-zinc-700 px-1.5 py-0.5 rounded">
+                   <span key={`${tag}-${idx}`} className="text-[9px] uppercase font-bold bg-zinc-700/50 text-zinc-300 border border-zinc-700 px-1.5 py-0.5 rounded">
                        {tag}
                    </span>
                ))}
@@ -360,7 +362,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
    };
 
   // Filtering Logic
-  const filteredItems = items.filter(i => {
+  const filteredItems = useMemo(() => items.filter(i => {
     // 1. Text Search
     const matchesSearch = 
         i.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -391,7 +393,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
     const matchesItemType = filterItemType ? i.type === filterItemType : true;
 
     return matchesSearch && matchesType && matchesLocation && matchesMonsterType && matchesSize && matchesLocType && matchesImportance && matchesItemRarity && matchesItemType;
-  });
+  }), [items, searchTerm, filterType, filterLocation, filterMonsterType, filterSize, filterLocType, filterImportance, filterItemRarity, filterItemType]);
 
   return (
     <div className="space-y-6">

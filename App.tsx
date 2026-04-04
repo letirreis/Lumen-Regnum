@@ -1,14 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import type { Session } from '@supabase/supabase-js';
 import { Layout } from './components/Layout';
 import { db, generateId } from './services/store';
 import { Campaign } from './types';
-import { Button, Card, Input, Modal, ConfirmModal } from './components/ui';
+import { Button, Input, Modal, ConfirmModal } from './components/ui';
 import { Plus, Trash2, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { SupabaseSetup } from './components/SupabaseSetup';
-import { checkConnection, supabase, getCurrentUser } from './services/supabase';
+import { checkConnection, supabase } from './services/supabase';
 import { Auth } from './pages/Auth';
+import { useToast } from './components/Toast';
 
 // Pages
 import { CampaignDashboard } from './pages/CampaignDashboard';
@@ -256,6 +258,7 @@ const CampaignSelector: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   useEffect(() => {
     verifyConnectionAndLoad();
@@ -291,7 +294,7 @@ const CampaignSelector: React.FC = () => {
     const result = await db.campaigns.add(newCamp);
     if (result.error) {
         console.error('Error creating campaign:', result.error);
-        alert(`Failed to create campaign. ${result.error.message || 'Check console for details.'}`);
+        showToast(`Failed to create campaign. ${result.error.message || 'Check console for details.'}`, 'error');
         return;
     }
     setCampaigns([...campaigns, newCamp]);
@@ -310,7 +313,7 @@ const CampaignSelector: React.FC = () => {
           const result = await db.campaigns.delete(deleteId);
           if (result.error) {
               console.error('Error deleting campaign:', result.error);
-              alert(`Failed to delete campaign. ${result.error.message || 'Check console for details.'}`);
+              showToast(`Failed to delete campaign. ${result.error.message || 'Check console for details.'}`, 'error');
               return;
           }
           setCampaigns(campaigns.filter(c => c.id !== deleteId));
@@ -421,7 +424,7 @@ const CampaignRouteWrapper: React.FC = () => {
 }
 
 function App() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

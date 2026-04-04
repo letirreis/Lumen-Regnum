@@ -6,6 +6,7 @@ import { Campaign } from '../types';
 import { DiceRoller } from './DiceRoller';
 import { getCurrentUser, signOut, deleteAccount } from '../services/supabase';
 import { ConfirmModal } from './ui';
+import { useToast } from './Toast';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id: campaignId } = useParams();
+  const { showToast } = useToast();
   const [isDiceRollerOpen, setIsDiceRollerOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
@@ -44,16 +46,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
 
   const handleSignOut = async () => {
       await signOut();
-      window.location.reload(); // Force reload to trigger auth state check in App.tsx
+      // Auth state change subscription in App.tsx handles the redirect
   };
 
   const handleDeleteAccount = async () => {
     try {
       await deleteAccount();
-      // Redireciona para página inicial
       navigate('/');
     } catch (error) {
       console.error('Erro ao deletar conta:', error);
+      showToast('Failed to delete account. Please try again.', 'error');
     }
   };
 
