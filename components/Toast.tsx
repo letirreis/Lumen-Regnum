@@ -71,15 +71,30 @@ const ToastContainer: React.FC<{ toasts: ToastMessage[]; onDismiss: (id: string)
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const timersRef = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const dismiss = useCallback((id: string) => {
+    const timer = timersRef.current.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      timersRef.current.delete(id);
+    }
     setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // Clear all pending timers when provider unmounts
+  React.useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current.clear();
+    };
   }, []);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => dismiss(id), TOAST_DURATION_MS);
+    const timer = setTimeout(() => dismiss(id), TOAST_DURATION_MS);
+    timersRef.current.set(id, timer);
   }, [dismiss]);
 
   return (
