@@ -1,9 +1,11 @@
 -- Migration: Create dmos_campaign_codex table for Codex system
 -- This table stores all worldbuilding and narrative information for campaigns
 
+-- NOTE: id/campaign_id are TEXT, not UUID, to match dmos_campaigns.id - this
+-- project uses client-generated TEXT ids throughout (see 000_baseline_schema.sql).
 CREATE TABLE IF NOT EXISTS dmos_campaign_codex (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id UUID REFERENCES dmos_campaigns(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  campaign_id TEXT REFERENCES dmos_campaigns(id) ON DELETE CASCADE,
   main_arc JSONB DEFAULT '{}',
   major_plots JSONB DEFAULT '[]',
   world_lore JSONB DEFAULT '{}',

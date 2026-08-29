@@ -1,17 +1,21 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { db } from '../services/store';
+import { db, generateId } from '../services/store';
 import { Encounter, Combatant, Character } from '../types';
 import { Card, Button, Input, Badge, Modal, ConfirmModal } from '../components/ui';
 import { Swords, Plus, Trash2, RotateCcw, Shield, Heart, Play, Activity } from 'lucide-react';
+import { useToast } from '../components/Toast';
+
+const CREATURE_SAVE_DEBOUNCE_MS = 400;
 
 export const CombatTracker: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
+  const { showToast } = useToast();
   const [encounters, setEncounters] = useState<Encounter[]>([]);
   const [activeEncounter, setActiveEncounter] = useState<Encounter | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
-  
+
   // Modal states
   const [isModalOpen, setModalOpen] = useState(false);
   const [newEncounterName, setNewEncounterName] = useState('');
@@ -23,11 +27,21 @@ export const CombatTracker: React.FC = () => {
   const [isAddCreatureOpen, setAddCreatureOpen] = useState(false);
   const [newCreature, setNewCreature] = useState<Partial<Combatant>>({ name: '', hp: 10, ac: 10, initiative: 0, type: 'Monster' });
 
+  // Debounced persistence for rapid-fire creature field edits (HP/AC/Initiative),
+  // to avoid firing a network request per keystroke and racing concurrent writes.
+  const creatureSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (campaignId) {
         loadData();
     }
   }, [campaignId]);
+
+  useEffect(() => {
+    return () => {
+      if (creatureSaveTimeout.current) clearTimeout(creatureSaveTimeout.current);
+    };
+  }, []);
 
   const loadData = async () => {
       if (!campaignId) return;
@@ -39,16 +53,36 @@ export const CombatTracker: React.FC = () => {
       setCharacters(chars);
   };
 
+  const persistEncounter = async (encounter: Encounter) => {
+    const { error } = await db.encounters.update(encounter);
+    if (error) {
+      showToast(`Failed to save encounter: ${error.message}`, 'error');
+    }
+  };
+
+  // Updates local state immediately (responsive UI) and writes through right away.
   const saveEncounter = async (encounter: Encounter) => {
-    await db.encounters.update(encounter);
+    if (creatureSaveTimeout.current) clearTimeout(creatureSaveTimeout.current);
     setEncounters(prev => prev.map(e => e.id === encounter.id ? encounter : e));
     setActiveEncounter(encounter);
+    await persistEncounter(encounter);
+  };
+
+  // Same as saveEncounter, but coalesces rapid successive calls into a single
+  // network write after the user pauses, so concurrent PATCH requests can't race.
+  const saveEncounterDebounced = (encounter: Encounter) => {
+    setEncounters(prev => prev.map(e => e.id === encounter.id ? encounter : e));
+    setActiveEncounter(encounter);
+    if (creatureSaveTimeout.current) clearTimeout(creatureSaveTimeout.current);
+    creatureSaveTimeout.current = setTimeout(() => {
+      persistEncounter(encounter);
+    }, CREATURE_SAVE_DEBOUNCE_MS);
   };
 
   const createEncounter = async () => {
     if (!campaignId || !newEncounterName) return;
     const newEnc: Encounter = {
-      id: Date.now().toString(),
+      id: generateId(),
       campaign_id: campaignId,
       name: newEncounterName,
       creatures: [],
@@ -56,7 +90,11 @@ export const CombatTracker: React.FC = () => {
       notes: '',
       round: 0
     };
-    await db.encounters.add(newEnc);
+    const { error } = await db.encounters.add(newEnc);
+    if (error) {
+      showToast(`Failed to create encounter: ${error.message}`, 'error');
+      return;
+    }
     setEncounters([...encounters, newEnc]);
     setActiveEncounter(newEnc);
     setNewEncounterName('');
@@ -70,7 +108,12 @@ export const CombatTracker: React.FC = () => {
 
   const confirmDeleteEncounter = async () => {
       if(deleteEncounterId) {
-          await db.encounters.delete(deleteEncounterId);
+          const { error } = await db.encounters.delete(deleteEncounterId);
+          if (error) {
+            showToast(`Failed to delete encounter: ${error.message}`, 'error');
+            setDeleteEncounterId(null);
+            return;
+          }
           setEncounters(encounters.filter(e => e.id !== deleteEncounterId));
           setDeleteEncounterId(null);
           if (activeEncounter?.id === deleteEncounterId) {
@@ -82,7 +125,7 @@ export const CombatTracker: React.FC = () => {
   const addCreature = async () => {
     if (!activeEncounter) return;
     const combatant: Combatant = {
-      id: Date.now().toString(),
+      id: generateId(),
       name: newCreature.name || 'Enemy',
       type: newCreature.type as any,
       ac: newCreature.ac || 10,
@@ -99,24 +142,28 @@ export const CombatTracker: React.FC = () => {
 
   const addParty = async () => {
     if (!activeEncounter) return;
-    const partyCombatants: Combatant[] = characters.map(c => ({
-      id: c.id,
-      name: c.name,
-      type: 'PC',
-      ac: c.ac,
-      hp: c.current_hp ?? c.max_hp,
-      max_hp: c.max_hp,
-      initiative: 0,
-      conditions: []
-    }));
+    const existingIds = new Set(activeEncounter.creatures.map(c => c.id));
+    const partyCombatants: Combatant[] = characters
+      .filter(c => !existingIds.has(c.id))
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        type: 'PC',
+        ac: c.ac,
+        hp: c.current_hp ?? c.max_hp,
+        max_hp: c.max_hp,
+        initiative: 0,
+        conditions: []
+      }));
+    if (partyCombatants.length === 0) return;
     const updated = { ...activeEncounter, creatures: [...activeEncounter.creatures, ...partyCombatants] };
     await saveEncounter(updated);
   };
 
-  const updateCreature = async (id: string, updates: Partial<Combatant>) => {
+  const updateCreature = (id: string, updates: Partial<Combatant>) => {
     if (!activeEncounter) return;
     const updatedCreatures = activeEncounter.creatures.map(c => c.id === id ? { ...c, ...updates } : c);
-    await saveEncounter({ ...activeEncounter, creatures: updatedCreatures });
+    saveEncounterDebounced({ ...activeEncounter, creatures: updatedCreatures });
   };
 
   const deleteCreature = async (id: string) => {
@@ -151,8 +198,8 @@ export const CombatTracker: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {encounters.map(enc => (
             <Card key={enc.id} className="hover:border-indigo-500 cursor-pointer transition-colors relative group">
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={(e) => requestDeleteEncounter(e, enc.id)} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                    <button onClick={(e) => requestDeleteEncounter(e, enc.id)} aria-label={`Delete encounter ${enc.name}`} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
                 </div>
                 <div onClick={() => setActiveEncounter(enc)}>
                     <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
@@ -229,7 +276,7 @@ export const CombatTracker: React.FC = () => {
         </div>
         
         {/* List */}
-        {activeEncounter.creatures.sort((a,b) => b.initiative - a.initiative).map(c => (
+        {[...activeEncounter.creatures].sort((a,b) => b.initiative - a.initiative).map(c => (
              <div key={c.id} className={`grid grid-cols-12 gap-2 items-center bg-zinc-900 p-3 rounded-md border ${c.hp <= 0 ? 'border-zinc-800 opacity-60' : 'border-zinc-800'}`}>
                 <div className="col-span-1">
                     <input 
@@ -266,7 +313,7 @@ export const CombatTracker: React.FC = () => {
                      </div>
                 </div>
                 <div className="col-span-2 flex justify-end gap-2">
-                    <button onClick={() => deleteCreature(c.id)} className="text-zinc-500 hover:text-red-400"><Trash2 className="w-4 h-4"/></button>
+                    <button onClick={() => deleteCreature(c.id)} aria-label={`Remove ${c.name}`} className="text-zinc-500 hover:text-red-400"><Trash2 className="w-4 h-4"/></button>
                 </div>
              </div>
         ))}
@@ -280,10 +327,10 @@ export const CombatTracker: React.FC = () => {
           <div className="space-y-4">
             <Input label="Name" value={newCreature.name} onChange={e => setNewCreature({...newCreature, name: e.target.value})} autoFocus />
             <div className="grid grid-cols-2 gap-4">
-                <Input label="Max HP" type="number" value={newCreature.hp} onChange={e => setNewCreature({...newCreature, hp: parseInt(e.target.value)})} />
-                <Input label="AC" type="number" value={newCreature.ac} onChange={e => setNewCreature({...newCreature, ac: parseInt(e.target.value)})} />
+                <Input label="Max HP" type="number" value={newCreature.hp} onChange={e => setNewCreature({...newCreature, hp: parseInt(e.target.value) || 0})} />
+                <Input label="AC" type="number" value={newCreature.ac} onChange={e => setNewCreature({...newCreature, ac: parseInt(e.target.value) || 0})} />
             </div>
-            <Input label="Initiative Bonus" type="number" value={newCreature.initiative} onChange={e => setNewCreature({...newCreature, initiative: parseInt(e.target.value)})} />
+            <Input label="Initiative Bonus" type="number" value={newCreature.initiative} onChange={e => setNewCreature({...newCreature, initiative: parseInt(e.target.value) || 0})} />
             <div className="flex justify-end gap-2 mt-4">
                 <Button variant="ghost" onClick={() => setAddCreatureOpen(false)}>Cancel</Button>
                 <Button onClick={addCreature}>Add Creature</Button>

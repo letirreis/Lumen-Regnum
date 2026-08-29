@@ -37,15 +37,12 @@ BEGIN
   -- IMPORTANT: Customize these deletions for your application's schema
   
   -- Delete user's campaigns (with error handling for schema variations)
-  -- Note: This handles both missing tables and missing columns gracefully
+  -- dmos_campaigns is keyed by user_id (see RLS policies in migrations 002-005)
   BEGIN
-    DELETE FROM public.dmos_campaigns WHERE owner_id = current_user_id;
+    DELETE FROM public.dmos_campaigns WHERE user_id = current_user_id;
   EXCEPTION
     WHEN undefined_table THEN
       -- Table doesn't exist in this schema, skip
-      NULL;
-    WHEN undefined_column THEN
-      -- Column doesn't exist (e.g., different foreign key name), skip
       NULL;
   END;
   

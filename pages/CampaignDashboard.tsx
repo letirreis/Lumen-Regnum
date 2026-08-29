@@ -13,6 +13,7 @@ export const CampaignDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [codex, setCodex] = useState<CampaignCodex | null>(null);
   const [stats, setStats] = useState({ npcs: 0, locations: 0, sessions: 0 });
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
@@ -31,8 +32,18 @@ export const CampaignDashboard: React.FC = () => {
   }, [id]);
 
   const loadCampaignData = async (campaignId: string) => {
-    const camps = await db.campaigns.list();
+    setLoadError(null);
+    let fetchError: string | null = null;
+    const camps = await db.campaigns.list((error) => { fetchError = error.message; });
+    if (fetchError) {
+        setLoadError(fetchError);
+        return;
+    }
     const found = camps.find(c => c.id === campaignId);
+    if (!found) {
+        setLoadError('Campaign not found.');
+        return;
+    }
     if (found) {
         setCampaign(found);
         
@@ -129,6 +140,13 @@ export const CampaignDashboard: React.FC = () => {
   const toggleDiceRoller = () => {
       window.dispatchEvent(new CustomEvent('open-dice-roller'));
   };
+
+  if (loadError) return (
+    <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+      <p className="text-red-400">{loadError}</p>
+      <Button variant="secondary" onClick={() => id && loadCampaignData(id)}>Try again</Button>
+    </div>
+  );
 
   if (!campaign) return (
     <div className="flex items-center justify-center py-20 text-gold font-cinzel gap-3">
@@ -237,9 +255,9 @@ export const CampaignDashboard: React.FC = () => {
                     <div className="space-y-3">
                         {notesList.map(note => (
                             <div key={note.id} className="bg-zinc-950 border border-zinc-800 rounded p-3 group relative hover:border-zinc-600 transition-colors">
-                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-950 pl-2">
-                                     <button onClick={() => openEditNote(note)} className="text-zinc-500 hover:text-indigo-400"><Edit2 className="w-3 h-3" /></button>
-                                     <button onClick={() => setDeleteNoteId(note.id)} className="text-zinc-500 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity bg-zinc-950 pl-2">
+                                     <button onClick={() => openEditNote(note)} aria-label={`Edit note ${note.title || 'Untitled Note'}`} className="text-zinc-500 hover:text-indigo-400"><Edit2 className="w-3 h-3" /></button>
+                                     <button onClick={() => setDeleteNoteId(note.id)} aria-label={`Delete note ${note.title || 'Untitled Note'}`} className="text-zinc-500 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
                                 </div>
                                 <div className="font-semibold text-zinc-200 text-sm mb-1 flex items-center gap-2">
                                     <FileText className="w-3 h-3 text-zinc-600"/>

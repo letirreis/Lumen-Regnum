@@ -2,9 +2,12 @@
 -- Creates normalized tags system with dmos_tags and dmos_faction_tags pivot table
 
 -- 1. Create dmos_tags table
+-- NOTE: campaign_id is TEXT, not UUID, to match dmos_campaigns.id - this
+-- project uses client-generated TEXT ids throughout (see 000_baseline_schema.sql).
+-- id itself stays UUID to match the live project.
 CREATE TABLE IF NOT EXISTS public.dmos_tags (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    campaign_id UUID NOT NULL REFERENCES public.dmos_campaigns(id) ON DELETE CASCADE,
+    campaign_id TEXT NOT NULL REFERENCES public.dmos_campaigns(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     color TEXT, -- Hex color code or preset color name (e.g., '#6366f1' or 'indigo')
     tag_type TEXT, -- Tag type: 'type', 'status', 'custom', etc.

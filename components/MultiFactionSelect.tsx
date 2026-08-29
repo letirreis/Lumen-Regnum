@@ -46,6 +46,7 @@ export const MultiFactionSelect: React.FC<MultiFactionSelectProps> = ({
               <button
                 type="button"
                 onClick={() => handleRemove(faction.id)}
+                aria-label={`Remove ${faction.name}`}
                 className="hover:bg-indigo-800/50 rounded p-0.5 transition-colors"
               >
                 <X className="w-3 h-3" />

@@ -1,58 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { db, generateId } from '../../services/store';
-import { CampaignCodex } from '../../types';
+import React, { useState } from 'react';
+import { generateId } from '../../services/store';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal } from '../../components/ui';
 import { Save, CheckCircle, Plus, Trash2, Edit2 } from 'lucide-react';
+import { useCodexSection } from './useCodexSection';
 
 export const MajorPlots: React.FC = () => {
-  const { id: campaignId } = useParams<{ id: string }>();
-  const [codex, setCodex] = useState<CampaignCodex | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { codex, saving, saved, loading, error, handleSave, handleCreateCodex, persist } = useCodexSection();
   const [editingPlot, setEditingPlot] = useState<any>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [deletePlotId, setDeletePlotId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (campaignId) {
-      loadCodex();
-    }
-  }, [campaignId]);
-
-  const loadCodex = async () => {
-    if (!campaignId) return;
-    setLoading(true);
-    const data = await db.codex.get(campaignId);
-    setCodex(data);
-    setLoading(false);
-  };
-
-  const handleCreateCodex = async () => {
-    if (!campaignId) return;
-    setLoading(true);
-    setError(null);
-    const data = await db.codex.create(campaignId);
-    if (data) {
-      setCodex(data);
-    } else {
-      setError('Failed to create codex. Please check the console for details or contact support.');
-      console.error('Codex creation failed for campaign:', campaignId);
-    }
-    setLoading(false);
-  };
-
-  const handleSave = async () => {
-    if (!codex) return;
-    setSaving(true);
-    setSaved(false);
-    await db.codex.update(codex);
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+  const [isSaving, setIsSaving] = useState(false);
 
   const openNewPlot = () => {
     setEditingPlot({
@@ -71,7 +28,7 @@ export const MajorPlots: React.FC = () => {
     setModalOpen(true);
   };
 
-  const savePlot = () => {
+  const savePlot = async () => {
     if (!editingPlot || !codex) return;
 
     const existingIndex = codex.major_plots.findIndex((p) => p.id === editingPlot.id);
@@ -84,15 +41,20 @@ export const MajorPlots: React.FC = () => {
       updatedPlots = [...codex.major_plots, editingPlot];
     }
 
-    setCodex({ ...codex, major_plots: updatedPlots });
+    setIsSaving(true);
+    const ok = await persist({ ...codex, major_plots: updatedPlots });
+    setIsSaving(false);
+    if (!ok) return;
     setModalOpen(false);
     setEditingPlot(null);
   };
 
-  const confirmDeletePlot = () => {
+  const confirmDeletePlot = async () => {
     if (!deletePlotId || !codex) return;
     const updatedPlots = codex.major_plots.filter((p) => p.id !== deletePlotId);
-    setCodex({ ...codex, major_plots: updatedPlots });
+    setIsSaving(true);
+    await persist({ ...codex, major_plots: updatedPlots });
+    setIsSaving(false);
     setDeletePlotId(null);
   };
 
@@ -255,10 +217,10 @@ export const MajorPlots: React.FC = () => {
               </select>
             </div>
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="ghost" onClick={() => setModalOpen(false)}>
+              <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={isSaving}>
                 Cancel
               </Button>
-              <Button onClick={savePlot}>Save Plot</Button>
+              <Button onClick={savePlot} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Plot'}</Button>
             </div>
           </>
         )}
@@ -267,10 +229,10 @@ export const MajorPlots: React.FC = () => {
       {/* Delete Confirmation */}
       <ConfirmModal
         isOpen={!!deletePlotId}
-        onClose={() => setDeletePlotId(null)}
+        onClose={() => !isSaving && setDeletePlotId(null)}
         onConfirm={confirmDeletePlot}
         title="Delete Plot"
-        message="Are you sure you want to delete this plot? This action cannot be undone."
+        message={isSaving ? "Deleting..." : "Are you sure you want to delete this plot? This action cannot be undone."}
       />
     </div>
   );

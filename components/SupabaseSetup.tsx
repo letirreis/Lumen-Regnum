@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, saveSupabaseConfig, clearSupabaseConfig } from '../services/supabase';
-import { Modal, Input, Button } from './ui';
+import { Modal, Input, Button, ConfirmModal } from './ui';
 import { Database, Settings } from 'lucide-react';
 
 export const SupabaseSetup: React.FC = () => {
@@ -9,6 +9,7 @@ export const SupabaseSetup: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [url, setUrl] = useState('');
     const [key, setKey] = useState('');
+    const [isResetConfirmOpen, setResetConfirmOpen] = useState(false);
 
     useEffect(() => {
         const configured = isSupabaseConfigured();
@@ -25,20 +26,29 @@ export const SupabaseSetup: React.FC = () => {
     };
 
     const handleReset = () => {
-        if(confirm("Are you sure you want to disconnect? This will clear stored credentials.")) {
-            clearSupabaseConfig();
-        }
+        clearSupabaseConfig();
     }
 
     if (isConfigured) {
         return (
-             <button 
-                onClick={handleReset} 
-                className="fixed bottom-4 left-4 z-50 p-2 text-zinc-600 hover:text-zinc-400 bg-zinc-900/50 rounded-full border border-zinc-800 hover:border-zinc-600 transition-colors"
-                title="Disconnect Database"
-            >
-                <Database className="w-4 h-4" />
-            </button>
+            <>
+                <button
+                    onClick={() => setResetConfirmOpen(true)}
+                    aria-label="Disconnect database"
+                    className="fixed bottom-4 left-4 z-50 p-2 text-zinc-600 hover:text-zinc-400 bg-zinc-900/50 rounded-full border border-zinc-800 hover:border-zinc-600 transition-colors"
+                    title="Disconnect Database"
+                >
+                    <Database className="w-4 h-4" />
+                </button>
+                <ConfirmModal
+                    isOpen={isResetConfirmOpen}
+                    onClose={() => setResetConfirmOpen(false)}
+                    onConfirm={handleReset}
+                    title="Disconnect Database"
+                    message="Are you sure you want to disconnect? This will clear stored credentials."
+                    confirmText="Disconnect"
+                />
+            </>
         );
     }
 

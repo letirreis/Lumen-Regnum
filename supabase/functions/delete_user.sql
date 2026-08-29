@@ -1,11 +1,16 @@
 -- Secure delete_user function with explicit search_path
 -- This function allows users to delete their own account and associated data
--- 
+--
 -- Security improvements:
 -- 1. SET search_path = public, pg_catalog - prevents search_path manipulation attacks
 -- 2. Fully-qualified table names (public.auth.users) - ensures correct table resolution
 -- 3. SECURITY DEFINER - runs with function owner's privileges
 -- 4. Proper parameter validation
+--
+-- CANONICAL SOURCE: this file is a documentation/reference copy. The version
+-- actually applied to the database is whichever migration ran last -
+-- currently migrations/007_fix_delete_user_owner_id.sql. Keep this file's body
+-- in sync with that migration whenever one of them changes.
 
 CREATE OR REPLACE FUNCTION public.delete_user()
 RETURNS void
@@ -30,15 +35,12 @@ BEGIN
   -- Example: DELETE FROM public.user_logs WHERE user_id = current_user_id;
   
   -- Delete user's campaigns (with error handling for missing table)
-  -- IMPORTANT: Customize this section for your application's tables
+  -- dmos_campaigns is keyed by user_id (see RLS policies in migrations 002-005)
   BEGIN
-    DELETE FROM public.dmos_campaigns WHERE owner_id = current_user_id;
+    DELETE FROM public.dmos_campaigns WHERE user_id = current_user_id;
   EXCEPTION
     WHEN undefined_table THEN
       -- Table doesn't exist in this schema, skip
-      NULL;
-    WHEN undefined_column THEN
-      -- Column doesn't exist, skip
       NULL;
   END;
   

@@ -1,58 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { db, generateId } from '../../services/store';
-import { CampaignCodex } from '../../types';
+import React, { useState } from 'react';
+import { generateId } from '../../services/store';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal } from '../../components/ui';
 import { Save, CheckCircle, Plus, Trash2, Edit2, Clock } from 'lucide-react';
+import { useCodexSection } from './useCodexSection';
 
 export const WorldTimeline: React.FC = () => {
-  const { id: campaignId } = useParams<{ id: string }>();
-  const [codex, setCodex] = useState<CampaignCodex | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { codex, saving, saved, loading, error, handleSave, handleCreateCodex, persist } = useCodexSection();
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (campaignId) {
-      loadCodex();
-    }
-  }, [campaignId]);
-
-  const loadCodex = async () => {
-    if (!campaignId) return;
-    setLoading(true);
-    const data = await db.codex.get(campaignId);
-    setCodex(data);
-    setLoading(false);
-  };
-
-  const handleCreateCodex = async () => {
-    if (!campaignId) return;
-    setLoading(true);
-    setError(null);
-    const data = await db.codex.create(campaignId);
-    if (data) {
-      setCodex(data);
-    } else {
-      setError('Failed to create codex. Please check the console for details or contact support.');
-      console.error('Codex creation failed for campaign:', campaignId);
-    }
-    setLoading(false);
-  };
-
-  const handleSave = async () => {
-    if (!codex) return;
-    setSaving(true);
-    setSaved(false);
-    await db.codex.update(codex);
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+  const [isSaving, setIsSaving] = useState(false);
 
   const openNewEvent = () => {
     setEditingEvent({
@@ -70,7 +27,7 @@ export const WorldTimeline: React.FC = () => {
     setModalOpen(true);
   };
 
-  const saveEvent = () => {
+  const saveEvent = async () => {
     if (!editingEvent || !codex) return;
 
     const existingIndex = codex.world_timeline.findIndex((e) => e.id === editingEvent.id);
@@ -83,15 +40,20 @@ export const WorldTimeline: React.FC = () => {
       updatedTimeline = [...codex.world_timeline, editingEvent];
     }
 
-    setCodex({ ...codex, world_timeline: updatedTimeline });
+    setIsSaving(true);
+    const ok = await persist({ ...codex, world_timeline: updatedTimeline });
+    setIsSaving(false);
+    if (!ok) return;
     setModalOpen(false);
     setEditingEvent(null);
   };
 
-  const confirmDeleteEvent = () => {
+  const confirmDeleteEvent = async () => {
     if (!deleteEventId || !codex) return;
     const updatedTimeline = codex.world_timeline.filter((e) => e.id !== deleteEventId);
-    setCodex({ ...codex, world_timeline: updatedTimeline });
+    setIsSaving(true);
+    await persist({ ...codex, world_timeline: updatedTimeline });
+    setIsSaving(false);
     setDeleteEventId(null);
   };
 
@@ -237,10 +199,10 @@ export const WorldTimeline: React.FC = () => {
               rows={3}
             />
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="ghost" onClick={() => setModalOpen(false)}>
+              <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={isSaving}>
                 Cancel
               </Button>
-              <Button onClick={saveEvent}>Save Event</Button>
+              <Button onClick={saveEvent} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Event'}</Button>
             </div>
           </>
         )}
@@ -249,10 +211,10 @@ export const WorldTimeline: React.FC = () => {
       {/* Delete Confirmation */}
       <ConfirmModal
         isOpen={!!deleteEventId}
-        onClose={() => setDeleteEventId(null)}
+        onClose={() => !isSaving && setDeleteEventId(null)}
         onConfirm={confirmDeleteEvent}
         title="Delete Event"
-        message="Are you sure you want to delete this timeline event? This action cannot be undone."
+        message={isSaving ? "Deleting..." : "Are you sure you want to delete this timeline event? This action cannot be undone."}
       />
     </div>
   );

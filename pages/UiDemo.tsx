@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
+import { Card, Button } from '../components/ui';
 import { Sparkles, Heart, Zap } from 'lucide-react';
 
 /**

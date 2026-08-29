@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Tag, UUID } from '../types';
 import { X, Plus } from 'lucide-react';
 import { db, generateId } from '../services/store';
+import { useToast } from './Toast';
 
 interface TagSelectorProps {
   campaignId: UUID;
@@ -23,6 +24,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
   onChange,
   onTagsReload,
 }) => {
+  const { showToast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#6366f1'); // Default indigo
@@ -62,9 +64,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
     
     if (result.error) {
       console.error('Error creating tag:', result.error);
-      // Note: Consider replacing with toast notification for better UX
-      // For now, using alert to match existing error handling pattern in the codebase
-      alert('Erro ao criar tag. Verifique se a tabela dmos_tags existe no banco de dados.');
+      showToast('Erro ao criar tag. Verifique se a tabela dmos_tags existe no banco de dados.', 'error');
       return;
     }
     

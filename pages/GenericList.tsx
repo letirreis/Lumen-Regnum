@@ -87,27 +87,20 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
   // Load available factions and tags when modal opens (for location and faction forms)
   const loadFormDependencies = async () => {
     if (!campaignId) return;
-    
-    // Load factions for NPC/Character forms
-    if (entityType === 'npc' || entityType === 'character') {
+
+    if (entityType === 'npc' || entityType === 'character' || entityType === 'location') {
       const factions = await db.factions.list(campaignId);
       setAvailableFactions(factions);
     }
-    
-    // Load factions for location form
-    if (entityType === 'location') {
-      const factions = await db.factions.list(campaignId);
-      setAvailableFactions(factions);
-    }
-    
-    // Load tags and NPCs/Characters for faction form
+
     if (entityType === 'faction') {
-      const tags = await db.tags.list(campaignId);
+      // Run independent lookups concurrently instead of one after another.
+      const [tags, npcs, characters] = await Promise.all([
+        db.tags.list(campaignId),
+        db.npcs.list(campaignId),
+        db.characters.list(campaignId),
+      ]);
       setAvailableTags(tags);
-      
-      // Load NPCs and Characters for member selection
-      const npcs = await db.npcs.list(campaignId);
-      const characters = await db.characters.list(campaignId);
       setAvailableNPCs(npcs);
       setAvailableCharacters(characters);
     }
@@ -228,6 +221,15 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             }
         }
 
+        // Sync location_factions pivot table if entity is location and has faction_ids
+        if (entityType === 'location' && Array.isArray(factionIds)) {
+            const syncResult = await db.location_factions.setForLocation(payload.id, factionIds);
+            if (syncResult.error) {
+                console.error("Error syncing location factions:", syncResult.error);
+                showToast(`${entityType} saved, but failed to sync factions. ${syncResult.error.message || 'Please try again.'}`, 'warning');
+            }
+        }
+
         setModalOpen(false);
         loadItems();
     } catch (error) {
@@ -299,7 +301,13 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
           // factionMemberLinks is array of { faction_id, member_id, member_type, created_at }
           itemWithExtras.member_ids = factionMemberLinks.map((link: { member_id: string }) => link.member_id);
       }
-      
+
+      // Load faction_ids from location_factions pivot table if editing a location
+      if (entityType === 'location' && item.id) {
+          const locationFactionLinks = await db.location_factions.listForLocation(item.id);
+          itemWithExtras.faction_ids = locationFactionLinks.map((link: { faction_id: string }) => link.faction_id);
+      }
+
       // Handle custom races: if race is not in standard list, treat as custom
       if ((entityType === 'npc' || entityType === 'character') && item.race) {
           // Check if the race is a custom one (not in DND_RACES or is 'Other')
@@ -410,6 +418,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
                 <input
                     type="text"
+                    aria-label={`Search ${title.toLowerCase()}`}
                     placeholder="Search name, role, tags..."
                     className="pl-9 flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
                     value={searchTerm}
@@ -561,9 +570,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 key={item.id} 
                 className={`group relative transition-all ${getBorderColor(item.accent_color)}`}
             >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                    <button onClick={() => openEdit(item)} className="p-1 bg-zinc-800 rounded hover:bg-indigo-600 text-zinc-300 hover:text-white"><Edit className="w-4 h-4" /></button>
-                    <button onClick={() => requestDelete(item.id)} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex gap-2">
+                    <button onClick={() => openEdit(item)} aria-label={`Edit ${item.name || title.slice(0, -1)}`} className="p-1 bg-zinc-800 rounded hover:bg-indigo-600 text-zinc-300 hover:text-white"><Edit className="w-4 h-4" /></button>
+                    <button onClick={() => requestDelete(item.id as string)} aria-label={`Delete ${item.name || title.slice(0, -1)}`} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
                 </div>
                 <div className="flex justify-between items-start pr-16">
                      <div>

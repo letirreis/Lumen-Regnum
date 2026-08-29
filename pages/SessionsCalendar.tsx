@@ -5,10 +5,12 @@ import { db, generateId } from '../services/store';
 import { Session } from '../types';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal, Badge } from '../components/ui';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Trash2 } from 'lucide-react';
+import { useToast } from '../components/Toast';
 
 export const SessionsCalendar: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [sessions, setSessions] = useState<Session[]>([]);
   
   // Calendar State
@@ -67,7 +69,7 @@ export const SessionsCalendar: React.FC = () => {
 
   const saveSession = async () => {
       if (!editingSession.date || !campaignId) return;
-      
+
       const payload = {
           ...editingSession,
           npcs_encountered: editingSession.npcs_encountered || [],
@@ -75,11 +77,13 @@ export const SessionsCalendar: React.FC = () => {
           items_found: editingSession.items_found || [],
       } as Session;
 
-      if (payload.id) {
-          await db.sessions.update(payload);
-      } else {
-          payload.id = generateId();
-          await db.sessions.add(payload);
+      const result = payload.id
+          ? await db.sessions.update(payload)
+          : await db.sessions.add({ ...payload, id: generateId() });
+
+      if (result.error) {
+          showToast(`Failed to save session: ${result.error.message}`, 'error');
+          return;
       }
       setModalOpen(false);
       loadSessions();
@@ -87,8 +91,14 @@ export const SessionsCalendar: React.FC = () => {
 
   const confirmDelete = async () => {
       if (deleteSessionId) {
-          await db.sessions.delete(deleteSessionId);
+          const { error } = await db.sessions.delete(deleteSessionId);
+          if (error) {
+              showToast(`Failed to delete session: ${error.message}`, 'error');
+              setDeleteSessionId(null);
+              return;
+          }
           setDeleteSessionId(null);
+          setModalOpen(false);
           loadSessions();
       }
   };
@@ -114,30 +124,35 @@ export const SessionsCalendar: React.FC = () => {
         const isToday = new Date().toISOString().split('T')[0] === dateStr;
 
         days.push(
-            <div 
-                key={day} 
-                className={`h-32 border border-zinc-800 p-2 relative group transition-colors hover:bg-zinc-900 ${isToday ? 'bg-indigo-900/10' : 'bg-zinc-950'}`}
-                onClick={() => daysSessions.length === 0 && openNewSession(day)}
+            <div
+                key={day}
+                className={`h-32 border border-zinc-800 p-2 relative group transition-colors ${isToday ? 'bg-indigo-900/10' : 'bg-zinc-950'}`}
             >
                 <div className="flex justify-between items-start">
                     <span className={`text-sm font-semibold ${isToday ? 'text-indigo-400' : 'text-zinc-500'}`}>{day}</span>
                     {daysSessions.length === 0 && (
-                        <button className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-white" onClick={(e) => { e.stopPropagation(); openNewSession(day); }}>
+                        <button
+                            className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-zinc-500 hover:text-white transition-opacity"
+                            aria-label={`Schedule session on ${dateStr}`}
+                            onClick={() => openNewSession(day)}
+                        >
                             <CalendarIcon className="w-4 h-4" />
                         </button>
                     )}
                 </div>
-                
+
                 <div className="mt-2 space-y-1 overflow-y-auto max-h-[80px]">
                     {daysSessions.map(session => (
-                        <div 
-                            key={session.id} 
-                            onClick={(e) => { e.stopPropagation(); openEditSession(session); }}
-                            className="text-xs p-1.5 rounded bg-zinc-800 border border-zinc-700 hover:border-indigo-500 hover:bg-zinc-700 cursor-pointer transition-all"
+                        <button
+                            type="button"
+                            key={session.id}
+                            onClick={() => openEditSession(session)}
+                            aria-label={`Edit session on ${dateStr}: ${session.summary || 'No Summary'}`}
+                            className="block w-full text-left text-xs p-1.5 rounded bg-zinc-800 border border-zinc-700 hover:border-indigo-500 hover:bg-zinc-700 focus:border-indigo-500 cursor-pointer transition-all"
                         >
                             <div className="font-semibold text-zinc-200 truncate">{session.summary || "No Summary"}</div>
                             {session.notes && <div className="text-[10px] text-zinc-400 truncate mt-0.5">{session.notes}</div>}
-                        </div>
+                        </button>
                     ))}
                 </div>
             </div>

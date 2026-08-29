@@ -99,7 +99,7 @@ const deleteAccount = async () => {
 
 ⚠️ **You MUST customize the function for your application's schema.**
 
-The provided migration includes a hardcoded reference to `dmos_campaigns` table, which may not exist in your schema or may have different column names. You need to:
+The provided migration includes a hardcoded reference to the `dmos_campaigns` table, deleted by its `user_id` column (see migration `007_fix_delete_user_owner_id.sql`). If you rename or add tables that store user data, you need to:
 
 1. **Review your database schema** and identify all tables that store user data
 2. **Edit the migration SQL** before applying it

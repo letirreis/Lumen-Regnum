@@ -2,20 +2,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, generateId } from '../services/store';
 import { Session, SessionScene, UUID } from '../types';
-import { Card, Button, Input, Textarea } from '../components/ui';
+import { Card, Button, Input, Textarea, ConfirmModal } from '../components/ui';
 import { SceneCard } from '../components/SceneCard';
 import { ArrowLeft, Plus, Save, FileText, BookOpen } from 'lucide-react';
+import { useToast } from '../components/Toast';
 
 export const SessionDetail: React.FC = () => {
   const { id: campaignId, sessionId } = useParams<{ id: string; sessionId: string }>();
   const navigate = useNavigate();
-  
+  const { showToast } = useToast();
+
   const [session, setSession] = useState<Session | null>(null);
   const [scenes, setScenes] = useState<SessionScene[]>([]);
   const [activeTab, setActiveTab] = useState<'prep' | 'log'>('prep');
   const [expandedScenes, setExpandedScenes] = useState<Set<UUID>>(new Set());
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [deleteSceneId, setDeleteSceneId] = useState<UUID | null>(null);
 
   useEffect(() => {
     if (sessionId) {
@@ -40,17 +43,27 @@ export const SessionDetail: React.FC = () => {
   };
 
   // Debounced autosave - keep reference stable
-  const autosaveRef = React.useRef<((s: Session) => void) | null>(null);
-  
+  const autosaveRef = React.useRef<ReturnType<typeof debounce<(s: Session) => void>> | null>(null);
+  const saveMessageTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   React.useEffect(() => {
     autosaveRef.current = debounce(async (sessionData: Session) => {
       setSaving(true);
-      await db.sessions.update(sessionData);
+      const { error } = await db.sessions.update(sessionData);
       setSaving(false);
+      if (error) {
+        showToast(`Failed to save session: ${error.message}`, 'error');
+        return;
+      }
       setSaveMessage('Saved ✓');
-      setTimeout(() => setSaveMessage(''), 2000);
+      if (saveMessageTimeoutRef.current) clearTimeout(saveMessageTimeoutRef.current);
+      saveMessageTimeoutRef.current = setTimeout(() => setSaveMessage(''), 2000);
     }, 500);
-  }, []);
+    return () => {
+      autosaveRef.current?.cancel();
+      if (saveMessageTimeoutRef.current) clearTimeout(saveMessageTimeoutRef.current);
+    };
+  }, [showToast]);
 
   const handleSessionChange = (field: keyof Session, value: any) => {
     if (session) {
@@ -79,27 +92,50 @@ export const SessionDetail: React.FC = () => {
       order_index: scenes.length,
     };
 
-    await db.scenes.add(newScene);
+    const { error } = await db.scenes.add(newScene);
+    if (error) {
+      showToast(`Failed to add scene: ${error.message}`, 'error');
+      return;
+    }
     setScenes([...scenes, newScene]);
     setExpandedScenes(new Set([...expandedScenes, newScene.id]));
   };
 
   const handleUpdateScene = async (updatedScene: SessionScene) => {
-    await db.scenes.update(updatedScene);
+    const { error } = await db.scenes.update(updatedScene);
+    if (error) {
+      showToast(`Failed to save scene: ${error.message}`, 'error');
+      return;
+    }
     setScenes(scenes.map(s => s.id === updatedScene.id ? updatedScene : s));
   };
 
-  const handleDeleteScene = async (sceneId: UUID) => {
-    if (!confirm('Delete this scene?')) return;
-    await db.scenes.delete(sceneId);
-    
+  const requestDeleteScene = (sceneId: UUID) => {
+    setDeleteSceneId(sceneId);
+  };
+
+  const confirmDeleteScene = async () => {
+    if (!deleteSceneId) return;
+    const sceneId = deleteSceneId;
+    const { error } = await db.scenes.delete(sceneId);
+    if (error) {
+      showToast(`Failed to delete scene: ${error.message}`, 'error');
+      setDeleteSceneId(null);
+      return;
+    }
+
     // Reindex remaining scenes (filter once and batch updates)
     const remainingScenes = scenes.filter(s => s.id !== sceneId);
     const reindexed = remainingScenes.map((s, idx) => ({ ...s, order_index: idx }));
-    
+
     // Batch update reindexed scenes
-    await Promise.all(reindexed.map(scene => db.scenes.update(scene)));
+    const results = await Promise.all(reindexed.map(scene => db.scenes.update(scene)));
+    const reindexError = results.find(r => r.error)?.error;
+    if (reindexError) {
+      showToast(`Scene deleted, but failed to reorder remaining scenes: ${reindexError.message}`, 'warning');
+    }
     setScenes(reindexed);
+    setDeleteSceneId(null);
   };
 
   const toggleSceneExpand = (sceneId: UUID) => {
@@ -263,7 +299,7 @@ export const SessionDetail: React.FC = () => {
                     key={scene.id}
                     scene={scene}
                     onUpdate={handleUpdateScene}
-                    onDelete={handleDeleteScene}
+                    onDelete={requestDeleteScene}
                     isExpanded={expandedScenes.has(scene.id)}
                     onToggleExpand={() => toggleSceneExpand(scene.id)}
                   />
@@ -279,18 +315,30 @@ export const SessionDetail: React.FC = () => {
           </div>
         </Card>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteSceneId}
+        onClose={() => setDeleteSceneId(null)}
+        onConfirm={confirmDeleteScene}
+        title="Delete Scene"
+        message="Are you sure you want to delete this scene? This action cannot be undone."
+      />
     </div>
   );
 };
 
-// Debounce utility
+// Debounce utility - exposes cancel() so callers can clear a pending call on unmount
 function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const debounced = (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };
+  debounced.cancel = () => {
+    if (timeout) clearTimeout(timeout);
+  };
+  return debounced;
 }

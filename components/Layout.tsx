@@ -13,7 +13,7 @@ interface LayoutProps {
   activeCampaign?: Campaign | null;
 }
 
-const DELETE_ACCOUNT_WARNING = "Are you absolutely sure you want to delete your account? This will permanently remove your authentication credentials. All campaign data will remain in the database but will become orphaned. This action cannot be undone.";
+const DELETE_ACCOUNT_WARNING = "Are you absolutely sure you want to delete your account? This will permanently remove your authentication credentials and all of your campaigns and their data. This action cannot be undone.";
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
   const navigate = useNavigate();
@@ -244,8 +244,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
             <LayoutDashboard className="w-5 h-5"/>
             <span className="truncate max-w-[200px] tracking-wider">{activeCampaign?.name || 'DM OS'}</span>
          </div>
-         <button 
-            onClick={() => setIsMobileMenuOpen(true)} 
+         <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Open menu"
             className="text-silver hover:text-gold p-1 rounded hover:bg-white/5 transition-colors"
          >
             <Menu className="w-6 h-6" />
@@ -276,7 +277,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
             <aside className="relative flex flex-col w-64 h-full bg-shadow border-l border-gold/20 shadow-2xl animate-in slide-in-from-right duration-300">
                 <div className="flex justify-between items-center p-4 border-b border-gold/10">
                     <span className="font-cinzel font-bold text-gold tracking-wide">Menu</span>
-                    <button onClick={() => setIsMobileMenuOpen(false)} className="text-twilight hover:text-gold transition-colors">
+                    <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu" className="text-twilight hover:text-gold transition-colors">
                         <X className="w-6 h-6"/>
                     </button>
                 </div>

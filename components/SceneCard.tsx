@@ -56,7 +56,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
         onClick={onToggleExpand}
       >
         <div className="flex items-center gap-3 flex-1">
-          <GripVertical className="w-5 h-5 text-zinc-600 cursor-grab active:cursor-grabbing" />
+          <GripVertical className="w-5 h-5 text-zinc-700" aria-hidden="true" title="Manual reordering is not yet supported" />
           {isExpanded ? <ChevronDown className="w-5 h-5 text-gold" /> : <ChevronRight className="w-5 h-5 text-zinc-500" />}
           
           <div className="flex-1">
@@ -72,8 +72,9 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
           </div>
         </div>
 
-        <button 
+        <button
           onClick={(e) => { e.stopPropagation(); onDelete(scene.id); }}
+          aria-label={`Delete scene ${localScene.title || 'Untitled Scene'}`}
           className="text-zinc-600 hover:text-red-400 transition-colors ml-2"
         >
           <Trash2 className="w-4 h-4" />

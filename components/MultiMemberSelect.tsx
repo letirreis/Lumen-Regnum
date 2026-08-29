@@ -58,6 +58,7 @@ export const MultiMemberSelect: React.FC<MultiMemberSelectProps> = ({
               <button
                 type="button"
                 onClick={() => handleRemove(member.id)}
+                aria-label={`Remove ${member.name}`}
                 className="hover:bg-opacity-50 rounded p-0.5 transition-colors"
               >
                 <X className="w-3 h-3" />

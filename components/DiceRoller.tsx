@@ -61,8 +61,9 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
   // Minimized State (Floating Action Button)
   if (!isOpen) {
     return (
-        <button 
+        <button
             onClick={onToggle}
+            aria-label="Open dice roller"
             className="fixed bottom-6 right-6 z-[100] h-14 w-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-lg border border-indigo-400 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
             title="Open Dice Roller"
         >
@@ -80,7 +81,7 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
             <Dices className="w-5 h-5" />
             <span>Dice Roller</span>
         </div>
-        <button onClick={onToggle} className="text-zinc-400 hover:text-white transition-colors">
+        <button onClick={onToggle} aria-label="Close dice roller" className="text-zinc-400 hover:text-white transition-colors">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -153,6 +154,7 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
             ))}
              <button
                 onClick={clearHistory}
+                aria-label="Clear roll history"
                 className="flex flex-col items-center justify-center bg-zinc-900 hover:bg-red-900/50 border border-zinc-800 hover:border-red-800 rounded p-2 transition-colors group"
                 title="Clear Log"
             >

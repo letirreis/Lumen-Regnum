@@ -17,6 +17,7 @@ export interface DbResult<T> {
 // Pivot table row shapes
 interface FactionTagLink { faction_id: UUID; tag_id: UUID; created_at?: string; }
 interface FactionMemberLink { faction_id: UUID; member_id: UUID; member_type: string; created_at?: string; }
+interface LocationFactionLink { location_id: UUID; faction_id: UUID; created_at?: string; }
 
 // Database Schema Keys (Tables)
 // NOTE: dmos_tags and dmos_faction_tags tables must be created via SQL migrations 
@@ -37,13 +38,17 @@ const TABLES = {
   TAGS: 'dmos_tags', // Normalized tags (type, status, etc.)
   FACTION_TAGS: 'dmos_faction_tags', // Pivot table: faction_id, tag_id
   FACTION_MEMBERS: 'dmos_faction_members', // Pivot table: faction_id, member_id, member_type
+  LOCATION_FACTIONS: 'dmos_location_factions', // Pivot table: location_id, faction_id
 };
 
 // Generic Helper for basic CRUD
 const api = {
-    list: async <T>(table: string, campaignId?: string, filterColumn?: string): Promise<T[]> => {
+    // onError lets callers distinguish "fetch failed" from "genuinely empty list" -
+    // both otherwise collapse to [], which can strand a page in a loading/not-found
+    // state forever when the failure is really a network/RLS error.
+    list: async <T>(table: string, campaignId?: string, filterColumn?: string, onError?: (error: PostgrestError) => void): Promise<T[]> => {
         if (!supabase) { console.warn('Supabase not configured'); return []; }
-        
+
         let query = supabase.from(table).select('*');
         if (campaignId) {
             const column = filterColumn || 'campaign_id';
@@ -56,6 +61,7 @@ const api = {
         const { data, error } = await query;
         if (error) {
             console.error(`Error listing ${table}`, error);
+            onError?.(error);
             // CRITICAL FIX: Return empty array instead of causing crash if error occurs
             return [];
         }
@@ -93,7 +99,7 @@ const api = {
 
 export const db = {
   campaigns: {
-    list: () => api.list<Campaign>(TABLES.CAMPAIGNS),
+    list: (onError?: (error: PostgrestError) => void) => api.list<Campaign>(TABLES.CAMPAIGNS, undefined, undefined, onError),
     add: (c: Campaign) => api.add(TABLES.CAMPAIGNS, c),
     update: (c: Campaign) => api.update(TABLES.CAMPAIGNS, c),
     delete: (id: UUID) => api.delete(TABLES.CAMPAIGNS, id),
@@ -176,7 +182,7 @@ export const db = {
     },
     create: async (campaignId: UUID): Promise<CampaignCodex | null> => {
       if (!supabase) { console.warn('Supabase not configured'); return null; }
-      
+
       const newCodex: Partial<CampaignCodex> = {
         campaign_id: campaignId,
         main_arc: {},
@@ -190,14 +196,29 @@ export const db = {
         home_rules: '',
         notes_and_scraps: '',
       };
-      
+
       const { data: created, error: createError } = await supabase
         .from(TABLES.CODEX)
         .insert(newCodex)
         .select()
         .single();
-      
+
       if (createError) {
+        // 23505 = unique_violation: a concurrent request (e.g. two tabs both
+        // hitting the "no codex yet" path at once) already created this
+        // campaign's codex. Fetch and return that row instead of failing.
+        if (createError.code === '23505') {
+          const { data: existing, error: fetchError } = await supabase
+            .from(TABLES.CODEX)
+            .select('*')
+            .eq('campaign_id', campaignId)
+            .single();
+          if (fetchError) {
+            console.error('Error fetching codex after conflict:', fetchError);
+            return null;
+          }
+          return existing as CampaignCodex;
+        }
         console.error('Error creating codex:', createError);
         return null;
       }
@@ -382,5 +403,65 @@ export const db = {
       }
       return { data: null, error };
     },
-  }
+  },
+  // Location-Factions Pivot Table API (requires dmos_location_factions table created via SQL migrations)
+  location_factions: {
+    // List all factions linked to a location
+    listForLocation: async (locationId: UUID): Promise<LocationFactionLink[]> => {
+      if (!supabase) { console.warn('Supabase not configured'); return []; }
+      const { data, error } = await supabase
+        .from(TABLES.LOCATION_FACTIONS)
+        .select('*')
+        .eq('location_id', locationId);
+      if (error) {
+        console.error('Error listing location factions', error);
+        return [];
+      }
+      return (data || []) as LocationFactionLink[];
+    },
+
+    // Set factions for a location (replaces all existing links)
+    setForLocation: async (locationId: UUID, factionIds: UUID[]): Promise<DbResult<LocationFactionLink[]>> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+
+      const { error: deleteError } = await supabase
+        .from(TABLES.LOCATION_FACTIONS)
+        .delete()
+        .eq('location_id', locationId);
+
+      if (deleteError) {
+        console.error('Error deleting existing location factions', deleteError);
+        return { data: null, error: deleteError };
+      }
+
+      if (!factionIds || factionIds.length === 0) {
+        return { data: [], error: null };
+      }
+
+      const links = factionIds.map(factionId => ({ location_id: locationId, faction_id: factionId }));
+      const { data, error } = await supabase
+        .from(TABLES.LOCATION_FACTIONS)
+        .insert(links)
+        .select();
+
+      if (error) {
+        console.error('Error adding location factions', error);
+      }
+
+      return { data: data as LocationFactionLink[] | null, error };
+    },
+
+    // Delete all faction links for a location (useful when deleting location)
+    deleteAll: async (locationId: UUID): Promise<DbResult<null>> => {
+      if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+      const { error } = await supabase
+        .from(TABLES.LOCATION_FACTIONS)
+        .delete()
+        .eq('location_id', locationId);
+      if (error) {
+        console.error('Error deleting all location factions', error);
+      }
+      return { data: null, error };
+    },
+  },
 };

@@ -360,7 +360,7 @@ const CampaignSelector: React.FC = () => {
                     <div className="flex gap-2">
                         <span className="text-xs bg-zinc-800 text-zinc-300 px-2 py-1 rounded">Active</span>
                     </div>
-                    <button onClick={(e) => requestDelete(c.id, e)} className="absolute top-6 right-6 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => requestDelete(c.id, e)} aria-label={`Delete campaign ${c.name}`} className="absolute top-6 right-6 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                         <Trash2 className="w-5 h-5" />
                     </button>
                 </div>
