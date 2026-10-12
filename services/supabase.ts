@@ -59,8 +59,9 @@ export const checkConnection = async (): Promise<{ success: boolean; message?: s
             .select('*', { count: 'exact', head: true });
 
         if (error) {
-            // RLS might return an error if not logged in, but connection itself works if code isn't 500/Network
-            if (error.code === 'PGRST301' || error.message.includes('JWT')) {
+            // RLS might return an error if not logged in, but connection itself works if code isn't 500/Network.
+            // 42501 = "permission denied": the anon role has no table grants, so the server was reached.
+            if (error.code === 'PGRST301' || error.code === '42501' || error.message.includes('JWT')) {
                  return { success: true }; // Connected, just needs auth
             }
             return { success: false, message: error.message };
