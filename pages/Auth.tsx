@@ -12,6 +12,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [inviteCode, setInviteCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -23,17 +24,26 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
         setMessage(null);
 
         try {
+            const cleanEmail = email.trim();
+
             if (mode === 'login') {
-                await signIn(email, password);
+                await signIn(cleanEmail, password);
                 onLoginSuccess();
             } else if (mode === 'signup') {
-                // Validate password length
-                if (password.length < 6) {
-                    setError("Secret Phrase must be at least 6 characters long.");
+                // Invite-only: a code is required (the server validates it again)
+                if (!inviteCode.trim()) {
+                    setError("An Invitation Code is required to join. Ask the person who invited you.");
                     setLoading(false);
                     return;
                 }
-                
+
+                // Validate password length
+                if (password.length < 8) {
+                    setError("Secret Phrase must be at least 8 characters long.");
+                    setLoading(false);
+                    return;
+                }
+
                 // Validate password confirmation
                 if (password !== confirmPassword) {
                     setError("Secret Phrases do not match. Please verify and try again.");
@@ -41,18 +51,25 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     return;
                 }
                 
-                await signUp(email, password);
+                await signUp(cleanEmail, password, inviteCode.trim());
                 setMessage("Account created! Please check your email to confirm, or login if auto-confirmed.");
                 setMode('login'); // Switch to login view
                 setPassword('');
                 setConfirmPassword('');
+                setInviteCode('');
             } else if (mode === 'forgot') {
-                await resetPassword(email);
+                await resetPassword(cleanEmail);
                 setMessage("Password reset instructions have been sent to your email. Check your inbox.");
                 setMode('login');
             }
         } catch (err: any) {
-            setError(err.message || "An unexpected error occurred.");
+            const raw: string = err?.message || '';
+            // The invite trigger rejects the insert; Supabase Auth reports that as a generic database error.
+            if (mode === 'signup' && /database error saving new user/i.test(raw)) {
+                setError("That Invitation Code is invalid, expired or already used.");
+            } else {
+                setError(raw || "An unexpected error occurred.");
+            }
         } finally {
             setLoading(false);
         }
@@ -78,13 +95,13 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     <div className="flex border-b border-gold/10 mb-6">
                         <button 
                             className={`flex-1 pb-2 text-sm font-cinzel font-bold tracking-wide transition-colors ${mode === 'login' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-zinc-400'}`}
-                            onClick={() => { setMode('login'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); }}
+                            onClick={() => { setMode('login'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); setInviteCode(''); }}
                         >
                             Access Archives
                         </button>
                         <button 
                             className={`flex-1 pb-2 text-sm font-cinzel font-bold tracking-wide transition-colors ${mode === 'signup' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-zinc-400'}`}
-                            onClick={() => { setMode('signup'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); }}
+                            onClick={() => { setMode('signup'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); setInviteCode(''); }}
                         >
                             Induct New Master
                         </button>
@@ -136,14 +153,29 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     )}
                     
                     {mode === 'signup' && (
-                        <Input 
-                            label="Confirm Secret Phrase" 
-                            type="password" 
-                            required 
-                            value={confirmPassword} 
+                        <Input
+                            label="Confirm Secret Phrase"
+                            type="password"
+                            required
+                            value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                             placeholder="••••••••"
                             className="bg-obsidian border-zinc-800 focus:border-violet"
+                        />
+                    )}
+
+                    {mode === 'signup' && (
+                        <Input
+                            label="Invitation Code"
+                            type="text"
+                            required
+                            value={inviteCode}
+                            onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                            placeholder="LUMEN-XXXX-XXXX-XXXX"
+                            autoComplete="off"
+                            autoCapitalize="characters"
+                            spellCheck={false}
+                            className="bg-obsidian border-zinc-800 focus:border-violet font-mono tracking-wider"
                         />
                     )}
 

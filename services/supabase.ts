@@ -74,9 +74,16 @@ export const checkConnection = async (): Promise<{ success: boolean; message?: s
 
 // --- AUTHENTICATION ---
 
-export const signUp = async (email: string, password: string) => {
+// Sign-up is invite-only. The code travels as user metadata and is validated SERVER-SIDE by a
+// trigger on auth.users (see supabase/migrations/017_invite_codes.sql); the trigger removes it
+// from the metadata afterwards. Without a valid code the account is never created.
+export const signUp = async (email: string, password: string, inviteCode: string) => {
     if (!supabase) throw new Error("Supabase not configured");
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { invite_code: inviteCode } },
+    });
     if (error) throw error;
     return data;
 };
