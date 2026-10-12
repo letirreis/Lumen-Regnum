@@ -1,19 +1,17 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
+// SEGURANÇA: o antigo bloco `define` injetava GEMINI_API_KEY dentro do JavaScript do navegador
+// (qualquer visitante conseguiria ler a chave). O código não usa Gemini, então foi removido.
+// Nunca exponha chaves privadas via `define` ou variáveis VITE_*: o que entra no bundle é público.
+export default defineConfig(() => {
     return {
       server: {
         port: 3000,
         host: '0.0.0.0',
       },
       plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
