@@ -23,6 +23,8 @@ export const entities = {
   'entity.session.save': 'Salvar Sessão', 'entity.session.delete': 'Excluir Sessão',
 
   'list.new': 'Novo',
+  'list.showRules': 'Mostrar campos de regras (D&D)',
+  'list.rulesHint': 'Raça, classe, atributos, CA, PV e outros campos do sistema de regras. Os dados continuam salvos mesmo quando ocultos.',
   'list.clear': 'Limpar',
   'list.select': 'Selecione...',
   'list.searchAria': 'Buscar em {entity}',

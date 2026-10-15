@@ -61,6 +61,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
 
   const navItems = [
     { icon: LayoutDashboard, label: t('nav.overview'), path: `/campaign/${campaignId}` },
+    { icon: BookOpen, label: t('nav.sessions'), path: `/campaign/${campaignId}/sessions` },
     { icon: User, label: t('nav.characters'), path: `/campaign/${campaignId}/characters` },
     { icon: Users, label: t('nav.npcs'), path: `/campaign/${campaignId}/npcs` },
     { icon: Ghost, label: t('nav.monsters'), path: `/campaign/${campaignId}/monsters` },
@@ -68,7 +69,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
     { icon: Flag, label: t('nav.factions'), path: `/campaign/${campaignId}/factions` },
     { icon: Box, label: t('nav.items'), path: `/campaign/${campaignId}/items` },
     { icon: Swords, label: t('nav.combat'), path: `/campaign/${campaignId}/combat` },
-    { icon: BookOpen, label: t('nav.sessions'), path: `/campaign/${campaignId}/sessions` },
   ];
 
   const codexSubItems = [
@@ -100,7 +100,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
     return (
     <>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
+          {navItems.slice(0, 2).map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -160,6 +160,25 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
               </div>
             )}
           </div>
+          
+          {navItems.slice(2).map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === `/campaign/${campaignId}`}
+              onClick={() => setIsMobileMenuOpen(false)} // Close mobile menu on click
+              className={({ isActive }) =>
+                `flex items-center px-3 py-2 text-sm font-cinzel tracking-wide rounded-sm transition-all duration-300 ${
+                  isActive
+                    ? 'bg-violet/10 text-violet-light border-l-2 border-violet shadow-[0_0_10px_-5px_rgba(110,81,163,0.5)]'
+                    : 'text-silver/60 hover:bg-shadow hover:text-gold hover:border-l-2 hover:border-gold/50'
+                }`
+              }
+            >
+              <item.icon className="mr-3 h-4 w-4 flex-shrink-0 opacity-70" />
+              {item.label}
+            </NavLink>
+          ))}
           
           <div className="pt-4 mt-4 border-t border-gold/10">
              <button

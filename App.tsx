@@ -50,23 +50,23 @@ export const DND_CLASSES = [
 const SCHEMAS = {
     character: [
         { key: 'name', type: 'text' },
-        { key: 'race', type: 'select', options: DND_RACES },
-        { key: 'race_custom', type: 'text', conditionalOn: { key: 'race', value: 'Other' } },
-        { key: 'class', type: 'select', options: DND_CLASSES },
-        { key: 'level', type: 'number' },
+        { key: 'race', rules: true, type: 'select', options: DND_RACES },
+        { key: 'race_custom', rules: true, type: 'text', conditionalOn: { key: 'race', value: 'Other' } },
+        { key: 'class', rules: true, type: 'select', options: DND_CLASSES },
+        { key: 'level', rules: true, type: 'number' },
         { key: 'faction_id', type: 'select', options: [] }, // Options populated dynamically in GenericList
-        { key: 'attributes', type: 'stats' },
-        { key: 'ac', type: 'number' },
-        { key: 'max_hp', type: 'number' },
+        { key: 'attributes', rules: true, type: 'stats' },
+        { key: 'ac', rules: true, type: 'number' },
+        { key: 'max_hp', rules: true, type: 'number' },
         { key: 'notes', type: 'textarea' },
     ],
     npc: [
         // Identity
         { key: 'name', type: 'text' },
         { key: 'title', type: 'text' },
-        { key: 'race', type: 'select', options: DND_RACES },
-        { key: 'race_custom', type: 'text', conditionalOn: { key: 'race', value: 'Other' } },
-        { key: 'class', type: 'select', options: DND_CLASSES },
+        { key: 'race', rules: true, type: 'select', options: DND_RACES },
+        { key: 'race_custom', rules: true, type: 'text', conditionalOn: { key: 'race', value: 'Other' } },
+        { key: 'class', rules: true, type: 'select', options: DND_CLASSES },
         { key: 'npc_type', type: 'select', options: [
             'Citizen', 'Merchant', 'Guard', 'Soldier', 'Noble', 
             'Thief', 'Criminal', 'Politician', 'Cultist', 
@@ -74,15 +74,15 @@ const SCHEMAS = {
         ] },
         { key: 'location_id', type: 'select', options: [] }, // Options populated dynamically in GenericList
         { key: 'status', type: 'select', options: ['Ally', 'Neutral', 'Hostile', 'Rival', 'Unknown', 'Deceased'] },
-        { key: 'magic_level', type: 'select', options: ['Zero', 'Latent', 'Basic', 'Intermediate', 'Advanced', 'Arcane Entity'] },
-        { key: 'alignment', type: 'select', options: ['LG', 'NG', 'CG', 'LN', 'N', 'CN', 'LE', 'NE', 'CE', 'Unaligned'] },
+        { key: 'magic_level', rules: true, type: 'select', options: ['Zero', 'Latent', 'Basic', 'Intermediate', 'Advanced', 'Arcane Entity'] },
+        { key: 'alignment', rules: true, type: 'select', options: ['LG', 'NG', 'CG', 'LN', 'N', 'CN', 'LE', 'NE', 'CE', 'Unaligned'] },
         
         // Importance
         { key: 'importance', type: 'select', options: ['Flavor', 'Relevant', 'Key/Critical', 'Antagonist', 'Unknown'] },
         { key: 'role', type: 'text' }, // Mentor, Informant
         
         // Stats
-        { key: 'attributes', type: 'stats' },
+        { key: 'attributes', rules: true, type: 'stats' },
         
         // Description
         { key: 'appearance', type: 'textarea' },
@@ -103,32 +103,32 @@ const SCHEMAS = {
             'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 
             'Monstrosity', 'Ooze', 'Plant', 'Undead'
         ] },
-        { key: 'size', type: 'select', options: ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'] },
-        { key: 'cr', type: 'text' },
-        { key: 'alignment', type: 'select', options: ['LG', 'NG', 'CG', 'LN', 'N', 'CN', 'LE', 'NE', 'CE', 'Unaligned'] },
+        { key: 'size', rules: true, type: 'select', options: ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'] },
+        { key: 'cr', rules: true, type: 'text' },
+        { key: 'alignment', rules: true, type: 'select', options: ['LG', 'NG', 'CG', 'LN', 'N', 'CN', 'LE', 'NE', 'CE', 'Unaligned'] },
         { key: 'origin_biome', type: 'text' },
         { key: 'status', type: 'select', options: ['Alive', 'Dead', 'Ally', 'Enemy', 'Captured', 'Fled'] },
 
         // 2. Basic Stats
-        { key: 'ac', type: 'number' },
-        { key: 'max_hp', type: 'number' },
-        { key: 'speed', type: 'text' },
-        { key: 'attributes', type: 'stats' },
-        { key: 'skills', type: 'text' },
-        { key: 'senses', type: 'text' },
-        { key: 'languages', type: 'text' },
-        { key: 'resistances', type: 'textarea' },
-        { key: 'immunities', type: 'textarea' },
-        { key: 'vulnerabilities', type: 'textarea' },
+        { key: 'ac', rules: true, type: 'number' },
+        { key: 'max_hp', rules: true, type: 'number' },
+        { key: 'speed', rules: true, type: 'text' },
+        { key: 'attributes', rules: true, type: 'stats' },
+        { key: 'skills', rules: true, type: 'text' },
+        { key: 'senses', rules: true, type: 'text' },
+        { key: 'languages', rules: true, type: 'text' },
+        { key: 'resistances', rules: true, type: 'textarea' },
+        { key: 'immunities', rules: true, type: 'textarea' },
+        { key: 'vulnerabilities', rules: true, type: 'textarea' },
 
         // 3. Combat & 4. Magic
-        { key: 'actions', type: 'textarea' },
-        { key: 'reactions', type: 'textarea' },
-        { key: 'legendary_actions', type: 'textarea' },
-        { key: 'spells', type: 'textarea' },
+        { key: 'actions', rules: true, type: 'textarea' },
+        { key: 'reactions', rules: true, type: 'textarea' },
+        { key: 'legendary_actions', rules: true, type: 'textarea' },
+        { key: 'spells', rules: true, type: 'textarea' },
 
         // 5. Behavior
-        { key: 'intelligence_level', type: 'select', options: ['Instinctive', 'Animalistic', 'Human-like', 'Genius', 'Omniscient'] },
+        { key: 'intelligence_level', rules: true, type: 'select', options: ['Instinctive', 'Animalistic', 'Human-like', 'Genius', 'Omniscient'] },
         { key: 'tactics', type: 'textarea' },
 
         // 6. World Bonds & 7. Narrative
@@ -204,7 +204,7 @@ const SCHEMAS = {
         { key: 'name', type: 'text' },
         { key: 'rarity', type: 'select', options: ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'] },
         { key: 'type', type: 'select', options: ['Weapon', 'Armor', 'Wondrous Item', 'Ring', 'Amulet', 'Potion', 'Scroll', 'Wand', 'Staff', 'Rod', 'Tool', 'Other'] },
-        { key: 'item_class', type: 'select', options: ['Minor Magic', 'Major Magic', 'Campaign Artifact', 'Divine Artifact'] },
+        { key: 'item_class', rules: true, type: 'select', options: ['Minor Magic', 'Major Magic', 'Campaign Artifact', 'Divine Artifact'] },
         { key: 'status', type: 'select', options: ['Intact', 'Corrupted', 'Sealed', 'Incomplete', 'Broken', 'Awakened'] },
         { key: 'accent_color', type: 'select', options: ['None', 'Red', 'Blue', 'Green', 'Purple', 'Orange', 'Yellow'] },
         { key: 'tags', type: 'text' },
@@ -220,8 +220,8 @@ const SCHEMAS = {
         { key: 'random_effects', type: 'textarea' },
 
         // 4. Cost
-        { key: 'requirements', type: 'text' },
-        { key: 'class_compatibility', type: 'text' },
+        { key: 'requirements', rules: true, type: 'text' },
+        { key: 'class_compatibility', rules: true, type: 'text' },
         { key: 'side_effects', type: 'textarea' },
         { key: 'corruption_growth', type: 'textarea' },
 
