@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { db, generateId } from '../services/store';
 import { Session } from '../types';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal, Badge } from '../components/ui';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Trash2, List } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { useI18n } from '../i18n';
 
@@ -12,8 +12,36 @@ export const SessionsCalendar: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { t, weekdays, monthYear } = useI18n();
+  const { t, weekdays, monthYear, formatDate } = useI18n();
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [view, setView] = useState<'list' | 'calendar'>(() => {
+    try { return localStorage.getItem('lumen_sessions_view') === 'calendar' ? 'calendar' : 'list'; } catch { return 'list'; }
+  });
+  const changeView = (v: 'list' | 'calendar') => {
+    setView(v);
+    try { localStorage.setItem('lumen_sessions_view', v); } catch { /* ignora */ }
+  };
+  const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD no fuso local
+  const upcoming = sessions.filter(x => x.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date));
+  const past = sessions.filter(x => x.date < todayStr).sort((a, b) => b.date.localeCompare(a.date));
+  const nextSession = upcoming[0];
+  const sessionLabel = (x: Session) => x.title || (x.session_number ? t('sessionDetail.defaultTitle', { n: x.session_number }) : t('calendar.untitled'));
+  const renderSessionCard = (x: Session, highlight = false) => (
+    <button
+      type="button"
+      key={x.id}
+      onClick={() => openEditSession(x)}
+      className={`w-full text-left p-4 rounded-lg border transition-colors ${highlight ? 'border-gold/40 bg-gold/5 hover:border-gold' : 'border-zinc-800 bg-zinc-900 hover:border-indigo-500'}`}
+    >
+      <div className="flex justify-between items-start gap-3">
+        <h3 className="font-cinzel font-semibold text-zinc-100">{sessionLabel(x)}</h3>
+        <span className="text-xs text-zinc-500 whitespace-nowrap">{formatDate(`${x.date}T12:00:00`, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</span>
+      </div>
+      {(x.goal_dm || x.synopsis || x.summary) && (
+        <p className="text-sm text-zinc-400 mt-2 line-clamp-2">{x.goal_dm || x.synopsis || x.summary}</p>
+      )}
+    </button>
+  );
   
   // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -170,9 +198,41 @@ export const SessionsCalendar: React.FC = () => {
             <CalendarIcon className="w-8 h-8 text-indigo-500" />
             {t('calendar.title')}
         </h2>
-        <Button onClick={() => openNewSession()}><CalendarIcon className="w-4 h-4 mr-2"/> {t('calendar.schedule')}</Button>
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-md border border-zinc-700 overflow-hidden" role="group" aria-label={t('calendar.viewToggle')}>
+            <button type="button" aria-pressed={view === 'list'} onClick={() => changeView('list')} className={`px-3 py-2 text-xs flex items-center gap-1 ${view === 'list' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'}`}><List className="w-3 h-3" /> {t('calendar.viewList')}</button>
+            <button type="button" aria-pressed={view === 'calendar'} onClick={() => changeView('calendar')} className={`px-3 py-2 text-xs flex items-center gap-1 ${view === 'calendar' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'}`}><CalendarIcon className="w-3 h-3" /> {t('calendar.viewCalendar')}</button>
+          </div>
+          <Button onClick={() => openNewSession()}><CalendarIcon className="w-4 h-4 mr-2"/> {t('calendar.schedule')}</Button>
+        </div>
       </div>
 
+      {view === 'list' && (
+        <div className="space-y-8">
+          <section>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-gold mb-3">{t('calendar.next')}</h3>
+            {nextSession ? renderSessionCard(nextSession, true) : (
+              <p className="text-sm text-zinc-500 italic">{t('calendar.noNext')}</p>
+            )}
+          </section>
+          {upcoming.length > 1 && (
+            <section>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3">{t('calendar.upcoming')}</h3>
+              <div className="space-y-2">{upcoming.slice(1).map(x => renderSessionCard(x))}</div>
+            </section>
+          )}
+          <section>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3">{t('calendar.past')}</h3>
+            {past.length === 0 ? (
+              <p className="text-sm text-zinc-500 italic">{t('calendar.noPast')}</p>
+            ) : (
+              <div className="space-y-2">{past.map(x => renderSessionCard(x))}</div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {view === 'calendar' && (
       <Card className="p-0 overflow-hidden border-zinc-800">
           {/* Calendar Header */}
           <div className="flex justify-between items-center p-4 bg-zinc-900 border-b border-zinc-800">
@@ -193,6 +253,7 @@ export const SessionsCalendar: React.FC = () => {
               {renderCalendar()}
           </div>
       </Card>
+      )}
 
       {/* Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={editingSession.id ? t('calendar.editTitle') : t('calendar.schedule')}>

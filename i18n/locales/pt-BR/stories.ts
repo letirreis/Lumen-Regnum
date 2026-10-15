@@ -42,6 +42,15 @@ export const stories = {
   'opt.campaign_status.finished': 'Encerrada',
 
   // --- calendário de sessões ---
+  'calendar.viewToggle': 'Modo de visualização',
+  'calendar.viewList': 'Lista',
+  'calendar.viewCalendar': 'Calendário',
+  'calendar.next': 'Próxima sessão',
+  'calendar.noNext': 'Nenhuma sessão agendada. Use "Agendar Sessão" para preparar a próxima.',
+  'calendar.upcoming': 'Mais adiante',
+  'calendar.past': 'Sessões anteriores',
+  'calendar.noPast': 'Nenhuma sessão anterior.',
+  'calendar.untitled': 'Sessão sem título',
   'calendar.title': 'Calendário de Sessões',
   'calendar.schedule': 'Agendar Sessão',
   'calendar.editTitle': 'Editar Sessão',
@@ -115,6 +124,11 @@ export const stories = {
   'scene.addBeat': '+ Adicionar Momento',
   'scene.branches': 'Ramificações (caminhos possíveis dos jogadores)',
   'scene.branchesPlaceholder': 'Como os jogadores podem abordar isto de outro jeito? Que escolhas podem fazer?',
+  'scene.plots': 'Tramas movimentadas (do Códex)',
+  'scene.plotsEmpty': 'Nenhuma trama cadastrada. Crie tramas em Códex > Tramas Principais para ligá-las às cenas.',
+  'scene.plotUnnamed': 'Trama sem nome',
+  'scene.secrets': 'Segredos a revelar nesta cena',
+  'scene.secretsPlaceholder': 'Que verdades, pistas ou segredos os jogadores podem descobrir aqui?',
   'scene.hooks': 'Ganchos (o que esta cena deixa em aberto)',
   'scene.hooksPlaceholder': 'Que fios narrativos ou perguntas esta cena cria para depois?',
 
