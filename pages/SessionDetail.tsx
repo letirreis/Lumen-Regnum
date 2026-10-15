@@ -16,6 +16,7 @@ export const SessionDetail: React.FC = () => {
 
   const [session, setSession] = useState<Session | null>(null);
   const [scenes, setScenes] = useState<SessionScene[]>([]);
+  const [plots, setPlots] = useState<{ id: string; name: string }[]>([]);
   const [activeTab, setActiveTab] = useState<'prep' | 'log'>('prep');
   const [expandedScenes, setExpandedScenes] = useState<Set<UUID>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -26,6 +27,7 @@ export const SessionDetail: React.FC = () => {
     if (sessionId) {
       loadSession();
       loadScenes();
+      loadPlots();
     }
   }, [sessionId]);
 
@@ -36,6 +38,12 @@ export const SessionDetail: React.FC = () => {
     if (found) {
       setSession(found);
     }
+  };
+
+  const loadPlots = async () => {
+    if (!campaignId) return;
+    const codex = await db.codex.get(campaignId);
+    setPlots((codex?.major_plots ?? []).filter(p => p.status !== 'Dropped').map(p => ({ id: p.id, name: p.name })));
   };
 
   const loadScenes = async () => {
@@ -91,6 +99,8 @@ export const SessionDetail: React.FC = () => {
       beats: [],
       branches: '',
       hooks: '',
+      plot_ids: [],
+      secrets: '',
       order_index: scenes.length,
     };
 
@@ -295,6 +305,7 @@ export const SessionDetail: React.FC = () => {
                   <SceneCard
                     key={scene.id}
                     scene={scene}
+                    plots={plots}
                     onUpdate={handleUpdateScene}
                     onDelete={requestDeleteScene}
                     isExpanded={expandedScenes.has(scene.id)}

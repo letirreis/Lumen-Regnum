@@ -10,11 +10,12 @@ interface SceneCardProps {
   onDelete: (id: UUID) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  plots?: { id: string; name: string }[]; // tramas do Códex disponíveis para ligar
 }
 
 const SCENE_TYPES = ['Social', 'Combat', 'Exploration', 'Investigation', 'Flashback', 'Downtime', 'Travel', 'Other'] as const;
 
-export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete, isExpanded, onToggleExpand }) => {
+export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete, isExpanded, onToggleExpand, plots = [] }) => {
   const { t, opt } = useI18n();
   const [localScene, setLocalScene] = useState(scene);
 
@@ -191,6 +192,44 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
             value={localScene.branches}
             onChange={e => handleChange('branches', e.target.value)}
             placeholder={t('scene.branchesPlaceholder')}
+            rows={2}
+          />
+
+          {/* Tramas do Códex que esta cena movimenta */}
+          <div>
+            <label className="block text-[10px] font-cinzel text-gold mb-2 tracking-[0.25em] uppercase font-bold">
+              {t('scene.plots')}
+            </label>
+            {plots.length === 0 ? (
+              <p className="text-xs text-zinc-500 italic">{t('scene.plotsEmpty')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {plots.map(plot => {
+                  const active = (localScene.plot_ids ?? []).includes(plot.id);
+                  return (
+                    <button
+                      key={plot.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => {
+                        const current = localScene.plot_ids ?? [];
+                        handleChange('plot_ids', active ? current.filter(id => id !== plot.id) : [...current, plot.id]);
+                      }}
+                      className={`px-2 py-1 rounded text-xs border transition-colors ${active ? 'bg-violet/20 border-violet/60 text-violet-light' : 'border-zinc-700 text-zinc-400 hover:border-gold/40 hover:text-gold'}`}
+                    >
+                      {plot.name || t('scene.plotUnnamed')}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <Textarea 
+            label={t('scene.secrets')}
+            value={localScene.secrets ?? ''}
+            onChange={e => handleChange('secrets', e.target.value)}
+            placeholder={t('scene.secretsPlaceholder')}
             rows={2}
           />
 

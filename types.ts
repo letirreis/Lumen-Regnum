@@ -326,6 +326,8 @@ export interface SessionScene {
   beats: string[];
   branches: string;
   hooks: string;
+  plot_ids?: string[]; // ids de CampaignCodex.major_plots que esta cena movimenta
+  secrets?: string; // segredos a revelar nesta cena
   order_index: number;
   created_at?: string;
   updated_at?: string;
