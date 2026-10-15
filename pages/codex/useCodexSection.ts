@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { db } from '../../services/store';
 import { CampaignCodex } from '../../types';
 import { useToast } from '../../components/Toast';
+import { useI18n } from '../../i18n';
 
 // Shared load/create/save logic for every Codex section page (MainArc, WorldLore, etc).
 // Centralizing this also fixes a class of bugs where db.codex.update()'s error was
@@ -10,6 +11,7 @@ import { useToast } from '../../components/Toast';
 export function useCodexSection() {
   const { id: campaignId } = useParams<{ id: string }>();
   const { showToast } = useToast();
+  const { t } = useI18n();
   const [codex, setCodex] = useState<CampaignCodex | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -38,11 +40,11 @@ export function useCodexSection() {
     if (data) {
       setCodex(data);
     } else {
-      setError('Failed to create codex. Please check the console for details or contact support.');
+      setError(t('codex.createError'));
       console.error('Codex creation failed for campaign:', campaignId);
     }
     setLoading(false);
-  }, [campaignId]);
+  }, [campaignId, t]);
 
   const handleSave = useCallback(async () => {
     if (!codex) return;
@@ -51,12 +53,12 @@ export function useCodexSection() {
     const { error: saveError } = await db.codex.update(codex);
     setSaving(false);
     if (saveError) {
-      showToast(`Failed to save: ${saveError.message}`, 'error');
+      showToast(t('codex.saveError', { detail: saveError.message }), 'error');
       return;
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  }, [codex, showToast]);
+  }, [codex, showToast, t]);
 
   // Persists a fully-updated codex immediately, for flows (add/edit/delete a list
   // item) that must not rely on the user remembering to click the page's Save button.
@@ -64,11 +66,11 @@ export function useCodexSection() {
     setCodex(updated);
     const { error: saveError } = await db.codex.update(updated);
     if (saveError) {
-      showToast(`Failed to save: ${saveError.message}`, 'error');
+      showToast(t('codex.saveError', { detail: saveError.message }), 'error');
       return false;
     }
     return true;
-  }, [showToast]);
+  }, [showToast, t]);
 
   return { campaignId, codex, setCodex, saving, saved, loading, error, handleSave, handleCreateCodex, persist };
 }

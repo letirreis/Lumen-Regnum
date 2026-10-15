@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useI18n } from '../i18n';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -39,6 +40,7 @@ const TOAST_ICONS: Record<ToastType, React.ElementType> = {
 const TOAST_DURATION_MS = 4000;
 
 const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
+  const { t } = useI18n();
   const Icon = TOAST_ICONS[toast.type];
   return (
     <div
@@ -50,7 +52,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
       <button
         onClick={() => onDismiss(toast.id)}
         className="opacity-50 hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5"
-        aria-label="Dismiss notification"
+        aria-label={t('common.dismissNotification')}
       >
         <X className="w-3.5 h-3.5" />
       </button>

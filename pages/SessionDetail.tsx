@@ -6,11 +6,13 @@ import { Card, Button, Input, Textarea, ConfirmModal } from '../components/ui';
 import { SceneCard } from '../components/SceneCard';
 import { ArrowLeft, Plus, Save, FileText, BookOpen } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { useI18n } from '../i18n';
 
 export const SessionDetail: React.FC = () => {
   const { id: campaignId, sessionId } = useParams<{ id: string; sessionId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t, formatDate } = useI18n();
 
   const [session, setSession] = useState<Session | null>(null);
   const [scenes, setScenes] = useState<SessionScene[]>([]);
@@ -52,10 +54,10 @@ export const SessionDetail: React.FC = () => {
       const { error } = await db.sessions.update(sessionData);
       setSaving(false);
       if (error) {
-        showToast(`Failed to save session: ${error.message}`, 'error');
+        showToast(t('sessionDetail.saveError', { detail: error.message }), 'error');
         return;
       }
-      setSaveMessage('Saved ✓');
+      setSaveMessage(t('common.savedCheck'));
       if (saveMessageTimeoutRef.current) clearTimeout(saveMessageTimeoutRef.current);
       saveMessageTimeoutRef.current = setTimeout(() => setSaveMessage(''), 2000);
     }, 500);
@@ -63,7 +65,7 @@ export const SessionDetail: React.FC = () => {
       autosaveRef.current?.cancel();
       if (saveMessageTimeoutRef.current) clearTimeout(saveMessageTimeoutRef.current);
     };
-  }, [showToast]);
+  }, [showToast, t]);
 
   const handleSessionChange = (field: keyof Session, value: any) => {
     if (session) {
@@ -94,7 +96,7 @@ export const SessionDetail: React.FC = () => {
 
     const { error } = await db.scenes.add(newScene);
     if (error) {
-      showToast(`Failed to add scene: ${error.message}`, 'error');
+      showToast(t('sessionDetail.addSceneError', { detail: error.message }), 'error');
       return;
     }
     setScenes([...scenes, newScene]);
@@ -104,7 +106,7 @@ export const SessionDetail: React.FC = () => {
   const handleUpdateScene = async (updatedScene: SessionScene) => {
     const { error } = await db.scenes.update(updatedScene);
     if (error) {
-      showToast(`Failed to save scene: ${error.message}`, 'error');
+      showToast(t('sessionDetail.saveSceneError', { detail: error.message }), 'error');
       return;
     }
     setScenes(scenes.map(s => s.id === updatedScene.id ? updatedScene : s));
@@ -119,7 +121,7 @@ export const SessionDetail: React.FC = () => {
     const sceneId = deleteSceneId;
     const { error } = await db.scenes.delete(sceneId);
     if (error) {
-      showToast(`Failed to delete scene: ${error.message}`, 'error');
+      showToast(t('sessionDetail.deleteSceneError', { detail: error.message }), 'error');
       setDeleteSceneId(null);
       return;
     }
@@ -132,7 +134,7 @@ export const SessionDetail: React.FC = () => {
     const results = await Promise.all(reindexed.map(scene => db.scenes.update(scene)));
     const reindexError = results.find(r => r.error)?.error;
     if (reindexError) {
-      showToast(`Scene deleted, but failed to reorder remaining scenes: ${reindexError.message}`, 'warning');
+      showToast(t('sessionDetail.reorderWarning', { detail: reindexError.message }), 'warning');
     }
     setScenes(reindexed);
     setDeleteSceneId(null);
@@ -151,7 +153,7 @@ export const SessionDetail: React.FC = () => {
   if (!session) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-zinc-500">Loading session...</div>
+        <div className="text-zinc-500">{t('sessionDetail.loading')}</div>
       </div>
     );
   }
@@ -169,21 +171,16 @@ export const SessionDetail: React.FC = () => {
           </button>
           <div>
             <h1 className="text-3xl font-bold text-white font-cinzel">
-              {session.title || `Session ${session.session_number ?? ''}`}
+              {session.title || t('sessionDetail.defaultTitle', { n: session.session_number ?? '' })}
             </h1>
             <p className="text-zinc-400 text-sm mt-1">
-              {new Date(session.date).toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+              {formatDate(session.date + 'T12:00:00', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
-          {saving && <span className="text-sm text-zinc-500 animate-pulse">Saving...</span>}
+          {saving && <span className="text-sm text-zinc-500 animate-pulse">{t('common.saving')}</span>}
           {saveMessage && <span className="text-sm text-green-400">{saveMessage}</span>}
         </div>
       </div>
@@ -199,7 +196,7 @@ export const SessionDetail: React.FC = () => {
           }`}
         >
           <BookOpen className="w-4 h-4 inline mr-2" />
-          Prep
+          {t('sessionDetail.tabPrep')}
         </button>
         <button
           onClick={() => setActiveTab('log')}
@@ -207,7 +204,7 @@ export const SessionDetail: React.FC = () => {
           className="px-4 py-2 font-cinzel font-semibold text-zinc-600 cursor-not-allowed border-b-2 border-transparent"
         >
           <FileText className="w-4 h-4 inline mr-2" />
-          Log <span className="text-xs ml-1">(Coming Soon)</span>
+          {t('sessionDetail.tabLog')} <span className="text-xs ml-1">({t('common.comingSoon')})</span>
         </button>
       </div>
 
@@ -215,61 +212,61 @@ export const SessionDetail: React.FC = () => {
       {activeTab === 'prep' ? (
         <div className="space-y-8">
           {/* Session Overview */}
-          <Card title="Session Overview">
+          <Card title={t('sessionDetail.overview')}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input 
-                  label="Session Number"
+                  label={t('sessionDetail.number')}
                   type="number"
                   value={session.session_number ?? ''}
                   onChange={e => handleSessionChange('session_number', e.target.value ? parseInt(e.target.value) : undefined)}
                   placeholder="0"
                 />
                 <Input 
-                  label="Session Title"
+                  label={t('sessionDetail.title')}
                   value={session.title ?? ''}
                   onChange={e => handleSessionChange('title', e.target.value)}
-                  placeholder="e.g., The Forgotten Conflict"
+                  placeholder={t('sessionDetail.titlePlaceholder')}
                 />
               </div>
 
               <Textarea 
-                label="DM Goal (What you want to accomplish narratively)"
+                label={t('sessionDetail.goalDm')}
                 value={session.goal_dm ?? ''}
                 onChange={e => handleSessionChange('goal_dm', e.target.value)}
-                placeholder="Your narrative objectives for this session..."
+                placeholder={t('sessionDetail.goalDmPlaceholder')}
                 rows={2}
               />
 
               <Textarea 
-                label="Player Focus (What players should experience/discover)"
+                label={t('sessionDetail.focusPlayers')}
                 value={session.focus_players ?? ''}
                 onChange={e => handleSessionChange('focus_players', e.target.value)}
-                placeholder="What should be memorable or important for players..."
+                placeholder={t('sessionDetail.focusPlayersPlaceholder')}
                 rows={2}
               />
 
               <Textarea 
-                label="Synopsis (1-3 paragraphs of overall plan)"
+                label={t('sessionDetail.synopsis')}
                 value={session.synopsis ?? ''}
                 onChange={e => handleSessionChange('synopsis', e.target.value)}
-                placeholder="High-level overview of the session flow..."
+                placeholder={t('sessionDetail.synopsisPlaceholder')}
                 rows={4}
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Textarea 
-                  label="Expected Start State"
+                  label={t('sessionDetail.startState')}
                   value={session.expected_start_state ?? ''}
                   onChange={e => handleSessionChange('expected_start_state', e.target.value)}
-                  placeholder="Where/how does the session begin?"
+                  placeholder={t('sessionDetail.startStatePlaceholder')}
                   rows={3}
                 />
                 <Textarea 
-                  label="Expected End State"
+                  label={t('sessionDetail.endState')}
                   value={session.expected_end_state ?? ''}
                   onChange={e => handleSessionChange('expected_end_state', e.target.value)}
-                  placeholder="What should be resolved by the end?"
+                  placeholder={t('sessionDetail.endStatePlaceholder')}
                   rows={3}
                 />
               </div>
@@ -279,17 +276,17 @@ export const SessionDetail: React.FC = () => {
           {/* Scenes Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-white font-cinzel">Scenes</h2>
+              <h2 className="text-2xl font-bold text-white font-cinzel">{t('sessionDetail.scenes')}</h2>
               <Button onClick={handleAddScene}>
-                <Plus className="w-4 h-4 mr-2" /> Add Scene
+                <Plus className="w-4 h-4 mr-2" /> {t('sessionDetail.addScene')}
               </Button>
             </div>
 
             {scenes.length === 0 ? (
               <Card className="text-center py-12">
-                <div className="text-zinc-500 mb-4">No scenes yet</div>
+                <div className="text-zinc-500 mb-4">{t('sessionDetail.noScenes')}</div>
                 <Button onClick={handleAddScene}>
-                  <Plus className="w-4 h-4 mr-2" /> Create First Scene
+                  <Plus className="w-4 h-4 mr-2" /> {t('sessionDetail.createFirstScene')}
                 </Button>
               </Card>
             ) : (
@@ -311,7 +308,7 @@ export const SessionDetail: React.FC = () => {
       ) : (
         <Card className="text-center py-12">
           <div className="text-zinc-500">
-            Session Log feature coming soon...
+            {t('sessionDetail.logSoon')}
           </div>
         </Card>
       )}
@@ -320,8 +317,8 @@ export const SessionDetail: React.FC = () => {
         isOpen={!!deleteSceneId}
         onClose={() => setDeleteSceneId(null)}
         onConfirm={confirmDeleteScene}
-        title="Delete Scene"
-        message="Are you sure you want to delete this scene? This action cannot be undone."
+        title={t('sessionDetail.deleteSceneTitle')}
+        message={t('sessionDetail.deleteSceneMessage')}
       />
     </div>
   );

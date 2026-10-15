@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SessionScene, UUID } from '../types';
 import { Card, Input, Textarea, Button } from './ui';
+import { useI18n } from '../i18n';
 import { ChevronDown, ChevronRight, Trash2, GripVertical } from 'lucide-react';
 
 interface SceneCardProps {
@@ -14,6 +15,7 @@ interface SceneCardProps {
 const SCENE_TYPES = ['Social', 'Combat', 'Exploration', 'Investigation', 'Flashback', 'Downtime', 'Travel', 'Other'] as const;
 
 export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete, isExpanded, onToggleExpand }) => {
+  const { t, opt } = useI18n();
   const [localScene, setLocalScene] = useState(scene);
 
   // Sync local state when scene prop changes
@@ -56,17 +58,17 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
         onClick={onToggleExpand}
       >
         <div className="flex items-center gap-3 flex-1">
-          <GripVertical className="w-5 h-5 text-zinc-700" aria-hidden="true" title="Manual reordering is not yet supported" />
+          <GripVertical className="w-5 h-5 text-zinc-700" aria-hidden="true" title={t('scene.reorderUnsupported')} />
           {isExpanded ? <ChevronDown className="w-5 h-5 text-gold" /> : <ChevronRight className="w-5 h-5 text-zinc-500" />}
           
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <span className="text-sm font-cinzel text-gold/70">#{localScene.order_index + 1}</span>
               <h4 className="font-cinzel font-semibold text-white text-lg">
-                {localScene.title || 'Untitled Scene'}
+                {localScene.title || t('scene.untitled')}
               </h4>
               <span className="text-xs px-2 py-1 rounded bg-violet/20 border border-violet/40 text-violet-light">
-                {localScene.type}
+                {opt('scene_type', localScene.type)}
               </span>
             </div>
           </div>
@@ -74,7 +76,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
 
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(scene.id); }}
-          aria-label={`Delete scene ${localScene.title || 'Untitled Scene'}`}
+          aria-label={t('scene.deleteAria', { title: localScene.title || t('scene.untitled') })}
           className="text-zinc-600 hover:text-red-400 transition-colors ml-2"
         >
           <Trash2 className="w-4 h-4" />
@@ -86,15 +88,15 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
         <div className="mt-4 space-y-4 border-t border-zinc-800 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input 
-              label="Scene Title"
+              label={t('scene.title')}
               value={localScene.title}
               onChange={e => handleChange('title', e.target.value)}
-              placeholder="e.g., The Burning Gate"
+              placeholder={t('scene.titlePlaceholder')}
             />
             
             <div className="mb-4">
               <label className="block text-[10px] font-cinzel text-gold mb-2 tracking-[0.25em] uppercase font-bold">
-                Scene Type
+                {t('scene.type')}
               </label>
               <select
                 value={localScene.type}
@@ -102,32 +104,32 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
                 className="flex h-10 w-full rounded-sm border border-twilight/50 bg-[#09090B] px-3 py-1 text-sm text-white focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors"
               >
                 {SCENE_TYPES.map(type => (
-                  <option key={type} value={type}>{type}</option>
+                  <option key={type} value={type}>{opt('scene_type', type)}</option>
                 ))}
               </select>
             </div>
           </div>
 
           <Textarea 
-            label="Description (Setting & Atmosphere)"
+            label={t('scene.description')}
             value={localScene.description}
             onChange={e => handleChange('description', e.target.value)}
-            placeholder="Describe the scene's environment, mood, and initial situation..."
+            placeholder={t('scene.descriptionPlaceholder')}
             rows={3}
           />
 
           <Textarea 
-            label="Objective (What should this scene accomplish?)"
+            label={t('scene.objective')}
             value={localScene.objective}
             onChange={e => handleChange('objective', e.target.value)}
-            placeholder="What narrative goal or information should this scene deliver?"
+            placeholder={t('scene.objectivePlaceholder')}
             rows={2}
           />
 
           {/* NPCs Involved */}
           <div>
             <label className="block text-[10px] font-cinzel text-gold mb-2 tracking-[0.25em] uppercase font-bold">
-              NPCs Involved
+              {t('scene.npcs')}
             </label>
             <div className="space-y-2">
               {localScene.npcs.map((npc, idx) => (
@@ -136,7 +138,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
                     type="text"
                     value={npc}
                     onChange={e => handleArrayChange('npcs', idx, e.target.value)}
-                    placeholder="NPC name..."
+                    placeholder={t('scene.npcPlaceholder')}
                     className="flex h-9 flex-1 rounded-sm border border-twilight/50 bg-[#09090B] px-3 py-1 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50"
                   />
                   <Button 
@@ -144,12 +146,12 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
                     variant="danger" 
                     onClick={() => handleRemoveArrayItem('npcs', idx)}
                   >
-                    Remove
+                    {t('common.remove')}
                   </Button>
                 </div>
               ))}
               <Button size="sm" variant="ghost" onClick={() => handleAddArrayItem('npcs')}>
-                + Add NPC
+                {t('scene.addNpc')}
               </Button>
             </div>
           </div>
@@ -157,7 +159,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
           {/* Beats (Key Points) */}
           <div>
             <label className="block text-[10px] font-cinzel text-gold mb-2 tracking-[0.25em] uppercase font-bold">
-              Beats (Key Points to Cover)
+              {t('scene.beats')}
             </label>
             <div className="space-y-2">
               {localScene.beats.map((beat, idx) => (
@@ -166,7 +168,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
                     type="text"
                     value={beat}
                     onChange={e => handleArrayChange('beats', idx, e.target.value)}
-                    placeholder="Story beat or important detail..."
+                    placeholder={t('scene.beatPlaceholder')}
                     className="flex h-9 flex-1 rounded-sm border border-twilight/50 bg-[#09090B] px-3 py-1 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-gold/50"
                   />
                   <Button 
@@ -174,29 +176,29 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
                     variant="danger" 
                     onClick={() => handleRemoveArrayItem('beats', idx)}
                   >
-                    Remove
+                    {t('common.remove')}
                   </Button>
                 </div>
               ))}
               <Button size="sm" variant="ghost" onClick={() => handleAddArrayItem('beats')}>
-                + Add Beat
+                {t('scene.addBeat')}
               </Button>
             </div>
           </div>
 
           <Textarea 
-            label="Branches (Possible Player Paths)"
+            label={t('scene.branches')}
             value={localScene.branches}
             onChange={e => handleChange('branches', e.target.value)}
-            placeholder="How might players approach this differently? What choices might they make?"
+            placeholder={t('scene.branchesPlaceholder')}
             rows={2}
           />
 
           <Textarea 
-            label="Hooks (What this scene leaves open)"
+            label={t('scene.hooks')}
             value={localScene.hooks}
             onChange={e => handleChange('hooks', e.target.value)}
-            placeholder="What narrative threads or questions does this scene create for later?"
+            placeholder={t('scene.hooksPlaceholder')}
             rows={2}
           />
         </div>

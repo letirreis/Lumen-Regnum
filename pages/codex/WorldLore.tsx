@@ -1,10 +1,12 @@
 import React from 'react';
 import { Card, Button, Textarea } from '../../components/ui';
-import { Save, CheckCircle } from 'lucide-react';
 import { useCodexSection } from './useCodexSection';
+import { CodexLoading, CodexMissing, CodexSaveButton } from './CodexParts';
+import { useI18n } from '../../i18n';
 
 export const WorldLore: React.FC = () => {
   const { codex, setCodex, saving, saved, loading, error, handleSave, handleCreateCodex } = useCodexSection();
+  const { t, opt } = useI18n();
 
   const updateWorldLore = (field: string, value: string) => {
     if (!codex) return;
@@ -17,80 +19,48 @@ export const WorldLore: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gold animate-pulse">Loading...</div>
-      </div>
-    );
-  }
+  if (loading) return <CodexLoading />;
 
-  if (!codex) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-zinc-500 mb-4">No codex data found for this campaign.</p>
-        {error && (
-          <div className="mb-4 p-4 bg-red-950/30 border border-red-900/50 rounded text-red-400 text-sm max-w-md mx-auto">
-            {error}
-          </div>
-        )}
-        <Button onClick={handleCreateCodex}>
-          Create Codex
-        </Button>
-      </div>
-    );
-  }
+  if (!codex) return <CodexMissing error={error} onCreate={handleCreateCodex} />;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">World Lore</h1>
-          <p className="text-zinc-400 text-sm">Document the history, cultures, and cosmology of your world</p>
+          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">{t('codex.worldLore.title')}</h1>
+          <p className="text-zinc-400 text-sm">{t('codex.worldLore.subtitle')}</p>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="min-w-[100px]"
-        >
-          {saving ? (
-            <>Saving...</>
-          ) : saved ? (
-            <><CheckCircle className="w-4 h-4 mr-2" /> Saved</>
-          ) : (
-            <><Save className="w-4 h-4 mr-2" /> Save</>
-          )}
-        </Button>
+        <CodexSaveButton saving={saving} saved={saved} onClick={handleSave} />
       </div>
 
       <Card>
         <Textarea
-          label="World Overview"
-          placeholder="A broad overview of the world, its nature, and what makes it unique..."
+          label={t('codex.worldLore.overview.label')}
+          placeholder={t('codex.worldLore.overview.placeholder')}
           value={codex.world_lore.overview || ''}
           onChange={(e) => updateWorldLore('overview', e.target.value)}
           rows={6}
         />
 
         <Textarea
-          label="History Highlights"
-          placeholder="Key historical events, ages, wars, or cataclysms that shaped the world..."
+          label={t('codex.worldLore.history.label')}
+          placeholder={t('codex.worldLore.history.placeholder')}
           value={codex.world_lore.history_highlights || ''}
           onChange={(e) => updateWorldLore('history_highlights', e.target.value)}
           rows={6}
         />
 
         <Textarea
-          label="Races & Cultures"
-          placeholder="Major races, cultures, and civilizations in your world..."
+          label={t('codex.worldLore.races.label')}
+          placeholder={t('codex.worldLore.races.placeholder')}
           value={codex.world_lore.races_cultures || ''}
           onChange={(e) => updateWorldLore('races_cultures', e.target.value)}
           rows={6}
         />
 
         <Textarea
-          label="Religion & Cosmology"
-          placeholder="Gods, pantheons, planes of existence, and spiritual beliefs..."
+          label={t('codex.worldLore.religion.label')}
+          placeholder={t('codex.worldLore.religion.placeholder')}
           value={codex.world_lore.religion_cosmology || ''}
           onChange={(e) => updateWorldLore('religion_cosmology', e.target.value)}
           rows={6}

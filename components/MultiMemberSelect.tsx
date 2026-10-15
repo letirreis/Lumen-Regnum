@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NPC, Character, UUID } from '../types';
 import { X } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface MultiMemberSelectProps {
   npcs: NPC[];
@@ -20,6 +21,7 @@ export const MultiMemberSelect: React.FC<MultiMemberSelectProps> = ({
   selectedIds,
   onChange,
 }) => {
+  const { t } = useI18n();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const allMembers = [
@@ -54,11 +56,11 @@ export const MultiMemberSelect: React.FC<MultiMemberSelectProps> = ({
               }`}
             >
               <span>{member.name}</span>
-              <span className="text-[10px] opacity-70">({member.type === 'character' ? 'PC' : 'NPC'})</span>
+              <span className="text-[10px] opacity-70">({member.type === 'character' ? t('memberSelect.pc') : t('memberSelect.npc')})</span>
               <button
                 type="button"
                 onClick={() => handleRemove(member.id)}
-                aria-label={`Remove ${member.name}`}
+                aria-label={t('common.removeItem', { name: member.name })}
                 className="hover:bg-opacity-50 rounded p-0.5 transition-colors"
               >
                 <X className="w-3 h-3" />
@@ -76,7 +78,7 @@ export const MultiMemberSelect: React.FC<MultiMemberSelectProps> = ({
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="w-full text-left px-3 py-2 bg-zinc-950 border border-zinc-700 rounded text-sm text-zinc-100 hover:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600"
           >
-            {selectedMembers.length === 0 ? 'Selecionar Membros (NPCs/PCs)...' : 'Adicionar mais membros...'}
+            {selectedMembers.length === 0 ? t('memberSelect.select') : t('memberSelect.addMore')}
           </button>
 
           {isDropdownOpen && (
@@ -92,7 +94,7 @@ export const MultiMemberSelect: React.FC<MultiMemberSelectProps> = ({
                   <span className={`text-[10px] px-1.5 py-0.5 rounded ${
                     member.type === 'character' ? 'bg-green-800/50' : 'bg-blue-800/50'
                   }`}>
-                    {member.type === 'character' ? 'PC' : 'NPC'}
+                    {member.type === 'character' ? t('memberSelect.pc') : t('memberSelect.npc')}
                   </span>
                 </button>
               ))}
@@ -103,7 +105,7 @@ export const MultiMemberSelect: React.FC<MultiMemberSelectProps> = ({
 
       {selectedMembers.length === 0 && availableMembers.length === 0 && (
         <p className="text-xs text-zinc-500 italic">
-          Nenhum NPC ou Character disponível. Crie NPCs/Characters primeiro.
+          {t('memberSelect.empty')}
         </p>
       )}
     </div>

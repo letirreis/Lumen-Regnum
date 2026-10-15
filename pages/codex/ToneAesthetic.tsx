@@ -1,10 +1,12 @@
 import React from 'react';
 import { Card, Button, Textarea } from '../../components/ui';
-import { Save, CheckCircle } from 'lucide-react';
 import { useCodexSection } from './useCodexSection';
+import { CodexLoading, CodexMissing, CodexSaveButton } from './CodexParts';
+import { useI18n } from '../../i18n';
 
 export const ToneAesthetic: React.FC = () => {
   const { codex, setCodex, saving, saved, loading, error, handleSave, handleCreateCodex } = useCodexSection();
+  const { t, opt } = useI18n();
 
   const updateToneAesthetic = (field: string, value: string) => {
     if (!codex) return;
@@ -17,80 +19,48 @@ export const ToneAesthetic: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gold animate-pulse">Loading...</div>
-      </div>
-    );
-  }
+  if (loading) return <CodexLoading />;
 
-  if (!codex) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-zinc-500 mb-4">No codex data found for this campaign.</p>
-        {error && (
-          <div className="mb-4 p-4 bg-red-950/30 border border-red-900/50 rounded text-red-400 text-sm max-w-md mx-auto">
-            {error}
-          </div>
-        )}
-        <Button onClick={handleCreateCodex}>
-          Create Codex
-        </Button>
-      </div>
-    );
-  }
+  if (!codex) return <CodexMissing error={error} onCreate={handleCreateCodex} />;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">Tone & Aesthetic</h1>
-          <p className="text-zinc-400 text-sm">Define the mood, feel, and boundaries of your campaign</p>
+          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">{t('codex.tone.title')}</h1>
+          <p className="text-zinc-400 text-sm">{t('codex.tone.subtitle')}</p>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="min-w-[100px]"
-        >
-          {saving ? (
-            <>Saving...</>
-          ) : saved ? (
-            <><CheckCircle className="w-4 h-4 mr-2" /> Saved</>
-          ) : (
-            <><Save className="w-4 h-4 mr-2" /> Save</>
-          )}
-        </Button>
+        <CodexSaveButton saving={saving} saved={saved} onClick={handleSave} />
       </div>
 
       <Card>
         <Textarea
-          label="Emotional Palette"
-          placeholder="What emotions do you want to evoke? Dark, hopeful, gritty, whimsical?"
+          label={t('codex.tone.emotional.label')}
+          placeholder={t('codex.tone.emotional.placeholder')}
           value={codex.tone_and_aesthetic.emotional_palette || ''}
           onChange={(e) => updateToneAesthetic('emotional_palette', e.target.value)}
           rows={5}
         />
 
         <Textarea
-          label="Inspirations"
-          placeholder="What media, books, movies, or games inspire this campaign?"
+          label={t('codex.tone.inspirations.label')}
+          placeholder={t('codex.tone.inspirations.placeholder')}
           value={codex.tone_and_aesthetic.inspirations || ''}
           onChange={(e) => updateToneAesthetic('inspirations', e.target.value)}
           rows={5}
         />
 
         <Textarea
-          label="Pacing"
-          placeholder="How do you want the campaign to feel? Fast-paced action, slow-burn mystery, sandbox exploration?"
+          label={t('codex.tone.pacing.label')}
+          placeholder={t('codex.tone.pacing.placeholder')}
           value={codex.tone_and_aesthetic.pacing || ''}
           onChange={(e) => updateToneAesthetic('pacing', e.target.value)}
           rows={5}
         />
 
         <Textarea
-          label="Hard Limits / Do Not Include"
-          placeholder="Content to avoid or boundaries for the table (e.g., no graphic violence, no romance, etc.)"
+          label={t('codex.tone.limits.label')}
+          placeholder={t('codex.tone.limits.placeholder')}
           value={codex.tone_and_aesthetic.hard_limits || ''}
           onChange={(e) => updateToneAesthetic('hard_limits', e.target.value)}
           rows={5}

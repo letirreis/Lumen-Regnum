@@ -1,10 +1,13 @@
 import React from 'react';
 import { Card, Button, Textarea } from '../../components/ui';
-import { Save, CheckCircle, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { useCodexSection } from './useCodexSection';
+import { CodexLoading, CodexMissing, CodexSaveButton } from './CodexParts';
+import { useI18n } from '../../i18n';
 
 export const HomeRules: React.FC = () => {
   const { codex, setCodex, saving, saved, loading, error, handleSave, handleCreateCodex } = useCodexSection();
+  const { t, opt } = useI18n();
 
   const updateHomeRules = (value: string) => {
     if (!codex) return;
@@ -14,70 +17,31 @@ export const HomeRules: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gold animate-pulse">Loading...</div>
-      </div>
-    );
-  }
+  if (loading) return <CodexLoading />;
 
-  if (!codex) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-zinc-500 mb-4">No codex data found for this campaign.</p>
-        {error && (
-          <div className="mb-4 p-4 bg-red-950/30 border border-red-900/50 rounded text-red-400 text-sm max-w-md mx-auto">
-            {error}
-          </div>
-        )}
-        <Button onClick={handleCreateCodex}>
-          Create Codex
-        </Button>
-      </div>
-    );
-  }
+  if (!codex) return <CodexMissing error={error} onCreate={handleCreateCodex} />;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">Home Rules</h1>
-          <p className="text-zinc-400 text-sm">Document your custom rules and system modifications</p>
+          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">{t('codex.homeRules.title')}</h1>
+          <p className="text-zinc-400 text-sm">{t('codex.homeRules.subtitle')}</p>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="min-w-[100px]"
-        >
-          {saving ? (
-            <>Saving...</>
-          ) : saved ? (
-            <><CheckCircle className="w-4 h-4 mr-2" /> Saved</>
-          ) : (
-            <><Save className="w-4 h-4 mr-2" /> Save</>
-          )}
-        </Button>
+        <CodexSaveButton saving={saving} saved={saved} onClick={handleSave} />
       </div>
 
       <Card>
         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-violet/20">
           <BookOpen className="w-5 h-5 text-violet-light" />
           <span className="text-sm text-violet-light font-cinzel font-semibold">
-            Custom Rules & Modifications
+            {t('codex.homeRules.banner')}
           </span>
         </div>
         
         <Textarea
-          label="House Rules"
-          placeholder="List your custom rules, modifications to the system, or clarifications...
-
-Examples:
-• Critical hits deal maximum damage + roll
-• Flanking grants advantage
-• Resurrection requires a ritual and rare components
-• Inspiration can be used after rolling
-• Modified resting rules: Short rest = 1 hour, Long rest = 8 hours in safe location"
+          label={t('codex.homeRules.label')}
+          placeholder={t('codex.homeRules.placeholder')}
           value={codex.home_rules || ''}
           onChange={(e) => updateHomeRules(e.target.value)}
           rows={20}

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { generateId } from '../../services/store';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal } from '../../components/ui';
-import { Save, CheckCircle, Plus, Trash2, Edit2, Clock } from 'lucide-react';
+import { Plus, Trash2, Edit2, Clock } from 'lucide-react';
 import { useCodexSection } from './useCodexSection';
+import { CodexLoading, CodexMissing, CodexSaveButton } from './CodexParts';
+import { useI18n } from '../../i18n';
 
 export const WorldTimeline: React.FC = () => {
   const { codex, saving, saved, loading, error, handleSave, handleCreateCodex, persist } = useCodexSection();
+  const { t } = useI18n();
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
@@ -57,54 +60,22 @@ export const WorldTimeline: React.FC = () => {
     setDeleteEventId(null);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gold animate-pulse">Loading...</div>
-      </div>
-    );
-  }
+  if (loading) return <CodexLoading />;
 
-  if (!codex) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-zinc-500 mb-4">No codex data found for this campaign.</p>
-        {error && (
-          <div className="mb-4 p-4 bg-red-950/30 border border-red-900/50 rounded text-red-400 text-sm max-w-md mx-auto">
-            {error}
-          </div>
-        )}
-        <Button onClick={handleCreateCodex}>
-          Create Codex
-        </Button>
-      </div>
-    );
-  }
+  if (!codex) return <CodexMissing error={error} onCreate={handleCreateCodex} />;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">World Timeline</h1>
-          <p className="text-zinc-400 text-sm">Chronicle major events throughout your world's history</p>
+          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">{t('codex.timeline.title')}</h1>
+          <p className="text-zinc-400 text-sm">{t('codex.timeline.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={openNewEvent} variant="secondary">
-            <Plus className="w-4 h-4 mr-2" /> Add Event
+            <Plus className="w-4 h-4 mr-2" /> {t('codex.timeline.add')}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="min-w-[100px]"
-          >
-            {saving ? (
-              <>Saving...</>
-            ) : saved ? (
-              <><CheckCircle className="w-4 h-4 mr-2" /> Saved</>
-            ) : (
-              <><Save className="w-4 h-4 mr-2" /> Save</>
-            )}
-          </Button>
+          <CodexSaveButton saving={saving} saved={saved} onClick={handleSave} />
         </div>
       </div>
 
@@ -112,7 +83,7 @@ export const WorldTimeline: React.FC = () => {
         {codex.world_timeline.length === 0 ? (
           <Card>
             <div className="text-center text-zinc-500 py-12">
-              No timeline events yet. Click "Add Event" to create your first historical event.
+              {t('codex.timeline.empty')}
             </div>
           </Card>
         ) : (
@@ -149,7 +120,7 @@ export const WorldTimeline: React.FC = () => {
                   {event.impact && (
                     <div className="mt-2 pt-2 border-t border-gold/10">
                       <p className="text-xs text-zinc-500">
-                        <span className="text-gold">Impact:</span> {event.impact}
+                        <span className="text-gold">{t('codex.timeline.impact')}:</span> {event.impact}
                       </p>
                     </div>
                   )}
@@ -167,42 +138,42 @@ export const WorldTimeline: React.FC = () => {
           setModalOpen(false);
           setEditingEvent(null);
         }}
-        title={editingEvent?.event_name ? 'Edit Event' : 'New Timeline Event'}
+        title={editingEvent?.event_name ? t('codex.timeline.editTitle') : t('codex.timeline.newTitle')}
       >
         {editingEvent && (
           <>
             <Input
-              label="Event Name"
+              label={t('codex.timeline.name')}
               value={editingEvent.event_name}
               onChange={(e) => setEditingEvent({ ...editingEvent, event_name: e.target.value })}
-              placeholder="e.g., The Great Cataclysm"
+              placeholder={t('codex.timeline.namePlaceholder')}
               autoFocus
             />
             <Input
-              label="Era / Date"
+              label={t('codex.timeline.era')}
               value={editingEvent.era_date}
               onChange={(e) => setEditingEvent({ ...editingEvent, era_date: e.target.value })}
-              placeholder="e.g., Year 1452, The Age of Dragons"
+              placeholder={t('codex.timeline.eraPlaceholder')}
             />
             <Textarea
-              label="Description"
+              label={t('common.description')}
               value={editingEvent.description}
               onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })}
-              placeholder="What happened during this event?"
+              placeholder={t('codex.timeline.descriptionPlaceholder')}
               rows={5}
             />
             <Textarea
-              label="Impact on Campaign"
+              label={t('codex.timeline.impactLabel')}
               value={editingEvent.impact}
               onChange={(e) => setEditingEvent({ ...editingEvent, impact: e.target.value })}
-              placeholder="How does this event affect the current campaign?"
+              placeholder={t('codex.timeline.impactPlaceholder')}
               rows={3}
             />
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={isSaving}>
-                Cancel
+                {t('common.cancel')}
               </Button>
-              <Button onClick={saveEvent} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Event'}</Button>
+              <Button onClick={saveEvent} disabled={isSaving}>{isSaving ? t('common.saving') : t('codex.timeline.save')}</Button>
             </div>
           </>
         )}
@@ -213,8 +184,8 @@ export const WorldTimeline: React.FC = () => {
         isOpen={!!deleteEventId}
         onClose={() => !isSaving && setDeleteEventId(null)}
         onConfirm={confirmDeleteEvent}
-        title="Delete Event"
-        message={isSaving ? "Deleting..." : "Are you sure you want to delete this timeline event? This action cannot be undone."}
+        title={t('codex.timeline.deleteTitle')}
+        message={isSaving ? t('common.deleting') : t('codex.timeline.deleteMessage')}
       />
     </div>
   );

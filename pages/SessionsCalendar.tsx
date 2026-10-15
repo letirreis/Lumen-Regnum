@@ -6,11 +6,13 @@ import { Session } from '../types';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal, Badge } from '../components/ui';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Trash2 } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { useI18n } from '../i18n';
 
 export const SessionsCalendar: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t, weekdays, monthYear } = useI18n();
   const [sessions, setSessions] = useState<Session[]>([]);
   
   // Calendar State
@@ -82,7 +84,7 @@ export const SessionsCalendar: React.FC = () => {
           : await db.sessions.add({ ...payload, id: generateId() });
 
       if (result.error) {
-          showToast(`Failed to save session: ${result.error.message}`, 'error');
+          showToast(t('calendar.saveError', { detail: result.error.message }), 'error');
           return;
       }
       setModalOpen(false);
@@ -93,7 +95,7 @@ export const SessionsCalendar: React.FC = () => {
       if (deleteSessionId) {
           const { error } = await db.sessions.delete(deleteSessionId);
           if (error) {
-              showToast(`Failed to delete session: ${error.message}`, 'error');
+              showToast(t('calendar.deleteError', { detail: error.message }), 'error');
               setDeleteSessionId(null);
               return;
           }
@@ -133,7 +135,7 @@ export const SessionsCalendar: React.FC = () => {
                     {daysSessions.length === 0 && (
                         <button
                             className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-zinc-500 hover:text-white transition-opacity"
-                            aria-label={`Schedule session on ${dateStr}`}
+                            aria-label={t('calendar.scheduleOn', { date: dateStr })}
                             onClick={() => openNewSession(day)}
                         >
                             <CalendarIcon className="w-4 h-4" />
@@ -147,10 +149,10 @@ export const SessionsCalendar: React.FC = () => {
                             type="button"
                             key={session.id}
                             onClick={() => openEditSession(session)}
-                            aria-label={`Edit session on ${dateStr}: ${session.summary || 'No Summary'}`}
+                            aria-label={t('calendar.editOn', { date: dateStr, summary: session.summary || t('calendar.noSummary') })}
                             className="block w-full text-left text-xs p-1.5 rounded bg-zinc-800 border border-zinc-700 hover:border-indigo-500 hover:bg-zinc-700 focus:border-indigo-500 cursor-pointer transition-all"
                         >
-                            <div className="font-semibold text-zinc-200 truncate">{session.summary || "No Summary"}</div>
+                            <div className="font-semibold text-zinc-200 truncate">{session.summary || t('calendar.noSummary')}</div>
                             {session.notes && <div className="text-[10px] text-zinc-400 truncate mt-0.5">{session.notes}</div>}
                         </button>
                     ))}
@@ -166,9 +168,9 @@ export const SessionsCalendar: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-white flex items-center gap-3">
             <CalendarIcon className="w-8 h-8 text-indigo-500" />
-            Sessions Calendar
+            {t('calendar.title')}
         </h2>
-        <Button onClick={() => openNewSession()}><CalendarIcon className="w-4 h-4 mr-2"/> Schedule Session</Button>
+        <Button onClick={() => openNewSession()}><CalendarIcon className="w-4 h-4 mr-2"/> {t('calendar.schedule')}</Button>
       </div>
 
       <Card className="p-0 overflow-hidden border-zinc-800">
@@ -176,20 +178,14 @@ export const SessionsCalendar: React.FC = () => {
           <div className="flex justify-between items-center p-4 bg-zinc-900 border-b border-zinc-800">
               <button onClick={handlePrevMonth} className="p-2 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-white"><ChevronLeft className="w-5 h-5"/></button>
               <h3 className="text-xl font-bold text-zinc-100">
-                  {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                  {monthYear(currentDate)}
               </h3>
               <button onClick={handleNextMonth} className="p-2 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-white"><ChevronRight className="w-5 h-5"/></button>
           </div>
           
           {/* Days Header */}
           <div className="grid grid-cols-7 bg-zinc-925 text-zinc-500 text-xs uppercase font-bold text-center py-2 border-b border-zinc-800">
-              <div>Sun</div>
-              <div>Mon</div>
-              <div>Tue</div>
-              <div>Wed</div>
-              <div>Thu</div>
-              <div>Fri</div>
-              <div>Sat</div>
+              {weekdays.map((d, i) => <div key={i}>{d}</div>)}
           </div>
 
           {/* Grid */}
@@ -199,34 +195,34 @@ export const SessionsCalendar: React.FC = () => {
       </Card>
 
       {/* Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={editingSession.id ? "Edit Session" : "Schedule Session"}>
+      <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={editingSession.id ? t('calendar.editTitle') : t('calendar.schedule')}>
           <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <Input 
                     type="date" 
-                    label="Date" 
+                    label={t('calendar.date')} 
                     value={editingSession.date || ''} 
                     onChange={e => setEditingSession({...editingSession, date: e.target.value})}
                 />
                  {editingSession.id && (
                      <div className="flex items-end justify-end pb-2">
                         <button onClick={() => setDeleteSessionId(editingSession.id as string)} className="text-red-400 hover:text-red-300 text-sm flex items-center gap-1">
-                            <Trash2 className="w-4 h-4"/> Delete Session
+                            <Trash2 className="w-4 h-4"/> {t('calendar.deleteSession')}
                         </button>
                      </div>
                  )}
             </div>
 
             <Textarea 
-                label="Summary" 
-                placeholder="Brief summary of what happened..." 
+                label={t('calendar.summary')}
+                placeholder={t('calendar.summaryPlaceholder')}
                 value={editingSession.summary || ''} 
                 onChange={e => setEditingSession({...editingSession, summary: e.target.value})}
             />
 
             <Textarea 
-                label="DM Notes & Comments" 
-                placeholder="Private notes, observations, or things to remember..." 
+                label={t('calendar.notes')}
+                placeholder={t('calendar.notesPlaceholder')}
                 className="font-mono text-zinc-300 bg-zinc-950/50"
                 value={editingSession.notes || ''} 
                 onChange={e => setEditingSession({...editingSession, notes: e.target.value})}
@@ -234,22 +230,22 @@ export const SessionsCalendar: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Textarea 
-                    label="Key Decisions" 
-                    placeholder="Important choices the party made..." 
+                    label={t('calendar.decisions')}
+                    placeholder={t('calendar.decisionsPlaceholder')}
                     value={editingSession.decisions || ''} 
                     onChange={e => setEditingSession({...editingSession, decisions: e.target.value})}
                 />
                 <Textarea 
-                    label="Next Session Hooks" 
-                    placeholder="What immediate threads need to be picked up?" 
+                    label={t('calendar.nextHooks')}
+                    placeholder={t('calendar.nextHooksPlaceholder')}
                     value={editingSession.next_hooks || ''} 
                     onChange={e => setEditingSession({...editingSession, next_hooks: e.target.value})}
                 />
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-zinc-800">
-                <Button variant="ghost" onClick={() => setModalOpen(false)}>Cancel</Button>
-                <Button onClick={saveSession}>Save Session</Button>
+                <Button variant="ghost" onClick={() => setModalOpen(false)}>{t('common.cancel')}</Button>
+                <Button onClick={saveSession}>{t('calendar.saveSession')}</Button>
             </div>
           </div>
       </Modal>
@@ -258,8 +254,8 @@ export const SessionsCalendar: React.FC = () => {
         isOpen={!!deleteSessionId}
         onClose={() => setDeleteSessionId(null)}
         onConfirm={confirmDelete}
-        title="Delete Session"
-        message="Are you sure? This will permanently delete this session record."
+        title={t('calendar.deleteTitle')}
+        message={t('calendar.deleteMessage')}
       />
     </div>
   );

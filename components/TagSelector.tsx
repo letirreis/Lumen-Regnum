@@ -3,6 +3,7 @@ import { Tag, UUID } from '../types';
 import { X, Plus } from 'lucide-react';
 import { db, generateId } from '../services/store';
 import { useToast } from './Toast';
+import { useI18n } from '../i18n';
 
 interface TagSelectorProps {
   campaignId: UUID;
@@ -25,6 +26,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
   onTagsReload,
 }) => {
   const { showToast } = useToast();
+  const { t, opt } = useI18n();
   const [isCreating, setIsCreating] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#6366f1'); // Default indigo
@@ -64,7 +66,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
     
     if (result.error) {
       console.error('Error creating tag:', result.error);
-      showToast('Erro ao criar tag. Verifique se a tabela dmos_tags existe no banco de dados.', 'error');
+      showToast(t('tags.createError'), 'error');
       return;
     }
     
@@ -87,15 +89,15 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
     <div className="space-y-3">
       {/* Filter by Type */}
       <div className="flex gap-2 items-center">
-        <label className="text-xs text-zinc-400">Filtrar por tipo:</label>
+        <label className="text-xs text-zinc-400">{t('tags.filterByType')}</label>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
           className="flex-1 h-8 rounded border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
         >
-          <option value="">Todos os tipos</option>
+          <option value="">{t('tags.allTypes')}</option>
           {tagTypes.map(type => (
-            <option key={type} value={type}>{type}</option>
+            <option key={type} value={type}>{opt('tag_kind', type)}</option>
           ))}
         </select>
       </div>
@@ -103,7 +105,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
       {/* Selected Tags */}
       {selectedTags.length > 0 && (
         <div>
-          <label className="block text-xs text-zinc-400 mb-1">Tags Selecionadas:</label>
+          <label className="block text-xs text-zinc-400 mb-1">{t('tags.selected')}</label>
           <div className="flex flex-wrap gap-2">
             {selectedTags.map(tag => (
               <div
@@ -117,7 +119,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
               >
                 <span className="font-medium">{tag.name}</span>
                 {tag.tag_type && (
-                  <span className="text-[9px] opacity-70">({tag.tag_type})</span>
+                  <span className="text-[9px] opacity-70">({opt('tag_kind', tag.tag_type)})</span>
                 )}
                 <button
                   type="button"
@@ -135,7 +137,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
       {/* Available Tags to Select */}
       {availableTags.length > 0 && (
         <div>
-          <label className="block text-xs text-zinc-400 mb-1">Clique para adicionar:</label>
+          <label className="block text-xs text-zinc-400 mb-1">{t('tags.clickToAdd')}</label>
           <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-zinc-950/50 border border-zinc-800 rounded">
             {availableTags.map(tag => (
               <button
@@ -151,7 +153,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
               >
                 <span className="font-medium">{tag.name}</span>
                 {tag.tag_type && (
-                  <span className="text-[9px] opacity-70">({tag.tag_type})</span>
+                  <span className="text-[9px] opacity-70">({opt('tag_kind', tag.tag_type)})</span>
                 )}
               </button>
             ))}
@@ -167,14 +169,14 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
           className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 border-dashed rounded text-sm text-zinc-400 hover:text-indigo-400 hover:border-indigo-600 focus:outline-none transition-colors flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Criar nova tag
+          {t('tags.createNew')}
         </button>
       ) : (
         <div className="p-3 bg-zinc-950 border border-indigo-900/30 rounded space-y-2">
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Nome da tag"
+              placeholder={t('tags.namePlaceholder')}
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
               className="flex-1 h-8 rounded border border-zinc-700 bg-zinc-900 px-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
@@ -184,19 +186,19 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
               value={newTagColor}
               onChange={(e) => setNewTagColor(e.target.value)}
               className="w-12 h-8 rounded border border-zinc-700 bg-zinc-900 cursor-pointer"
-              title="Cor da tag"
+              title={t('tags.color')}
             />
           </div>
           <div className="flex gap-2 items-center">
-            <label className="text-xs text-zinc-400">Tipo:</label>
+            <label className="text-xs text-zinc-400">{t('tags.type')}</label>
             <select
               value={newTagType}
               onChange={(e) => setNewTagType(e.target.value)}
               className="flex-1 h-8 rounded border border-zinc-700 bg-zinc-900 px-2 text-xs text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
             >
-              <option value="type">type</option>
-              <option value="status">status</option>
-              <option value="custom">custom</option>
+              <option value="type">{opt('tag_kind', 'type')}</option>
+              <option value="status">{opt('tag_kind', 'status')}</option>
+              <option value="custom">{opt('tag_kind', 'custom')}</option>
             </select>
           </div>
           <div className="flex gap-2">
@@ -205,7 +207,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
               onClick={handleCreateTag}
               className="flex-1 px-3 py-1.5 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 transition-colors"
             >
-              Criar Tag
+              {t('tags.create')}
             </button>
             <button
               type="button"
@@ -217,7 +219,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
               }}
               className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-xs hover:bg-zinc-700 transition-colors"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -225,7 +227,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
 
       {tags.length === 0 && (
         <p className="text-xs text-zinc-500 italic">
-          Nenhuma tag disponível. Use "Criar nova tag" para começar.
+          {t('tags.empty')}
         </p>
       )}
     </div>
