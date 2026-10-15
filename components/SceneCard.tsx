@@ -11,11 +11,12 @@ interface SceneCardProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   plots?: { id: string; name: string }[]; // tramas do Códex disponíveis para ligar
+  worldSecrets?: { id: string; title: string; status: string }[]; // segredos do Códex disponíveis para ligar
 }
 
 const SCENE_TYPES = ['Social', 'Combat', 'Exploration', 'Investigation', 'Flashback', 'Downtime', 'Travel', 'Other'] as const;
 
-export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete, isExpanded, onToggleExpand, plots = [] }) => {
+export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete, isExpanded, onToggleExpand, plots = [], worldSecrets = [] }) => {
   const { t, opt } = useI18n();
   const [localScene, setLocalScene] = useState(scene);
 
@@ -218,6 +219,36 @@ export const SceneCard: React.FC<SceneCardProps> = ({ scene, onUpdate, onDelete,
                       className={`px-2 py-1 rounded text-xs border transition-colors ${active ? 'bg-violet/20 border-violet/60 text-violet-light' : 'border-zinc-700 text-zinc-400 hover:border-gold/40 hover:text-gold'}`}
                     >
                       {plot.name || t('scene.plotUnnamed')}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Segredos do Códex que esta cena pode revelar */}
+          <div>
+            <label className="block text-[10px] font-cinzel text-gold mb-2 tracking-[0.25em] uppercase font-bold">
+              {t('scene.secretsLinked')}
+            </label>
+            {worldSecrets.length === 0 ? (
+              <p className="text-xs text-zinc-500 italic">{t('scene.secretsEmpty')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {worldSecrets.map(secret => {
+                  const active = (localScene.secret_ids ?? []).includes(secret.id);
+                  return (
+                    <button
+                      key={secret.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => {
+                        const current = localScene.secret_ids ?? [];
+                        handleChange('secret_ids', active ? current.filter(id => id !== secret.id) : [...current, secret.id]);
+                      }}
+                      className={`px-2 py-1 rounded text-xs border transition-colors ${active ? 'bg-red-950/40 border-red-800 text-red-300' : 'border-zinc-700 text-zinc-400 hover:border-gold/40 hover:text-gold'}`}
+                    >
+                      {secret.title || t('scene.secretUnnamed')} <span className="opacity-60">· {opt('secret_status', secret.status)}</span>
                     </button>
                   );
                 })}
