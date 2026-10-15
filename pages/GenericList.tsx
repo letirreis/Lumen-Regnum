@@ -11,9 +11,11 @@ import { MultiMemberSelect } from '../components/MultiMemberSelect';
 import { DND_RACES } from '../App';
 import { useToast } from '../components/Toast';
 import { useI18n, TKey } from '../i18n';
+import { useShowRules } from '../services/preferences';
 
 interface SchemaField {
   key: string;
+  rules?: boolean; // campo que depende do sistema de regras (ex.: D&D); oculto por padrão
   type: 'text' | 'textarea' | 'number' | 'select' | 'stats' | 'faction-multi-select' | 'tags-select' | 'member-multi-select';
   options?: string[]; // For select
   conditionalOn?: { key: string; value: string }; // For conditional fields
@@ -24,7 +26,10 @@ interface GenericListProps {
   fields: SchemaField[];
 }
 
-export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) => {
+export const GenericList: React.FC<GenericListProps> = ({ entityType, fields: allFields }) => {
+  const [showRules, setShowRules] = useShowRules();
+  const hasRules = allFields.some(f => f.rules);
+  const fields = showRules ? allFields : allFields.filter(f => !f.rules);
   const { t, opt: optL } = useI18n();
   const title = t(`entity.${entityType}.plural` as TKey);
   const fieldLabel = (key: string) => t(`field.${entityType}.${key}` as TKey);
@@ -412,7 +417,15 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
           {/* Header & Main Actions */}
           <div className="flex justify-between items-center">
              <h2 className="text-3xl font-bold text-white">{title}</h2>
-             <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> {t('list.new')}</Button>
+             <div className="flex items-center gap-4">
+               {hasRules && (
+                 <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer select-none" title={t('list.rulesHint')}>
+                   <input type="checkbox" checked={showRules} onChange={e => setShowRules(e.target.checked)} className="accent-indigo-500" />
+                   {t('list.showRules')}
+                 </label>
+               )}
+               <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> {t('list.new')}</Button>
+             </div>
           </div>
 
           {/* Filter Bar */}
@@ -581,7 +594,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                      <div>
                         <h3 className="text-lg font-bold text-zinc-100 leading-tight">{item.name || item.date}</h3>
                         {item.title && <div className="text-xs text-zinc-400 italic">{item.title}</div>}
-                        {entityType === 'monster' && <div className="text-xs text-zinc-400 italic">{optL('size', item.size)} {optL('monster_type', item.monster_type)} {item.cr && t('list.crShort', { cr: item.cr })}</div>}
+                        {entityType === 'monster' && <div className="text-xs text-zinc-400 italic">{showRules && optL('size', item.size)} {optL('monster_type', item.monster_type)} {showRules && item.cr && t('list.crShort', { cr: item.cr })}</div>}
                      </div>
                 </div>
 
@@ -590,12 +603,12 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                     {renderTags(item.tags)}
 
                     {/* Race and Class Badges (for NPCs and Characters) */}
-                    {(entityType === 'npc' || entityType === 'character') && item.race && (
+                    {showRules && (entityType === 'npc' || entityType === 'character') && item.race && (
                         <span className="text-[10px] uppercase font-bold bg-yellow-900/10 text-yellow-600 border border-yellow-900/30 px-1.5 py-0.5 rounded tracking-wider">
                             🎭 {optL('race', item.race)}
                         </span>
                     )}
-                    {(entityType === 'npc' || entityType === 'character') && item.class && (
+                    {showRules && (entityType === 'npc' || entityType === 'character') && item.class && (
                         <span className="text-[10px] uppercase font-bold bg-indigo-900/20 text-indigo-300 border border-indigo-800/50 px-1.5 py-0.5 rounded tracking-wider">
                             ⚔️ {optL('class', item.class)}
                         </span>
@@ -659,7 +672,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                     {entityType !== 'location' && entityType !== 'item' && item.importance && item.importance !== 'Unknown' && <span className="text-[10px] uppercase font-bold bg-indigo-900/30 text-indigo-300 border border-indigo-900 px-1.5 py-0.5 rounded">{optL('importance', item.importance)}</span>}
                 </div>
 
-                {item.race && item.class && <span className="text-xs text-indigo-400 mb-2 block">{t('list.levelLine', { level: item.level ?? '?', race: optL('race', item.race), cls: optL('class', item.class) })}</span>}
+                {showRules && item.race && item.class && <span className="text-xs text-indigo-400 mb-2 block">{t('list.levelLine', { level: item.level ?? '?', race: optL('race', item.race), cls: optL('class', item.class) })}</span>}
                 
                 {/* Location Specific Content Display */}
                 {entityType === 'location' ? (
@@ -746,7 +759,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                 )}
                 
                 {/* Stats Preview */}
-                {item.attributes && (
+                {showRules && item.attributes && (
                     <div className="mt-3 grid grid-cols-6 gap-1 text-center">
                         {['str', 'dex', 'con', 'int', 'wis', 'cha'].map((k) => (
                             <div key={k} className="bg-zinc-950/50 rounded p-1 border border-zinc-800">
@@ -757,7 +770,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                     </div>
                 )}
                 
-                {(entityType === 'character' || entityType === 'monster') && !item.attributes && (
+                {showRules && (entityType === 'character' || entityType === 'monster') && !item.attributes && (
                     <div className="mt-3 flex gap-2 text-xs font-mono text-zinc-500">
                         <span title={t('list.acTitle')}>{t('list.acShort')}:{item.ac}</span>
                         <span title={t('list.hpTitle')}>{t('list.hpShort')}:{item.max_hp}</span>
