@@ -1,10 +1,12 @@
 import React from 'react';
 import { Card, Button, Textarea } from '../../components/ui';
-import { Save, CheckCircle } from 'lucide-react';
 import { useCodexSection } from './useCodexSection';
+import { CodexLoading, CodexMissing, CodexSaveButton } from './CodexParts';
+import { useI18n } from '../../i18n';
 
 export const PoliticsFactions: React.FC = () => {
   const { codex, setCodex, saving, saved, loading, error, handleSave, handleCreateCodex } = useCodexSection();
+  const { t, opt } = useI18n();
 
   const updatePoliticsFactions = (field: string, value: string) => {
     if (!codex) return;
@@ -17,72 +19,40 @@ export const PoliticsFactions: React.FC = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gold animate-pulse">Loading...</div>
-      </div>
-    );
-  }
+  if (loading) return <CodexLoading />;
 
-  if (!codex) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-zinc-500 mb-4">No codex data found for this campaign.</p>
-        {error && (
-          <div className="mb-4 p-4 bg-red-950/30 border border-red-900/50 rounded text-red-400 text-sm max-w-md mx-auto">
-            {error}
-          </div>
-        )}
-        <Button onClick={handleCreateCodex}>
-          Create Codex
-        </Button>
-      </div>
-    );
-  }
+  if (!codex) return <CodexMissing error={error} onCreate={handleCreateCodex} />;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">Politics & Factions</h1>
-          <p className="text-zinc-400 text-sm">Map the political landscape and power dynamics</p>
+          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">{t('codex.politics.title')}</h1>
+          <p className="text-zinc-400 text-sm">{t('codex.politics.subtitle')}</p>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="min-w-[100px]"
-        >
-          {saving ? (
-            <>Saving...</>
-          ) : saved ? (
-            <><CheckCircle className="w-4 h-4 mr-2" /> Saved</>
-          ) : (
-            <><Save className="w-4 h-4 mr-2" /> Save</>
-          )}
-        </Button>
+        <CodexSaveButton saving={saving} saved={saved} onClick={handleSave} />
       </div>
 
       <Card>
         <Textarea
-          label="Political Landscape"
-          placeholder="Describe the political structure of your world. Kingdoms, republics, empires?"
+          label={t('codex.politics.landscape.label')}
+          placeholder={t('codex.politics.landscape.placeholder')}
           value={codex.politics_and_factions.political_landscape || ''}
           onChange={(e) => updatePoliticsFactions('political_landscape', e.target.value)}
           rows={6}
         />
 
         <Textarea
-          label="Major Powers"
-          placeholder="Who are the major powers? Rulers, organizations, and influential figures..."
+          label={t('codex.politics.powers.label')}
+          placeholder={t('codex.politics.powers.placeholder')}
           value={codex.politics_and_factions.major_powers || ''}
           onChange={(e) => updatePoliticsFactions('major_powers', e.target.value)}
           rows={6}
         />
 
         <Textarea
-          label="Current Tensions & Conflicts"
-          placeholder="What conflicts exist between factions? Wars, rivalries, or political intrigue..."
+          label={t('codex.politics.tensions.label')}
+          placeholder={t('codex.politics.tensions.placeholder')}
           value={codex.politics_and_factions.tensions_conflicts || ''}
           onChange={(e) => updatePoliticsFactions('tensions_conflicts', e.target.value)}
           rows={6}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Faction, UUID } from '../types';
 import { X } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface MultiFactionSelectProps {
   factions: Faction[]; // All available factions for the campaign
@@ -18,6 +19,7 @@ export const MultiFactionSelect: React.FC<MultiFactionSelectProps> = ({
   selectedIds,
   onChange,
 }) => {
+  const { t } = useI18n();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const selectedFactions = factions.filter(f => selectedIds.includes(f.id));
@@ -46,7 +48,7 @@ export const MultiFactionSelect: React.FC<MultiFactionSelectProps> = ({
               <button
                 type="button"
                 onClick={() => handleRemove(faction.id)}
-                aria-label={`Remove ${faction.name}`}
+                aria-label={t('common.removeItem', { name: faction.name })}
                 className="hover:bg-indigo-800/50 rounded p-0.5 transition-colors"
               >
                 <X className="w-3 h-3" />
@@ -64,7 +66,7 @@ export const MultiFactionSelect: React.FC<MultiFactionSelectProps> = ({
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="w-full text-left px-3 py-2 bg-zinc-950 border border-zinc-700 rounded text-sm text-zinc-100 hover:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600"
           >
-            {selectedFactions.length === 0 ? 'Selecionar Facções...' : 'Adicionar mais facções...'}
+            {selectedFactions.length === 0 ? t('factionSelect.select') : t('factionSelect.addMore')}
           </button>
 
           {isDropdownOpen && (
@@ -86,7 +88,7 @@ export const MultiFactionSelect: React.FC<MultiFactionSelectProps> = ({
 
       {selectedFactions.length === 0 && availableFactions.length === 0 && (
         <p className="text-xs text-zinc-500 italic">
-          Nenhuma facção disponível. Crie facções na aba "Families & Factions" primeiro.
+          {t('factionSelect.empty')}
         </p>
       )}
     </div>

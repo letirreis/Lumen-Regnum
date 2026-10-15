@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { signIn, signUp, resetPassword } from '../services/supabase';
 import { Button, Input, Card } from '../components/ui';
 import { Shield, Scroll, Crown, AlertCircle } from 'lucide-react';
+import { useI18n } from '../i18n';
+import { authErrorKey } from '../i18n/authErrors';
 
 interface AuthProps {
     onLoginSuccess: () => void;
 }
 
 export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
+    const { t } = useI18n();
     const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -32,43 +35,44 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
             } else if (mode === 'signup') {
                 // Invite-only: a code is required (the server validates it again)
                 if (!inviteCode.trim()) {
-                    setError("An Invitation Code is required to join. Ask the person who invited you.");
+                    setError(t('auth.inviteRequired'));
                     setLoading(false);
                     return;
                 }
 
                 // Validate password length
                 if (password.length < 8) {
-                    setError("Secret Phrase must be at least 8 characters long.");
+                    setError(t('auth.passwordTooShort'));
                     setLoading(false);
                     return;
                 }
 
                 // Validate password confirmation
                 if (password !== confirmPassword) {
-                    setError("Secret Phrases do not match. Please verify and try again.");
+                    setError(t('auth.passwordMismatch'));
                     setLoading(false);
                     return;
                 }
                 
                 await signUp(cleanEmail, password, inviteCode.trim());
-                setMessage("Account created! Please check your email to confirm, or login if auto-confirmed.");
+                setMessage(t('auth.signupSuccess'));
                 setMode('login'); // Switch to login view
                 setPassword('');
                 setConfirmPassword('');
                 setInviteCode('');
             } else if (mode === 'forgot') {
                 await resetPassword(cleanEmail);
-                setMessage("Password reset instructions have been sent to your email. Check your inbox.");
+                setMessage(t('auth.resetSent'));
                 setMode('login');
             }
         } catch (err: any) {
             const raw: string = err?.message || '';
             // The invite trigger rejects the insert; Supabase Auth reports that as a generic database error.
             if (mode === 'signup' && /database error saving new user/i.test(raw)) {
-                setError("That Invitation Code is invalid, expired or already used.");
+                setError(t('auth.inviteInvalid'));
             } else {
-                setError(raw || "An unexpected error occurred.");
+                const key = authErrorKey(raw);
+                setError(key ? t(key) : (raw || t('common.unexpectedError')));
             }
         } finally {
             setLoading(false);
@@ -83,10 +87,10 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
             <div className="relative z-10 mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
                 <Crown className="w-12 h-12 text-gold mx-auto mb-4 drop-shadow-lg" />
                 <h1 className="text-4xl font-cinzel font-bold text-gold tracking-[0.25em] drop-shadow-md">
-                    LUMEN REGNUM
+                    {t('app.name').toUpperCase()}
                 </h1>
                 <p className="text-[#7E8299] text-xs uppercase tracking-[0.3em] mt-3 font-bold">
-                    Campaign Manager OS
+                    {t('app.tagline')}
                 </p>
             </div>
 
@@ -97,21 +101,21 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                             className={`flex-1 pb-2 text-sm font-cinzel font-bold tracking-wide transition-colors ${mode === 'login' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-zinc-400'}`}
                             onClick={() => { setMode('login'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); setInviteCode(''); }}
                         >
-                            Access Archives
+                            {t('auth.tabLogin')}
                         </button>
                         <button 
                             className={`flex-1 pb-2 text-sm font-cinzel font-bold tracking-wide transition-colors ${mode === 'signup' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-zinc-400'}`}
                             onClick={() => { setMode('signup'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); setInviteCode(''); }}
                         >
-                            Induct New Master
+                            {t('auth.tabSignup')}
                         </button>
                     </div>
                 )}
                 
                 {mode === 'forgot' && (
                     <div className="mb-6 pb-4 border-b border-gold/10">
-                        <h2 className="text-xl font-cinzel font-bold text-gold text-center tracking-wide">Recover Access</h2>
-                        <p className="text-xs text-zinc-400 text-center mt-2">Enter your email to receive reset instructions</p>
+                        <h2 className="text-xl font-cinzel font-bold text-gold text-center tracking-wide">{t('auth.recoverTitle')}</h2>
+                        <p className="text-xs text-zinc-400 text-center mt-2">{t('auth.recoverSubtitle')}</p>
                     </div>
                 )}
 
@@ -131,7 +135,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Input 
-                        label="Email Identity" 
+                        label={t('auth.email')} 
                         type="email" 
                         required 
                         value={email} 
@@ -142,7 +146,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     
                     {mode !== 'forgot' && (
                         <Input 
-                            label="Secret Phrase" 
+                            label={t('auth.password')} 
                             type="password" 
                             required 
                             value={password} 
@@ -154,7 +158,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     
                     {mode === 'signup' && (
                         <Input
-                            label="Confirm Secret Phrase"
+                            label={t('auth.confirmPassword')}
                             type="password"
                             required
                             value={confirmPassword}
@@ -166,7 +170,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
 
                     {mode === 'signup' && (
                         <Input
-                            label="Invitation Code"
+                            label={t('auth.inviteCode')}
                             type="text"
                             required
                             value={inviteCode}
@@ -184,10 +188,10 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                         className="w-full mt-2" 
                         disabled={loading}
                     >
-                        {loading ? 'Processing...' : (
-                            mode === 'login' ? 'Enter the Realm' : 
-                            mode === 'signup' ? 'Forge Identity' : 
-                            'Send Reset Link'
+                        {loading ? t('auth.processing') : (
+                            mode === 'login' ? t('auth.submitLogin') : 
+                            mode === 'signup' ? t('auth.submitSignup') : 
+                            t('auth.submitReset')
                         )}
                     </Button>
                 </form>
@@ -198,7 +202,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                             onClick={() => { setMode('forgot'); setError(null); setMessage(null); }}
                             className="text-xs text-zinc-400 hover:text-gold transition-colors font-cinzel"
                         >
-                            Forgot your Secret Phrase?
+                            {t('auth.forgot')}
                         </button>
                     </div>
                 )}
@@ -209,20 +213,20 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                             onClick={() => { setMode('login'); setError(null); setMessage(null); }}
                             className="text-xs text-zinc-400 hover:text-gold transition-colors font-cinzel"
                         >
-                            ← Back to Login
+                            {t('auth.backToLogin')}
                         </button>
                     </div>
                 )}
 
                 <div className="mt-8 text-center">
                     <p className="text-[10px] text-zinc-500 font-serif italic opacity-70">
-                        "Only those who hold the key may shape the world."
+                        "{t('auth.quote')}"
                     </p>
                 </div>
             </Card>
 
             <div className="relative z-10 mt-8 text-center text-zinc-700 text-xs">
-                 <p>Secure. Private. Offline-Capable.</p>
+                 <p>{t('auth.footer')}</p>
             </div>
         </div>
     );

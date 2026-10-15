@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { generateId } from '../../services/store';
 import { Card, Button, Input, Textarea, Modal, ConfirmModal } from '../../components/ui';
-import { Save, CheckCircle, Plus, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { useCodexSection } from './useCodexSection';
+import { CodexLoading, CodexMissing, CodexSaveButton } from './CodexParts';
+import { useI18n } from '../../i18n';
 
 export const MajorPlots: React.FC = () => {
   const { codex, saving, saved, loading, error, handleSave, handleCreateCodex, persist } = useCodexSection();
+  const { t, opt } = useI18n();
   const [editingPlot, setEditingPlot] = useState<any>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [deletePlotId, setDeletePlotId] = useState<string | null>(null);
@@ -58,29 +61,9 @@ export const MajorPlots: React.FC = () => {
     setDeletePlotId(null);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gold animate-pulse">Loading...</div>
-      </div>
-    );
-  }
+  if (loading) return <CodexLoading />;
 
-  if (!codex) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-zinc-500 mb-4">No codex data found for this campaign.</p>
-        {error && (
-          <div className="mb-4 p-4 bg-red-950/30 border border-red-900/50 rounded text-red-400 text-sm max-w-md mx-auto">
-            {error}
-          </div>
-        )}
-        <Button onClick={handleCreateCodex}>
-          Create Codex
-        </Button>
-      </div>
-    );
-  }
+  if (!codex) return <CodexMissing error={error} onCreate={handleCreateCodex} />;
 
   const statusColors: Record<string, string> = {
     Active: 'bg-green-900/20 text-green-400 border-green-900/40',
@@ -93,26 +76,14 @@ export const MajorPlots: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">Major Plots</h1>
-          <p className="text-zinc-400 text-sm">Manage sub-arcs and storylines in your campaign</p>
+          <h1 className="text-3xl font-cinzel font-bold text-gold mb-2 tracking-wide">{t('codex.majorPlots.title')}</h1>
+          <p className="text-zinc-400 text-sm">{t('codex.majorPlots.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={openNewPlot} variant="secondary">
-            <Plus className="w-4 h-4 mr-2" /> Add Plot
+            <Plus className="w-4 h-4 mr-2" /> {t('codex.majorPlots.add')}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="min-w-[100px]"
-          >
-            {saving ? (
-              <>Saving...</>
-            ) : saved ? (
-              <><CheckCircle className="w-4 h-4 mr-2" /> Saved</>
-            ) : (
-              <><Save className="w-4 h-4 mr-2" /> Save</>
-            )}
-          </Button>
+          <CodexSaveButton saving={saving} saved={saved} onClick={handleSave} />
         </div>
       </div>
 
@@ -120,7 +91,7 @@ export const MajorPlots: React.FC = () => {
         {codex.major_plots.length === 0 ? (
           <Card>
             <div className="text-center text-zinc-500 py-12">
-              No plots yet. Click "Add Plot" to create your first major plot.
+              {t('codex.majorPlots.empty')}
             </div>
           </Card>
         ) : (
@@ -130,7 +101,7 @@ export const MajorPlots: React.FC = () => {
                 <div className="flex-1">
                   <h3 className="text-xl font-cinzel font-bold text-violet-light mb-2">{plot.name}</h3>
                   <span className={`text-xs px-2 py-1 rounded border ${statusColors[plot.status]}`}>
-                    {plot.status}
+                    {opt('plot_status', plot.status)}
                   </span>
                 </div>
                 <div className="flex gap-2">
@@ -151,12 +122,12 @@ export const MajorPlots: React.FC = () => {
               <p className="text-sm text-zinc-300 mb-3">{plot.description}</p>
               {plot.involved_npcs && (
                 <p className="text-xs text-zinc-500 mb-1">
-                  <span className="text-gold">NPCs:</span> {plot.involved_npcs}
+                  <span className="text-gold">{t('codex.majorPlots.npcs')}:</span> {plot.involved_npcs}
                 </p>
               )}
               {plot.involved_factions && (
                 <p className="text-xs text-zinc-500">
-                  <span className="text-gold">Factions:</span> {plot.involved_factions}
+                  <span className="text-gold">{t('codex.majorPlots.factions')}:</span> {plot.involved_factions}
                 </p>
               )}
             </Card>
@@ -171,56 +142,56 @@ export const MajorPlots: React.FC = () => {
           setModalOpen(false);
           setEditingPlot(null);
         }}
-        title={editingPlot?.name ? 'Edit Plot' : 'New Plot'}
+        title={editingPlot?.name ? t('codex.majorPlots.editTitle') : t('codex.majorPlots.newTitle')}
       >
         {editingPlot && (
           <>
             <Input
-              label="Plot Name"
+              label={t('codex.majorPlots.name')}
               value={editingPlot.name}
               onChange={(e) => setEditingPlot({ ...editingPlot, name: e.target.value })}
-              placeholder="e.g., The Shadow Conspiracy"
+              placeholder={t('codex.majorPlots.namePlaceholder')}
               autoFocus
             />
             <Textarea
-              label="Description"
+              label={t('common.description')}
               value={editingPlot.description}
               onChange={(e) => setEditingPlot({ ...editingPlot, description: e.target.value })}
-              placeholder="Brief description of this plot..."
+              placeholder={t('codex.majorPlots.descriptionPlaceholder')}
               rows={4}
             />
             <Input
-              label="Involved NPCs"
+              label={t('codex.majorPlots.involvedNpcs')}
               value={editingPlot.involved_npcs}
               onChange={(e) => setEditingPlot({ ...editingPlot, involved_npcs: e.target.value })}
-              placeholder="e.g., Lord Varrick, Assassin Kira"
+              placeholder={t('codex.majorPlots.involvedNpcsPlaceholder')}
             />
             <Input
-              label="Involved Factions"
+              label={t('codex.majorPlots.involvedFactions')}
               value={editingPlot.involved_factions}
               onChange={(e) => setEditingPlot({ ...editingPlot, involved_factions: e.target.value })}
-              placeholder="e.g., The Shadow Guild, Royal Court"
+              placeholder={t('codex.majorPlots.involvedFactionsPlaceholder')}
             />
             <div className="mb-4">
               <label className="block text-[10px] font-cinzel text-gold mb-2 tracking-[0.25em] uppercase font-bold">
-                Status
+                {t('codex.majorPlots.status')}
               </label>
               <select
                 value={editingPlot.status}
                 onChange={(e) => setEditingPlot({ ...editingPlot, status: e.target.value })}
                 className="flex h-10 w-full rounded-sm border border-twilight/50 bg-[#09090B] px-3 py-1 text-sm text-white focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/30 transition-colors"
               >
-                <option value="Active">Active</option>
-                <option value="Future">Future</option>
-                <option value="Resolved">Resolved</option>
-                <option value="Dropped">Dropped</option>
+                <option value="Active">{opt('plot_status', 'Active')}</option>
+                <option value="Future">{opt('plot_status', 'Future')}</option>
+                <option value="Resolved">{opt('plot_status', 'Resolved')}</option>
+                <option value="Dropped">{opt('plot_status', 'Dropped')}</option>
               </select>
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={isSaving}>
-                Cancel
+                {t('common.cancel')}
               </Button>
-              <Button onClick={savePlot} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Plot'}</Button>
+              <Button onClick={savePlot} disabled={isSaving}>{isSaving ? t('common.saving') : t('codex.majorPlots.save')}</Button>
             </div>
           </>
         )}
@@ -231,8 +202,8 @@ export const MajorPlots: React.FC = () => {
         isOpen={!!deletePlotId}
         onClose={() => !isSaving && setDeletePlotId(null)}
         onConfirm={confirmDeletePlot}
-        title="Delete Plot"
-        message={isSaving ? "Deleting..." : "Are you sure you want to delete this plot? This action cannot be undone."}
+        title={t('codex.majorPlots.deleteTitle')}
+        message={isSaving ? t('common.deleting') : t('codex.majorPlots.deleteMessage')}
       />
     </div>
   );

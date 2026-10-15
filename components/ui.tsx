@@ -1,4 +1,5 @@
 import React, { useId, useEffect, useRef } from 'react';
+import { useI18n } from '../i18n';
 
 // --- Card ---
 interface CardProps {
@@ -140,6 +141,7 @@ export const Badge: React.FC<{ children: React.ReactNode; color?: 'green' | 'red
 
 // --- Modal ---
 export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
+  const { t } = useI18n();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -176,7 +178,7 @@ export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: stri
       >
         <div className="flex justify-between items-center p-4 border-b border-gold/20 bg-gradient-to-r from-shadow to-obsidian">
           <h2 id={titleId} className="text-xl font-cinzel font-bold text-gold glow-gold">{title}</h2>
-          <button onClick={onClose} aria-label="Close dialog" className="text-twilight hover:text-gold transition-colors">✕</button>
+          <button onClick={onClose} aria-label={t('common.closeDialog')} className="text-twilight hover:text-gold transition-colors">✕</button>
         </div>
         <div className="p-6 text-white">{children}</div>
       </div>
@@ -192,14 +194,15 @@ export const ConfirmModal: React.FC<{
   title: string;
   message: string;
   confirmText?: string;
-}> = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Delete" }) => {
+}> = ({ isOpen, onClose, onConfirm, title, message, confirmText }) => {
+  const { t } = useI18n();
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="space-y-6">
         <p className="text-white/80 font-serif leading-relaxed">{message}</p>
         <div className="flex justify-end gap-3 pt-4 border-t border-twilight/20">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="danger" onClick={() => { onConfirm(); onClose(); }}>{confirmText}</Button>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant="danger" onClick={() => { onConfirm(); onClose(); }}>{confirmText ?? t('common.delete')}</Button>
         </div>
       </div>
     </Modal>

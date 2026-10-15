@@ -10,10 +10,10 @@ import { TagSelector } from '../components/TagSelector';
 import { MultiMemberSelect } from '../components/MultiMemberSelect';
 import { DND_RACES } from '../App';
 import { useToast } from '../components/Toast';
+import { useI18n, TKey } from '../i18n';
 
 interface SchemaField {
   key: string;
-  label: string;
   type: 'text' | 'textarea' | 'number' | 'select' | 'stats' | 'faction-multi-select' | 'tags-select' | 'member-multi-select';
   options?: string[]; // For select
   conditionalOn?: { key: string; value: string }; // For conditional fields
@@ -21,11 +21,14 @@ interface SchemaField {
 
 interface GenericListProps {
   entityType: 'npc' | 'location' | 'faction' | 'item' | 'character' | 'session' | 'monster';
-  title: string;
   fields: SchemaField[];
 }
 
-export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fields }) => {
+export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) => {
+  const { t, opt: optL } = useI18n();
+  const title = t(`entity.${entityType}.plural` as TKey);
+  const fieldLabel = (key: string) => t(`field.${entityType}.${key}` as TKey);
+  const singular = (item?: Record<string, unknown>) => (item?.name as string) || t(`entity.${entityType}.singular` as TKey);
   const { id: campaignId } = useParams<{ id: string }>();
   const { showToast } = useToast();
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
@@ -186,7 +189,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         // Check for errors in main entity save
         if (result.error) {
             console.error("Error saving entity:", result.error);
-            showToast(`Failed to save ${entityType}. ${result.error.message || 'Please try again.'}`, 'error');
+            showToast(t('list.saveError', { detail: result.error.message || t('common.tryAgain') }), 'error');
             return;
         }
 
@@ -195,7 +198,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             const syncResult = await db.faction_tags.setForFaction(payload.id, tagIds);
             if (syncResult.error) {
                 console.error("Error syncing faction tags:", syncResult.error);
-                showToast(`${entityType} saved, but failed to sync tags. ${syncResult.error.message || 'Please try again.'}`, 'warning');
+                showToast(t('list.syncTagsWarning', { detail: syncResult.error.message || t('common.tryAgain') }), 'warning');
             }
         }
 
@@ -217,7 +220,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             const syncResult = await db.faction_members.setForFaction(payload.id, memberIds, memberTypes);
             if (syncResult.error) {
                 console.error("Error syncing faction members:", syncResult.error);
-                showToast(`${entityType} saved, but failed to sync members. ${syncResult.error.message || 'Please try again.'}`, 'warning');
+                showToast(t('list.syncMembersWarning', { detail: syncResult.error.message || t('common.tryAgain') }), 'warning');
             }
         }
 
@@ -226,7 +229,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             const syncResult = await db.location_factions.setForLocation(payload.id, factionIds);
             if (syncResult.error) {
                 console.error("Error syncing location factions:", syncResult.error);
-                showToast(`${entityType} saved, but failed to sync factions. ${syncResult.error.message || 'Please try again.'}`, 'warning');
+                showToast(t('list.syncFactionsWarning', { detail: syncResult.error.message || t('common.tryAgain') }), 'warning');
             }
         }
 
@@ -236,7 +239,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         // Catch any unexpected errors not handled by db method error returns
         // (e.g., network errors, JSON parsing errors, etc.)
         console.error("Failed to save item:", error);
-        showToast("Failed to save. Please try again.", 'error');
+        showToast(t('list.saveErrorGeneric'), 'error');
     } finally {
         setIsSaving(false);
     }
@@ -263,7 +266,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         
         if (result.error) {
             console.error("Error deleting entity:", result.error);
-            showToast(`Failed to delete ${entityType}. ${result.error.message || 'Please try again.'}`, 'error');
+            showToast(t('list.deleteError', { detail: result.error.message || t('common.tryAgain') }), 'error');
             return;
         }
         
@@ -273,7 +276,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
         // Catch any unexpected errors not handled by db method error returns
         // (e.g., network errors, JSON parsing errors, etc.)
         console.error("Failed to delete item:", error);
-        showToast("Failed to delete. Please try again.", 'error');
+        showToast(t('list.deleteErrorGeneric'), 'error');
     } finally {
         setIsSaving(false);
     }
@@ -323,7 +326,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
 
   // Helper to find location name by ID
   const getLocationName = (id: string) => {
-      return locations.find(l => l.id === id)?.name || 'Unknown Location';
+      return locations.find(l => l.id === id)?.name || t('list.unknownLocation');
   };
 
   // Helper for Rarity Colors
@@ -409,7 +412,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
           {/* Header & Main Actions */}
           <div className="flex justify-between items-center">
              <h2 className="text-3xl font-bold text-white">{title}</h2>
-             <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> New</Button>
+             <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> {t('list.new')}</Button>
           </div>
 
           {/* Filter Bar */}
@@ -418,8 +421,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
                 <input
                     type="text"
-                    aria-label={`Search ${title.toLowerCase()}`}
-                    placeholder="Search name, role, tags..."
+                    aria-label={t('list.searchAria', { entity: title.toLowerCase() })}
+                    placeholder={t('list.searchPlaceholder')}
                     className="pl-9 flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -435,9 +438,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
                         >
-                            <option value="">All Types</option>
-                            {fields.find(f => f.key === 'npc_type')?.options?.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
+                            <option value="">{t('list.allTypes')}</option>
+                            {fields.find(f => f.key === 'npc_type')?.options?.map(o => (
+                                <option key={o} value={o}>{optL('npc_type', o)}</option>
                             ))}
                         </select>
                     </div>
@@ -447,7 +450,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                             value={filterLocation}
                             onChange={(e) => setFilterLocation(e.target.value)}
                         >
-                            <option value="">All Locations</option>
+                            <option value="">{t('list.allLocations')}</option>
                             {locations.map(loc => (
                                 <option key={loc.id} value={loc.id}>{loc.name}</option>
                             ))}
@@ -465,9 +468,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                             value={filterMonsterType}
                             onChange={(e) => setFilterMonsterType(e.target.value)}
                         >
-                            <option value="">All Types</option>
-                            {fields.find(f => f.key === 'monster_type')?.options?.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
+                            <option value="">{t('list.allTypes')}</option>
+                            {fields.find(f => f.key === 'monster_type')?.options?.map(o => (
+                                <option key={o} value={o}>{optL('monster_type', o)}</option>
                             ))}
                         </select>
                     </div>
@@ -477,9 +480,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                             value={filterSize}
                             onChange={(e) => setFilterSize(e.target.value)}
                         >
-                            <option value="">All Sizes</option>
-                            {fields.find(f => f.key === 'size')?.options?.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
+                            <option value="">{t('list.allSizes')}</option>
+                            {fields.find(f => f.key === 'size')?.options?.map(o => (
+                                <option key={o} value={o}>{optL('size', o)}</option>
                             ))}
                         </select>
                     </div>
@@ -495,9 +498,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                             value={filterLocType}
                             onChange={(e) => setFilterLocType(e.target.value)}
                         >
-                            <option value="">All Types</option>
-                            {fields.find(f => f.key === 'type')?.options?.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
+                            <option value="">{t('list.allTypes')}</option>
+                            {fields.find(f => f.key === 'type')?.options?.map(o => (
+                                <option key={o} value={o}>{optL('type', o)}</option>
                             ))}
                         </select>
                     </div>
@@ -507,9 +510,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                             value={filterImportance}
                             onChange={(e) => setFilterImportance(e.target.value)}
                         >
-                            <option value="">All Importance</option>
-                            {fields.find(f => f.key === 'importance')?.options?.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
+                            <option value="">{t('list.allImportance')}</option>
+                            {fields.find(f => f.key === 'importance')?.options?.map(o => (
+                                <option key={o} value={o}>{optL('importance', o)}</option>
                             ))}
                         </select>
                     </div>
@@ -525,9 +528,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                             value={filterItemRarity}
                             onChange={(e) => setFilterItemRarity(e.target.value)}
                         >
-                            <option value="">All Rarities</option>
-                            {fields.find(f => f.key === 'rarity')?.options?.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
+                            <option value="">{t('list.allRarities')}</option>
+                            {fields.find(f => f.key === 'rarity')?.options?.map(o => (
+                                <option key={o} value={o}>{optL('rarity', o)}</option>
                             ))}
                         </select>
                     </div>
@@ -537,9 +540,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                             value={filterItemType}
                             onChange={(e) => setFilterItemType(e.target.value)}
                         >
-                            <option value="">All Types</option>
-                            {fields.find(f => f.key === 'type')?.options?.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
+                            <option value="">{t('list.allTypes')}</option>
+                            {fields.find(f => f.key === 'type')?.options?.map(o => (
+                                <option key={o} value={o}>{optL('type', o)}</option>
                             ))}
                         </select>
                     </div>
@@ -558,7 +561,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     setFilterItemRarity('');
                     setFilterItemType('');
                 }}>
-                    Clear
+                    {t('list.clear')}
                 </Button>
             )}
           </div>
@@ -571,14 +574,14 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 className={`group relative transition-all ${getBorderColor(item.accent_color)}`}
             >
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex gap-2">
-                    <button onClick={() => openEdit(item)} aria-label={`Edit ${item.name || title.slice(0, -1)}`} className="p-1 bg-zinc-800 rounded hover:bg-indigo-600 text-zinc-300 hover:text-white"><Edit className="w-4 h-4" /></button>
-                    <button onClick={() => requestDelete(item.id as string)} aria-label={`Delete ${item.name || title.slice(0, -1)}`} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => openEdit(item)} aria-label={t('list.editAria', { name: singular(item) })} className="p-1 bg-zinc-800 rounded hover:bg-indigo-600 text-zinc-300 hover:text-white"><Edit className="w-4 h-4" /></button>
+                    <button onClick={() => requestDelete(item.id as string)} aria-label={t('list.deleteAria', { name: singular(item) })} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
                 </div>
                 <div className="flex justify-between items-start pr-16">
                      <div>
                         <h3 className="text-lg font-bold text-zinc-100 leading-tight">{item.name || item.date}</h3>
                         {item.title && <div className="text-xs text-zinc-400 italic">{item.title}</div>}
-                        {entityType === 'monster' && <div className="text-xs text-zinc-400 italic">{item.size} {item.monster_type} {item.cr && `(CR ${item.cr})`}</div>}
+                        {entityType === 'monster' && <div className="text-xs text-zinc-400 italic">{optL('size', item.size)} {optL('monster_type', item.monster_type)} {item.cr && t('list.crShort', { cr: item.cr })}</div>}
                      </div>
                 </div>
 
@@ -589,32 +592,32 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     {/* Race and Class Badges (for NPCs and Characters) */}
                     {(entityType === 'npc' || entityType === 'character') && item.race && (
                         <span className="text-[10px] uppercase font-bold bg-yellow-900/10 text-yellow-600 border border-yellow-900/30 px-1.5 py-0.5 rounded tracking-wider">
-                            🎭 {item.race}
+                            🎭 {optL('race', item.race)}
                         </span>
                     )}
                     {(entityType === 'npc' || entityType === 'character') && item.class && (
                         <span className="text-[10px] uppercase font-bold bg-indigo-900/20 text-indigo-300 border border-indigo-800/50 px-1.5 py-0.5 rounded tracking-wider">
-                            ⚔️ {item.class}
+                            ⚔️ {optL('class', item.class)}
                         </span>
                     )}
 
                     {/* Generic Type Tags */}
                     {item.type && entityType !== 'location' && entityType !== 'item' && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{item.type}</span>}
-                    {item.npc_type && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{item.npc_type}</span>}
+                    {item.npc_type && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{optL('npc_type', item.npc_type)}</span>}
                     
                     {/* Location Specific Tags */}
                     {entityType === 'location' && (
                         <>
-                             {item.type && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{item.type}</span>}
+                             {item.type && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{optL('type', item.type)}</span>}
                              {item.region && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400 flex items-center gap-1"><MapPin className="w-3 h-3"/> {item.region}</span>}
                              {item.importance && <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
                                  item.importance === 'Critical' || item.importance === 'Epic' ? 'bg-indigo-900/50 text-indigo-200 border border-indigo-700' : 'bg-zinc-800 text-zinc-400'
-                             }`}>{item.importance}</span>}
+                             }`}>{optL('importance', item.importance)}</span>}
                              {item.magic_intensity && (
                                 <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${
                                     item.magic_intensity === 'High' || item.magic_intensity === 'Wild' ? 'bg-pink-900/30 text-pink-300 border border-pink-800' : 'bg-zinc-800 text-zinc-400'
                                 }`}>
-                                   <Sparkles className="w-3 h-3"/> {item.magic_intensity}
+                                   <Sparkles className="w-3 h-3"/> {optL('magic_intensity', item.magic_intensity)}
                                 </span>
                              )}
                         </>
@@ -623,10 +626,10 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     {/* Item Specific Tags */}
                     {entityType === 'item' && (
                         <>
-                             {item.rarity && <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${getRarityColor(item.rarity)}`}>{item.rarity}</span>}
-                             {item.type && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{item.type}</span>}
-                             {item.item_class && <span className="text-[10px] uppercase font-bold bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-500">{item.item_class}</span>}
-                             {item.corruption_growth && <span className="text-[10px] uppercase font-bold bg-zinc-900 text-purple-400 border border-purple-900/50 px-1.5 py-0.5 rounded flex items-center gap-1"><Skull className="w-3 h-3"/> Corrupting</span>}
+                             {item.rarity && <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${getRarityColor(item.rarity)}`}>{optL('rarity', item.rarity)}</span>}
+                             {item.type && <span className="text-[10px] uppercase font-bold bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">{optL('type', item.type)}</span>}
+                             {item.item_class && <span className="text-[10px] uppercase font-bold bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-500">{optL('item_class', item.item_class)}</span>}
+                             {item.corruption_growth && <span className="text-[10px] uppercase font-bold bg-zinc-900 text-purple-400 border border-purple-900/50 px-1.5 py-0.5 rounded flex items-center gap-1"><Skull className="w-3 h-3"/> {t('list.corrupting')}</span>}
                         </>
                     )}
 
@@ -648,15 +651,15 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                         item.status === 'Ally' || item.status === 'Intact' || item.status === 'Awakened' ? 'bg-green-900/30 text-green-400 border border-green-900' :
                         item.status === 'Dead' || item.status === 'Broken' ? 'bg-zinc-950 text-zinc-600 border border-zinc-800 line-through' :
                         'bg-zinc-800 text-zinc-400'
-                    }`}>{item.status}</span>}
+                    }`}>{optL('status', item.status)}</span>}
                     
                     {/* Monster Horror Scale */}
-                    {item.horror_scale && <span className="text-[10px] uppercase font-bold bg-purple-900/30 text-purple-400 border border-purple-900 px-1.5 py-0.5 rounded">Horror {item.horror_scale}</span>}
+                    {item.horror_scale && <span className="text-[10px] uppercase font-bold bg-purple-900/30 text-purple-400 border border-purple-900 px-1.5 py-0.5 rounded">{t('list.horror', { n: item.horror_scale })}</span>}
                     
-                    {entityType !== 'location' && entityType !== 'item' && item.importance && item.importance !== 'Unknown' && <span className="text-[10px] uppercase font-bold bg-indigo-900/30 text-indigo-300 border border-indigo-900 px-1.5 py-0.5 rounded">{item.importance}</span>}
+                    {entityType !== 'location' && entityType !== 'item' && item.importance && item.importance !== 'Unknown' && <span className="text-[10px] uppercase font-bold bg-indigo-900/30 text-indigo-300 border border-indigo-900 px-1.5 py-0.5 rounded">{optL('importance', item.importance)}</span>}
                 </div>
 
-                {item.race && item.class && <span className="text-xs text-indigo-400 mb-2 block">Lvl {item.level} {item.race} {item.class}</span>}
+                {item.race && item.class && <span className="text-xs text-indigo-400 mb-2 block">{t('list.levelLine', { level: item.level ?? '?', race: optL('race', item.race), cls: optL('class', item.class) })}</span>}
                 
                 {/* Location Specific Content Display */}
                 {entityType === 'location' ? (
@@ -667,31 +670,31 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                         <div className="flex flex-col gap-1 mt-2">
                             {item.dangers && (
                                 <div className="flex gap-1 items-start">
-                                    <span className="text-[10px] font-bold text-red-400 bg-red-950/30 px-1 rounded uppercase">Dangers</span>
+                                    <span className="text-[10px] font-bold text-red-400 bg-red-950/30 px-1 rounded uppercase">{t('list.card.dangers')}</span>
                                     <span className="text-xs line-clamp-1">{item.dangers}</span>
                                 </div>
                             )}
                              {item.typical_creatures && (
                                 <div className="flex gap-1 items-start">
-                                    <span className="text-[10px] font-bold text-zinc-500 bg-zinc-900 px-1 rounded uppercase">Creatures</span>
+                                    <span className="text-[10px] font-bold text-zinc-500 bg-zinc-900 px-1 rounded uppercase">{t('list.card.creatures')}</span>
                                     <span className="text-xs line-clamp-1">{item.typical_creatures}</span>
                                 </div>
                             )}
                             {item.climate && (
                                 <div className="flex gap-1 items-start">
-                                    <span className="text-[10px] font-bold text-blue-400 bg-blue-950/30 px-1 rounded uppercase flex items-center gap-0.5"><Cloud className="w-2 h-2"/> Climate</span>
+                                    <span className="text-[10px] font-bold text-blue-400 bg-blue-950/30 px-1 rounded uppercase flex items-center gap-0.5"><Cloud className="w-2 h-2"/> {t('list.card.climate')}</span>
                                     <span className="text-xs line-clamp-1">{item.climate}</span>
                                 </div>
                             )}
                              {item.rumors && (
                                 <div className="flex gap-1 items-start">
-                                    <span className="text-[10px] font-bold text-yellow-500/80 bg-yellow-900/20 px-1 rounded uppercase">Rumors</span>
+                                    <span className="text-[10px] font-bold text-yellow-500/80 bg-yellow-900/20 px-1 rounded uppercase">{t('list.card.rumors')}</span>
                                     <span className="text-xs line-clamp-1">{item.rumors}</span>
                                 </div>
                             )}
                              {item.map_description && (
                                 <div className="flex gap-1 items-start">
-                                    <span className="text-[10px] font-bold text-zinc-500 bg-zinc-900 px-1 rounded uppercase">Layout</span>
+                                    <span className="text-[10px] font-bold text-zinc-500 bg-zinc-900 px-1 rounded uppercase">{t('list.card.layout')}</span>
                                     <span className="text-xs line-clamp-1 italic">{item.map_description}</span>
                                 </div>
                             )}
@@ -701,32 +704,32 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     <div className="text-sm text-zinc-400 space-y-2 mt-2">
                          {item.effects_passive && (
                             <div className="flex gap-1 items-start">
-                                <span className="text-[10px] font-bold text-zinc-500 bg-zinc-900 px-1 rounded uppercase border border-zinc-800">Passive</span>
+                                <span className="text-[10px] font-bold text-zinc-500 bg-zinc-900 px-1 rounded uppercase border border-zinc-800">{t('list.card.passive')}</span>
                                 <span className="text-xs line-clamp-2">{item.effects_passive}</span>
                             </div>
                         )}
                         {item.effects_active && (
                             <div className="flex gap-1 items-start">
-                                <span className="text-[10px] font-bold text-indigo-400 bg-indigo-900/20 px-1 rounded uppercase border border-indigo-900/30">Active</span>
+                                <span className="text-[10px] font-bold text-indigo-400 bg-indigo-900/20 px-1 rounded uppercase border border-indigo-900/30">{t('list.card.active')}</span>
                                 <span className="text-xs line-clamp-2">{item.effects_active}</span>
                             </div>
                         )}
                         {item.runes && (
                             <div className="flex gap-1 items-start">
-                                <span className="text-[10px] font-bold text-purple-400 bg-purple-900/20 px-1 rounded uppercase border border-purple-900/30 flex items-center gap-0.5"><Scroll className="w-2 h-2"/> Runes</span>
+                                <span className="text-[10px] font-bold text-purple-400 bg-purple-900/20 px-1 rounded uppercase border border-purple-900/30 flex items-center gap-0.5"><Scroll className="w-2 h-2"/> {t('list.card.runes')}</span>
                                 <span className="text-xs line-clamp-1 font-mono text-purple-300">{item.runes}</span>
                             </div>
                         )}
                          {item.random_effects && (
                             <div className="flex gap-1 items-start">
-                                <span className="text-[10px] font-bold text-yellow-500/80 bg-yellow-900/20 px-1 rounded uppercase flex items-center gap-0.5"><Zap className="w-2 h-2"/> Random</span>
+                                <span className="text-[10px] font-bold text-yellow-500/80 bg-yellow-900/20 px-1 rounded uppercase flex items-center gap-0.5"><Zap className="w-2 h-2"/> {t('list.card.random')}</span>
                                 <span className="text-xs line-clamp-1 italic">{item.random_effects}</span>
                             </div>
                         )}
                         <div className="mt-2 space-y-1">
                             {item.class_compatibility && (
                                 <div className="text-xs text-zinc-500 flex items-center gap-1">
-                                    <ShieldAlert className="w-3 h-3"/> Only: {item.class_compatibility}
+                                    <ShieldAlert className="w-3 h-3"/> {t('list.onlyClasses', { classes: item.class_compatibility })}
                                 </div>
                             )}
                             {item.requirements && (
@@ -738,7 +741,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     </div>
                 ) : (
                     <p className="text-sm text-zinc-400 line-clamp-3">
-                        {item.description || item.summary || item.notes || item.role || item.effect || item.narrative_theme || "No details provided."}
+                        {item.description || item.summary || item.notes || item.role || item.effect || item.narrative_theme || t('list.noDetails')}
                     </p>
                 )}
                 
@@ -747,7 +750,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     <div className="mt-3 grid grid-cols-6 gap-1 text-center">
                         {['str', 'dex', 'con', 'int', 'wis', 'cha'].map((k) => (
                             <div key={k} className="bg-zinc-950/50 rounded p-1 border border-zinc-800">
-                                <div className="text-[9px] uppercase text-zinc-500 mb-0.5">{k}</div>
+                                <div className="text-[9px] uppercase text-zinc-500 mb-0.5">{t(`stat.${k}` as TKey)}</div>
                                 <div className="text-xs font-bold text-zinc-300">{item.attributes[k]}</div>
                             </div>
                         ))}
@@ -756,20 +759,20 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 
                 {(entityType === 'character' || entityType === 'monster') && !item.attributes && (
                     <div className="mt-3 flex gap-2 text-xs font-mono text-zinc-500">
-                        <span title="Armor Class">AC:{item.ac}</span>
-                        <span title="Hit Points">HP:{item.max_hp}</span>
+                        <span title={t('list.acTitle')}>{t('list.acShort')}:{item.ac}</span>
+                        <span title={t('list.hpTitle')}>{t('list.hpShort')}:{item.max_hp}</span>
                     </div>
                 )}
             </Card>
         ))}
         {filteredItems.length === 0 && (
             <div className="col-span-full py-12 text-center text-zinc-500 border border-zinc-800 border-dashed rounded-lg">
-                No items found. Create one to get started.
+                {t('list.empty')}
             </div>
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => !isSaving && setModalOpen(false)} title={editingItem?.id ? `Edit ${title}` : `New ${title}`}>
+      <Modal isOpen={isModalOpen} onClose={() => !isSaving && setModalOpen(false)} title={t(editingItem?.id ? `entity.${entityType}.edit` as TKey : `entity.${entityType}.new` as TKey)}>
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             {fields.map(field => {
                 // Check if this field is conditional and should be hidden
@@ -784,7 +787,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 if (field.type === 'faction-multi-select') {
                     return (
                         <div key={field.key} className="mb-2">
-                            <label className="block text-xs font-medium text-zinc-400 mb-1">{field.label}</label>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1">{fieldLabel(field.key)}</label>
                             <MultiFactionSelect
                                 factions={availableFactions}
                                 selectedIds={editingItem?.[field.key] || []}
@@ -798,7 +801,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 if (field.type === 'tags-select') {
                     return (
                         <div key={field.key} className="mb-2">
-                            <label className="block text-xs font-medium text-zinc-400 mb-1">{field.label}</label>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1">{fieldLabel(field.key)}</label>
                             <TagSelector
                                 campaignId={campaignId!}
                                 tags={availableTags}
@@ -820,7 +823,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 if (field.type === 'member-multi-select') {
                     return (
                         <div key={field.key} className="mb-2">
-                            <label className="block text-xs font-medium text-zinc-400 mb-1">{field.label}</label>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1">{fieldLabel(field.key)}</label>
                             <MultiMemberSelect
                                 npcs={availableNPCs}
                                 characters={availableCharacters}
@@ -835,11 +838,11 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     const stats = editingItem?.[field.key] || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
                     return (
                          <div key={field.key} className="mb-2">
-                            <label className="block text-xs font-medium text-zinc-400 mb-2">{field.label}</label>
+                            <label className="block text-xs font-medium text-zinc-400 mb-2">{fieldLabel(field.key)}</label>
                             <div className="grid grid-cols-6 gap-2">
                                 {['str', 'dex', 'con', 'int', 'wis', 'cha'].map(stat => (
                                     <div key={stat} className="flex flex-col items-center">
-                                        <label className="text-[10px] uppercase text-zinc-500 font-bold mb-1">{stat}</label>
+                                        <label className="text-[10px] uppercase text-zinc-500 font-bold mb-1">{t(`stat.${stat}` as TKey)}</label>
                                         <input 
                                             type="number" 
                                             className="w-full h-9 rounded-md border border-zinc-700 bg-zinc-950 px-1 text-center text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
@@ -867,18 +870,18 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                     } else if (isFactionField) {
                         options = availableFactions.map(f => ({ value: f.id, label: f.name }));
                     } else {
-                        options = field.options?.map(o => ({ value: o, label: o }));
+                        options = field.options?.map(o => ({ value: o, label: optL(field.key, o) }));
                     }
 
                     return (
                         <div key={field.key} className="mb-2">
-                            <label className="block text-xs font-medium text-zinc-400 mb-1">{field.label}</label>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1">{fieldLabel(field.key)}</label>
                             <select
                                 className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
                                 value={editingItem?.[field.key] || ''}
                                 onChange={(e) => setEditingItem({...editingItem, [field.key]: e.target.value})}
                             >
-                                <option value="">Select...</option>
+                                <option value="">{t('list.select')}</option>
                                 {options?.map(opt => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
@@ -891,21 +894,21 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
                 <div key={field.key}>
                     {field.type === 'textarea' ? (
                         <Textarea 
-                            label={field.label}
+                            label={fieldLabel(field.key)}
                             value={editingItem?.[field.key] || ''}
                             onChange={(e) => setEditingItem({...editingItem, [field.key]: e.target.value})}
                         />
                     ) : field.type === 'number' ? (
                          <Input
                             type="number" 
-                            label={field.label}
+                            label={fieldLabel(field.key)}
                             value={editingItem?.[field.key] ?? ''}
                             onFocus={(e) => e.target.select()}
                             onChange={(e) => setEditingItem({...editingItem, [field.key]: Number(e.target.value)})}
                         />
                     ) : (
                         <Input 
-                            label={field.label}
+                            label={fieldLabel(field.key)}
                             value={editingItem?.[field.key] || ''}
                             onChange={(e) => setEditingItem({...editingItem, [field.key]: e.target.value})}
                         />
@@ -914,7 +917,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             )})}
             <div className="flex justify-end pt-4">
                 <Button onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : `Save ${title}`}
+                    {isSaving ? t('common.saving') : t(`entity.${entityType}.save` as TKey)}
                 </Button>
             </div>
         </div>
@@ -924,8 +927,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, title, fie
             isOpen={!!deleteId} 
             onClose={() => !isSaving && setDeleteId(null)} 
             onConfirm={confirmDelete} 
-            title={`Delete ${title.slice(0, -1)}`} 
-            message={isSaving ? "Deleting..." : "Are you sure you want to delete this item? This action cannot be undone."}
+            title={t(`entity.${entityType}.delete` as TKey)}
+            message={isSaving ? t('common.deleting') : t('list.deleteConfirm')}
       />
     </div>
   );

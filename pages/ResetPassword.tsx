@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { updatePassword } from '../services/supabase';
 import { Button, Input, Card } from '../components/ui';
 import { Crown, AlertCircle, CheckCircle } from 'lucide-react';
+import { useI18n } from '../i18n';
+import { authErrorKey } from '../i18n/authErrors';
 
 export const ResetPassword: React.FC = () => {
     const [newPassword, setNewPassword] = useState('');
@@ -11,6 +13,7 @@ export const ResetPassword: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
+    const { t } = useI18n();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,15 +22,15 @@ export const ResetPassword: React.FC = () => {
 
         try {
             // Validate password length
-            if (newPassword.length < 6) {
-                setError("Secret Phrase must be at least 6 characters long.");
+            if (newPassword.length < 8) {
+                setError(t('auth.passwordTooShort'));
                 setLoading(false);
                 return;
             }
 
             // Validate passwords match
             if (newPassword !== confirmPassword) {
-                setError("Secret Phrases do not match. Please verify and try again.");
+                setError(t('auth.passwordMismatch'));
                 setLoading(false);
                 return;
             }
@@ -40,7 +43,8 @@ export const ResetPassword: React.FC = () => {
                 navigate('/', { replace: true });
             }, 2000);
         } catch (err: any) {
-            setError(err.message || "An unexpected error occurred.");
+            const key = authErrorKey(err?.message);
+            setError(key ? t(key) : (err?.message || t('common.unexpectedError')));
         } finally {
             setLoading(false);
         }
@@ -54,16 +58,16 @@ export const ResetPassword: React.FC = () => {
                 <div className="relative z-10 mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
                     <Crown className="w-12 h-12 text-gold mx-auto mb-4 drop-shadow-lg" />
                     <h1 className="text-4xl font-cinzel font-bold text-gold tracking-[0.25em] drop-shadow-md">
-                        LUMEN REGNUM
+                        {t('app.name').toUpperCase()}
                     </h1>
                 </div>
 
                 <Card className="relative z-10 w-full max-w-md border-gold/30 bg-shadow/95 shadow-2xl backdrop-blur-md p-8 animate-in zoom-in-95 duration-500">
                     <div className="flex flex-col items-center justify-center text-center py-8">
                         <CheckCircle className="w-16 h-16 text-green-400 mb-4" />
-                        <h2 className="text-2xl font-cinzel font-bold text-gold mb-2">Password Updated!</h2>
-                        <p className="text-zinc-400 text-sm">Your Secret Phrase has been successfully changed.</p>
-                        <p className="text-zinc-500 text-xs mt-4">Redirecting to login...</p>
+                        <h2 className="text-2xl font-cinzel font-bold text-gold mb-2">{t('reset.updatedTitle')}</h2>
+                        <p className="text-zinc-400 text-sm">{t('reset.updatedText')}</p>
+                        <p className="text-zinc-500 text-xs mt-4">{t('reset.redirecting')}</p>
                     </div>
                 </Card>
             </div>
@@ -80,7 +84,7 @@ export const ResetPassword: React.FC = () => {
                     LUMEN REGNUM
                 </h1>
                 <p className="text-[#7E8299] text-xs uppercase tracking-[0.3em] mt-3 font-bold">
-                    Reset Your Secret Phrase
+                    {t('reset.subtitle')}
                 </p>
             </div>
 
@@ -94,7 +98,7 @@ export const ResetPassword: React.FC = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Input 
-                        label="New Secret Phrase" 
+                        label={t('reset.newPassword')} 
                         type="password" 
                         required 
                         value={newPassword} 
@@ -105,7 +109,7 @@ export const ResetPassword: React.FC = () => {
                     />
                     
                     <Input 
-                        label="Confirm New Secret Phrase" 
+                        label={t('reset.confirmNewPassword')} 
                         type="password" 
                         required 
                         value={confirmPassword} 
@@ -119,19 +123,19 @@ export const ResetPassword: React.FC = () => {
                         className="w-full mt-2" 
                         disabled={loading}
                     >
-                        {loading ? 'Updating...' : 'Update Secret Phrase'}
+                        {loading ? t('reset.updating') : t('reset.submit')}
                     </Button>
                 </form>
 
                 <div className="mt-8 text-center">
                     <p className="text-[10px] text-zinc-500 font-serif italic opacity-70">
-                        "With new words of power, you may enter once more."
+                        "{t('reset.quote')}"
                     </p>
                 </div>
             </Card>
 
             <div className="relative z-10 mt-8 text-center text-zinc-700 text-xs">
-                <p>Secure. Private. Protected.</p>
+                <p>{t('reset.footer')}</p>
             </div>
         </div>
     );

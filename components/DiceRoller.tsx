@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, RotateCcw, History, Trash2, Dices } from 'lucide-react';
 import { Button } from './ui';
+import { useI18n } from '../i18n';
 
 interface RollResult {
   id: string;
@@ -19,6 +20,7 @@ interface DiceRollerProps {
 }
 
 export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
+  const { t, formatTime } = useI18n();
   const [history, setHistory] = useState<RollResult[]>([]);
   const [count, setCount] = useState(1);
   const [modifier, setModifier] = useState(0);
@@ -63,9 +65,9 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
     return (
         <button
             onClick={onToggle}
-            aria-label="Open dice roller"
+            aria-label={t('dice.open')}
             className="fixed bottom-6 right-6 z-[100] h-14 w-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-lg border border-indigo-400 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-            title="Open Dice Roller"
+            title={t('dice.open')}
         >
             <Dices className="w-8 h-8" />
         </button>
@@ -79,9 +81,9 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
       <div className="flex justify-between items-center p-3 border-b border-zinc-800 bg-zinc-800/50 rounded-t-lg">
         <div className="flex items-center gap-2 text-indigo-400 font-bold">
             <Dices className="w-5 h-5" />
-            <span>Dice Roller</span>
+            <span>{t('dice.title')}</span>
         </div>
-        <button onClick={onToggle} aria-label="Close dice roller" className="text-zinc-400 hover:text-white transition-colors">
+        <button onClick={onToggle} aria-label={t('dice.close')} className="text-zinc-400 hover:text-white transition-colors">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -91,13 +93,13 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
         {history.length === 0 ? (
           <div className="text-center text-zinc-500 text-sm py-8 flex flex-col items-center gap-2">
             <History className="w-8 h-8 opacity-20" />
-            <p>Roll log is empty.</p>
+            <p>{t('dice.empty')}</p>
           </div>
         ) : (
           history.map((res) => (
             <div key={res.id} className="bg-zinc-900 border border-zinc-800 rounded p-2 text-sm animate-in fade-in slide-in-from-left-2">
                <div className="flex justify-between text-xs text-zinc-500 mb-1">
-                   <span>{res.timestamp.toLocaleTimeString()}</span>
+                   <span>{formatTime(res.timestamp, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                    <span className="font-mono">
                        {res.count}d{res.diceType} {res.modifier !== 0 && (res.modifier > 0 ? `+${res.modifier}` : res.modifier)}
                    </span>
@@ -120,7 +122,7 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
         {/* Settings */}
         <div className="grid grid-cols-2 gap-3">
             <div>
-                <label className="text-[10px] uppercase font-bold text-zinc-500">Count</label>
+                <label className="text-[10px] uppercase font-bold text-zinc-500">{t('dice.count')}</label>
                 <input 
                     type="number" 
                     min="1" 
@@ -131,7 +133,7 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
                 />
             </div>
             <div>
-                <label className="text-[10px] uppercase font-bold text-zinc-500">Modifier</label>
+                <label className="text-[10px] uppercase font-bold text-zinc-500">{t('dice.modifier')}</label>
                 <input 
                     type="number" 
                     value={modifier}
@@ -154,9 +156,9 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
             ))}
              <button
                 onClick={clearHistory}
-                aria-label="Clear roll history"
+                aria-label={t('dice.clearHistory')}
                 className="flex flex-col items-center justify-center bg-zinc-900 hover:bg-red-900/50 border border-zinc-800 hover:border-red-800 rounded p-2 transition-colors group"
-                title="Clear Log"
+                title={t('dice.clearLog')}
             >
                 <Trash2 className="w-4 h-4 text-zinc-500 group-hover:text-red-400" />
             </button>

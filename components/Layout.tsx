@@ -7,19 +7,19 @@ import { DiceRoller } from './DiceRoller';
 import { getCurrentUser, signOut, deleteAccount } from '../services/supabase';
 import { ConfirmModal } from './ui';
 import { useToast } from './Toast';
+import { useI18n } from '../i18n';
 
 interface LayoutProps {
   children: React.ReactNode;
   activeCampaign?: Campaign | null;
 }
 
-const DELETE_ACCOUNT_WARNING = "Are you absolutely sure you want to delete your account? This will permanently remove your authentication credentials and all of your campaigns and their data. This action cannot be undone.";
-
 export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id: campaignId } = useParams();
   const { showToast } = useToast();
+  const { t } = useI18n();
   const [isDiceRollerOpen, setIsDiceRollerOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
@@ -55,33 +55,33 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
       navigate('/');
     } catch (error) {
       console.error('Erro ao deletar conta:', error);
-      showToast('Failed to delete account. Please try again.', 'error');
+      showToast(t('layout.deleteAccountError'), 'error');
     }
   };
 
   const navItems = [
-    { icon: LayoutDashboard, label: 'Overview', path: `/campaign/${campaignId}` },
-    { icon: User, label: 'Characters', path: `/campaign/${campaignId}/characters` },
-    { icon: Users, label: 'NPCs', path: `/campaign/${campaignId}/npcs` },
-    { icon: Ghost, label: 'Monsters', path: `/campaign/${campaignId}/monsters` },
-    { icon: Map, label: 'Locations', path: `/campaign/${campaignId}/locations` },
-    { icon: Flag, label: 'Families & Factions', path: `/campaign/${campaignId}/factions` },
-    { icon: Box, label: 'Items', path: `/campaign/${campaignId}/items` },
-    { icon: Swords, label: 'Combat', path: `/campaign/${campaignId}/combat` },
-    { icon: BookOpen, label: 'Sessions', path: `/campaign/${campaignId}/sessions` },
+    { icon: LayoutDashboard, label: t('nav.overview'), path: `/campaign/${campaignId}` },
+    { icon: User, label: t('nav.characters'), path: `/campaign/${campaignId}/characters` },
+    { icon: Users, label: t('nav.npcs'), path: `/campaign/${campaignId}/npcs` },
+    { icon: Ghost, label: t('nav.monsters'), path: `/campaign/${campaignId}/monsters` },
+    { icon: Map, label: t('nav.locations'), path: `/campaign/${campaignId}/locations` },
+    { icon: Flag, label: t('nav.factions'), path: `/campaign/${campaignId}/factions` },
+    { icon: Box, label: t('nav.items'), path: `/campaign/${campaignId}/items` },
+    { icon: Swords, label: t('nav.combat'), path: `/campaign/${campaignId}/combat` },
+    { icon: BookOpen, label: t('nav.sessions'), path: `/campaign/${campaignId}/sessions` },
   ];
 
   const codexSubItems = [
-    { label: 'Main Arc', path: `/campaign/${campaignId}/codex/main-arc` },
-    { label: 'Major Plots', path: `/campaign/${campaignId}/codex/major-plots` },
-    { label: 'World Lore', path: `/campaign/${campaignId}/codex/world-lore` },
-    { label: 'Magic & Technology', path: `/campaign/${campaignId}/codex/magic-tech` },
-    { label: 'Politics & Factions', path: `/campaign/${campaignId}/codex/politics-factions` },
-    { label: 'Secrets of the World', path: `/campaign/${campaignId}/codex/secrets` },
-    { label: 'Tone & Aesthetic', path: `/campaign/${campaignId}/codex/tone-aesthetic` },
-    { label: 'World Timeline', path: `/campaign/${campaignId}/codex/world-timeline` },
-    { label: 'Home Rules', path: `/campaign/${campaignId}/codex/home-rules` },
-    { label: 'Notes & Scraps', path: `/campaign/${campaignId}/codex/notes` },
+    { label: t('codex.mainArc.title'), path: `/campaign/${campaignId}/codex/main-arc` },
+    { label: t('codex.majorPlots.title'), path: `/campaign/${campaignId}/codex/major-plots` },
+    { label: t('codex.worldLore.title'), path: `/campaign/${campaignId}/codex/world-lore` },
+    { label: t('codex.magicTech.title'), path: `/campaign/${campaignId}/codex/magic-tech` },
+    { label: t('codex.politics.title'), path: `/campaign/${campaignId}/codex/politics-factions` },
+    { label: t('codex.secrets.title'), path: `/campaign/${campaignId}/codex/secrets` },
+    { label: t('codex.tone.title'), path: `/campaign/${campaignId}/codex/tone-aesthetic` },
+    { label: t('codex.timeline.title'), path: `/campaign/${campaignId}/codex/world-timeline` },
+    { label: t('codex.homeRules.title'), path: `/campaign/${campaignId}/codex/home-rules` },
+    { label: t('codex.notes.title'), path: `/campaign/${campaignId}/codex/notes` },
   ];
 
   const handleCodexClick = () => {
@@ -130,7 +130,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
               }`}
             >
               <Book className="mr-3 h-4 w-4 flex-shrink-0 opacity-70" />
-              <span className="flex-1 text-left">Codex</span>
+              <span className="flex-1 text-left">{t('nav.codex')}</span>
               {isCodexExpanded ? (
                 <ChevronDown className="h-3 w-3 opacity-70" />
               ) : (
@@ -167,7 +167,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
                 className={`flex items-center w-full px-3 py-2 text-sm font-cinzel tracking-wide rounded-sm transition-all ${isDiceRollerOpen ? 'bg-violet/10 text-violet-light border-l-2 border-violet' : 'text-silver/60 hover:bg-shadow hover:text-gold'}`}
               >
                 <Dices className="mr-3 h-4 w-4 opacity-70" />
-                Dice Roller
+                {t('nav.diceRoller')}
               </button>
           </div>
         </nav>
@@ -179,28 +179,28 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
               </div>
               <div className="overflow-hidden">
                   <p className="text-xs text-silver truncate max-w-[120px]">{userEmail}</p>
-                  <p className="text-[10px] text-zinc-500 uppercase">Game Master</p>
+                  <p className="text-[10px] text-zinc-500 uppercase">{t('layout.gameMaster')}</p>
               </div>
           </div>
           <button
             onClick={() => navigate('/')}
             className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-silver/60 hover:text-white hover:bg-white/5 w-full transition-colors mb-1"
           >
-             Exit Campaign
+             {t('layout.exitCampaign')}
           </button>
           <button
             onClick={handleSignOut}
             className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-red-400/70 hover:text-red-400 hover:bg-red-950/20 w-full transition-colors mb-1"
           >
             <LogOut className="mr-3 h-3 w-3" />
-            Sign Out
+            {t('layout.signOut')}
           </button>
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-red-500/70 hover:text-red-500 hover:bg-red-950/30 w-full transition-colors border-t border-red-900/20 mt-1 pt-2"
           >
             <Trash2 className="mr-3 h-3 w-3" />
-            Delete Account
+            {t('layout.deleteAccount')}
           </button>
         </div>
     </>
@@ -213,10 +213,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
             <div className="absolute top-4 right-4 flex items-center gap-4">
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-zinc-500">{userEmail}</span>
-                    <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 text-xs uppercase font-bold border border-red-900/30 px-3 py-1 rounded bg-red-950/20">Sign Out</button>
+                    <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 text-xs uppercase font-bold border border-red-900/30 px-3 py-1 rounded bg-red-950/20">{t('layout.signOut')}</button>
                     <button onClick={() => setShowDeleteConfirm(true)} className="text-red-500 hover:text-red-400 text-xs uppercase font-bold border border-red-900/30 px-3 py-1 rounded bg-red-950/30 flex items-center gap-1">
                         <Trash2 className="w-3 h-3" />
-                        Delete Account
+                        {t('layout.deleteAccount')}
                     </button>
                 </div>
             </div>
@@ -227,9 +227,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
                 isOpen={showDeleteConfirm}
                 onClose={() => setShowDeleteConfirm(false)}
                 onConfirm={handleDeleteAccount}
-                title="Delete Account"
-                message={DELETE_ACCOUNT_WARNING}
-                confirmText="Delete Account"
+                title={t('layout.deleteAccount')}
+                message={t('layout.deleteAccountWarning')}
+                confirmText={t('layout.deleteAccount')}
             />
         </main>
     );
@@ -242,11 +242,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
       <div className="md:hidden flex items-center justify-between p-4 bg-shadow border-b border-gold/20 sticky top-0 z-20">
          <div className="font-cinzel font-bold text-gold flex items-center gap-2">
             <LayoutDashboard className="w-5 h-5"/>
-            <span className="truncate max-w-[200px] tracking-wider">{activeCampaign?.name || 'DM OS'}</span>
+            <span className="truncate max-w-[200px] tracking-wider">{activeCampaign?.name || t('app.shortName')}</span>
          </div>
          <button
             onClick={() => setIsMobileMenuOpen(true)}
-            aria-label="Open menu"
+            aria-label={t('layout.openMenu')}
             className="text-silver hover:text-gold p-1 rounded hover:bg-white/5 transition-colors"
          >
             <Menu className="w-6 h-6" />
@@ -257,9 +257,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
       <aside className="w-64 border-r border-gold/10 bg-shadow/40 backdrop-blur-sm hidden md:flex flex-col sticky top-0 h-screen z-10">
         <div className="p-6 border-b border-gold/10">
           <h1 className="text-xl font-cinzel font-bold tracking-widest text-gold truncate drop-shadow-sm">
-            {activeCampaign?.name || 'DM OS'}
+            {activeCampaign?.name || t('app.shortName')}
           </h1>
-          <p className="text-[10px] text-twilight mt-1 uppercase tracking-[0.2em] font-bold">Lumen Regnum v1.0</p>
+          <p className="text-[10px] text-twilight mt-1 uppercase tracking-[0.2em] font-bold">{t('app.name')} v1.0</p>
         </div>
         {renderNavContent()}
       </aside>
@@ -276,8 +276,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
             {/* Drawer - Opens from Right */}
             <aside className="relative flex flex-col w-64 h-full bg-shadow border-l border-gold/20 shadow-2xl animate-in slide-in-from-right duration-300">
                 <div className="flex justify-between items-center p-4 border-b border-gold/10">
-                    <span className="font-cinzel font-bold text-gold tracking-wide">Menu</span>
-                    <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu" className="text-twilight hover:text-gold transition-colors">
+                    <span className="font-cinzel font-bold text-gold tracking-wide">{t('layout.menu')}</span>
+                    <button onClick={() => setIsMobileMenuOpen(false)} aria-label={t('layout.closeMenu')} className="text-twilight hover:text-gold transition-colors">
                         <X className="w-6 h-6"/>
                     </button>
                 </div>
@@ -301,9 +301,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteAccount}
-        title="Delete Account"
-        message={DELETE_ACCOUNT_WARNING}
-        confirmText="Delete Account"
+        title={t('layout.deleteAccount')}
+        message={t('layout.deleteAccountWarning')}
+        confirmText={t('layout.deleteAccount')}
       />
     </div>
   );

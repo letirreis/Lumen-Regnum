@@ -6,12 +6,14 @@ import { Encounter, Combatant, Character } from '../types';
 import { Card, Button, Input, Badge, Modal, ConfirmModal } from '../components/ui';
 import { Swords, Plus, Trash2, RotateCcw, Shield, Heart, Play, Activity } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { useI18n } from '../i18n';
 
 const CREATURE_SAVE_DEBOUNCE_MS = 400;
 
 export const CombatTracker: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
   const { showToast } = useToast();
+  const { t, opt } = useI18n();
   const [encounters, setEncounters] = useState<Encounter[]>([]);
   const [activeEncounter, setActiveEncounter] = useState<Encounter | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -56,7 +58,7 @@ export const CombatTracker: React.FC = () => {
   const persistEncounter = async (encounter: Encounter) => {
     const { error } = await db.encounters.update(encounter);
     if (error) {
-      showToast(`Failed to save encounter: ${error.message}`, 'error');
+      showToast(t('combat.saveError', { detail: error.message }), 'error');
     }
   };
 
@@ -92,7 +94,7 @@ export const CombatTracker: React.FC = () => {
     };
     const { error } = await db.encounters.add(newEnc);
     if (error) {
-      showToast(`Failed to create encounter: ${error.message}`, 'error');
+      showToast(t('combat.createError', { detail: error.message }), 'error');
       return;
     }
     setEncounters([...encounters, newEnc]);
@@ -110,7 +112,7 @@ export const CombatTracker: React.FC = () => {
       if(deleteEncounterId) {
           const { error } = await db.encounters.delete(deleteEncounterId);
           if (error) {
-            showToast(`Failed to delete encounter: ${error.message}`, 'error');
+            showToast(t('combat.deleteError', { detail: error.message }), 'error');
             setDeleteEncounterId(null);
             return;
           }
@@ -126,7 +128,7 @@ export const CombatTracker: React.FC = () => {
     if (!activeEncounter) return;
     const combatant: Combatant = {
       id: generateId(),
-      name: newCreature.name || 'Enemy',
+      name: newCreature.name || t('combat.defaultCreatureName'),
       type: newCreature.type as any,
       ac: newCreature.ac || 10,
       hp: newCreature.hp || 10,
@@ -192,14 +194,14 @@ export const CombatTracker: React.FC = () => {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-3xl font-bold">Encounters</h2>
-          <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4 mr-2" /> New Encounter</Button>
+          <h2 className="text-3xl font-bold">{t('combat.title')}</h2>
+          <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4 mr-2" /> {t('combat.new')}</Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {encounters.map(enc => (
             <Card key={enc.id} className="hover:border-indigo-500 cursor-pointer transition-colors relative group">
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-                    <button onClick={(e) => requestDeleteEncounter(e, enc.id)} aria-label={`Delete encounter ${enc.name}`} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={(e) => requestDeleteEncounter(e, enc.id)} aria-label={t('combat.deleteAria', { name: enc.name })} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
                 </div>
                 <div onClick={() => setActiveEncounter(enc)}>
                     <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
@@ -207,27 +209,27 @@ export const CombatTracker: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center mb-4">
                         <Badge color={enc.status === 'active' ? 'green' : enc.status === 'done' ? 'gray' : 'blue'}>
-                        {enc.status}
+                        {opt('encounter_status', enc.status)}
                         </Badge>
-                        <span className="text-xs text-zinc-500">{enc.creatures.length} Combatants</span>
+                        <span className="text-xs text-zinc-500">{t('combat.combatants', { count: enc.creatures.length })}</span>
                     </div>
                     <Button size="sm" variant="secondary" className="w-full">
-                        Open Tracker
+                        {t('combat.open')}
                     </Button>
                 </div>
             </Card>
           ))}
           {encounters.length === 0 && (
              <div className="col-span-full py-12 text-center text-zinc-500 border border-zinc-800 border-dashed rounded-lg">
-                No encounters planned.
+                {t('combat.empty')}
             </div>
           )}
         </div>
 
-        <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Create Encounter">
-          <Input label="Encounter Name" value={newEncounterName} onChange={e => setNewEncounterName(e.target.value)} autoFocus />
+        <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={t('combat.createTitle')}>
+          <Input label={t('combat.name')} value={newEncounterName} onChange={e => setNewEncounterName(e.target.value)} autoFocus />
           <div className="mt-4 flex justify-end">
-            <Button onClick={createEncounter}>Create</Button>
+            <Button onClick={createEncounter}>{t('common.create')}</Button>
           </div>
         </Modal>
 
@@ -235,8 +237,8 @@ export const CombatTracker: React.FC = () => {
             isOpen={!!deleteEncounterId} 
             onClose={() => setDeleteEncounterId(null)} 
             onConfirm={confirmDeleteEncounter} 
-            title="Delete Encounter" 
-            message="Are you sure you want to delete this encounter?"
+            title={t('combat.deleteTitle')}
+            message={t('combat.deleteMessage')}
         />
       </div>
     );
@@ -247,20 +249,20 @@ export const CombatTracker: React.FC = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between bg-zinc-900 p-4 rounded-lg border border-zinc-800">
         <div>
-          <button onClick={() => setActiveEncounter(null)} className="text-sm text-zinc-400 hover:text-white mb-1">← Back to list</button>
+          <button onClick={() => setActiveEncounter(null)} className="text-sm text-zinc-400 hover:text-white mb-1">{t('combat.back')}</button>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             {activeEncounter.name}
-            <Badge color={activeEncounter.status === 'active' ? 'green' : 'blue'}>Round {activeEncounter.round}</Badge>
+            <Badge color={activeEncounter.status === 'active' ? 'green' : 'blue'}>{t('combat.round', { n: activeEncounter.round })}</Badge>
           </h2>
         </div>
         <div className="flex gap-2">
-            <Button size="sm" variant="secondary" onClick={addParty}><Users className="w-4 h-4 mr-2"/> Add Party</Button>
-            <Button size="sm" variant="secondary" onClick={() => setAddCreatureOpen(true)}><Plus className="w-4 h-4 mr-2"/> Add NPC/Monster</Button>
+            <Button size="sm" variant="secondary" onClick={addParty}><Users className="w-4 h-4 mr-2"/> {t('combat.addParty')}</Button>
+            <Button size="sm" variant="secondary" onClick={() => setAddCreatureOpen(true)}><Plus className="w-4 h-4 mr-2"/> {t('combat.addCreature')}</Button>
             {activeEncounter.status !== 'active' && (
-                <Button size="sm" onClick={rollInitiative}><Swords className="w-4 h-4 mr-2"/> Roll Init</Button>
+                <Button size="sm" onClick={rollInitiative}><Swords className="w-4 h-4 mr-2"/> {t('combat.rollInit')}</Button>
             )}
              {activeEncounter.status === 'active' && (
-                <Button size="sm" onClick={nextRound}><RotateCcw className="w-4 h-4 mr-2"/> Next Round</Button>
+                <Button size="sm" onClick={nextRound}><RotateCcw className="w-4 h-4 mr-2"/> {t('combat.nextRound')}</Button>
             )}
         </div>
       </div>
@@ -268,11 +270,11 @@ export const CombatTracker: React.FC = () => {
       <div className="space-y-2">
         {/* Header */}
         <div className="grid grid-cols-12 gap-2 text-xs font-bold text-zinc-500 uppercase px-4">
-            <div className="col-span-1 text-center">Init</div>
-            <div className="col-span-4">Name</div>
-            <div className="col-span-2 text-center">AC</div>
-            <div className="col-span-3">HP</div>
-            <div className="col-span-2 text-right">Actions</div>
+            <div className="col-span-1 text-center">{t('combat.colInit')}</div>
+            <div className="col-span-4">{t('combat.colName')}</div>
+            <div className="col-span-2 text-center">{t('combat.colAc')}</div>
+            <div className="col-span-3">{t('combat.colHp')}</div>
+            <div className="col-span-2 text-right">{t('combat.colActions')}</div>
         </div>
         
         {/* List */}
@@ -288,7 +290,7 @@ export const CombatTracker: React.FC = () => {
                 </div>
                 <div className="col-span-4 font-medium flex flex-col">
                     <span className={c.type === 'PC' ? 'text-indigo-400' : 'text-zinc-200'}>{c.name}</span>
-                    <span className="text-[10px] text-zinc-500 uppercase">{c.type}</span>
+                    <span className="text-[10px] text-zinc-500 uppercase">{opt('combatant_type', c.type)}</span>
                 </div>
                 <div className="col-span-2 flex justify-center items-center gap-1 text-zinc-400">
                     <Shield className="w-3 h-3" />
@@ -313,27 +315,27 @@ export const CombatTracker: React.FC = () => {
                      </div>
                 </div>
                 <div className="col-span-2 flex justify-end gap-2">
-                    <button onClick={() => deleteCreature(c.id)} aria-label={`Remove ${c.name}`} className="text-zinc-500 hover:text-red-400"><Trash2 className="w-4 h-4"/></button>
+                    <button onClick={() => deleteCreature(c.id)} aria-label={t('common.removeItem', { name: c.name })} className="text-zinc-500 hover:text-red-400"><Trash2 className="w-4 h-4"/></button>
                 </div>
              </div>
         ))}
 
         {activeEncounter.creatures.length === 0 && (
-            <div className="text-center py-12 text-zinc-500">No combatants. Add the party or monsters.</div>
+            <div className="text-center py-12 text-zinc-500">{t('combat.noCombatants')}</div>
         )}
       </div>
 
-       <Modal isOpen={isAddCreatureOpen} onClose={() => setAddCreatureOpen(false)} title="Add Creature">
+       <Modal isOpen={isAddCreatureOpen} onClose={() => setAddCreatureOpen(false)} title={t('combat.addTitle')}>
           <div className="space-y-4">
-            <Input label="Name" value={newCreature.name} onChange={e => setNewCreature({...newCreature, name: e.target.value})} autoFocus />
+            <Input label={t('combat.colName')} value={newCreature.name} onChange={e => setNewCreature({...newCreature, name: e.target.value})} autoFocus />
             <div className="grid grid-cols-2 gap-4">
-                <Input label="Max HP" type="number" value={newCreature.hp} onChange={e => setNewCreature({...newCreature, hp: parseInt(e.target.value) || 0})} />
-                <Input label="AC" type="number" value={newCreature.ac} onChange={e => setNewCreature({...newCreature, ac: parseInt(e.target.value) || 0})} />
+                <Input label={t('combat.maxHp')} type="number" value={newCreature.hp} onChange={e => setNewCreature({...newCreature, hp: parseInt(e.target.value) || 0})} />
+                <Input label={t('combat.colAc')} type="number" value={newCreature.ac} onChange={e => setNewCreature({...newCreature, ac: parseInt(e.target.value) || 0})} />
             </div>
-            <Input label="Initiative Bonus" type="number" value={newCreature.initiative} onChange={e => setNewCreature({...newCreature, initiative: parseInt(e.target.value) || 0})} />
+            <Input label={t('combat.initBonus')} type="number" value={newCreature.initiative} onChange={e => setNewCreature({...newCreature, initiative: parseInt(e.target.value) || 0})} />
             <div className="flex justify-end gap-2 mt-4">
-                <Button variant="ghost" onClick={() => setAddCreatureOpen(false)}>Cancel</Button>
-                <Button onClick={addCreature}>Add Creature</Button>
+                <Button variant="ghost" onClick={() => setAddCreatureOpen(false)}>{t('common.cancel')}</Button>
+                <Button onClick={addCreature}>{t('combat.addButton')}</Button>
             </div>
           </div>
        </Modal>
