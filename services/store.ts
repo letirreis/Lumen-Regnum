@@ -191,6 +191,7 @@ export const db = {
         magic_and_technology: {},
         politics_and_factions: {},
         secrets_of_world: '',
+        world_secrets: [],
         tone_and_aesthetic: {},
         world_timeline: [],
         home_rules: '',

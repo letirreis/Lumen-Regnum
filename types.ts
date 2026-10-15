@@ -327,7 +327,8 @@ export interface SessionScene {
   branches: string;
   hooks: string;
   plot_ids?: string[]; // ids de CampaignCodex.major_plots que esta cena movimenta
-  secrets?: string; // segredos a revelar nesta cena
+  secrets?: string; // segredos a revelar nesta cena (anotação livre)
+  secret_ids?: string[]; // ids de CampaignCodex.world_secrets ligados a esta cena
   order_index: number;
   created_at?: string;
   updated_at?: string;
@@ -353,7 +354,17 @@ export interface Campaign {
 }
 
 // Campaign Codex (Worldbuilding & Narrative)
+// Segredo do mundo (Códex). Status são valores gravados no banco.
+export interface WorldSecret {
+  id: string;
+  title: string;
+  truth: string; // a verdade por trás do segredo
+  clues: string; // pistas que podem levar até ele
+  status: 'Hidden' | 'Hinted' | 'Revealed';
+}
+
 export interface CampaignCodex {
+  world_secrets?: WorldSecret[];
   id: UUID;
   campaign_id: UUID;
   main_arc: {
