@@ -70,7 +70,7 @@ export const DiceStage: React.FC<DiceStageProps> = ({ sides, rolls, modifier, to
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const size = visible.length > 6 ? 64 : 88;
+  const size = visible.length <= 6 ? 88 : visible.length <= 10 ? 60 : 52;
   const shape = SHAPES[sides] ?? SHAPES[20];
 
   return createPortal(
@@ -81,7 +81,7 @@ export const DiceStage: React.FC<DiceStageProps> = ({ sides, rolls, modifier, to
       aria-live="polite"
       aria-label={landed ? `${rolls.length}d${sides}: ${total}` : t('dice.rolling', { count: rolls.length, sides })}
     >
-      <div className="flex flex-wrap items-center justify-center gap-4 max-w-xl px-4">
+      <div className="flex flex-wrap items-center justify-center gap-4 max-w-2xl px-4">
         {visible.map((value, i) => {
           const f = flights[i];
           const crit = landed && sides === 20 && (value === 20 || value === 1);
@@ -100,8 +100,13 @@ export const DiceStage: React.FC<DiceStageProps> = ({ sides, rolls, modifier, to
               }}
             >
               <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" aria-hidden="true">
-                <polygon points={shape} fill="#18181b" stroke={stroke} strokeWidth="3" strokeLinejoin="round"
-                  style={crit ? { filter: `drop-shadow(0 0 8px ${stroke})` } : undefined} />
+                {sides === 6 ? (
+                  <rect x="12" y="12" width="76" height="76" rx="16" fill="#18181b" stroke={stroke} strokeWidth="3"
+                    style={crit ? { filter: `drop-shadow(0 0 8px ${stroke})` } : undefined} />
+                ) : (
+                  <polygon points={shape} fill="#18181b" stroke={stroke} strokeWidth="3" strokeLinejoin="round"
+                    style={crit ? { filter: `drop-shadow(0 0 8px ${stroke})` } : undefined} />
+                )}
                 {sides === 20 && <polygon points="50,22 74,64 26,64" fill="none" stroke={stroke} strokeOpacity="0.35" strokeWidth="2" />}
                 <text x="50" y="58" textAnchor="middle" fontSize={sides === 100 ? 30 : 38} fontWeight="700"
                   fill={crit ? stroke : '#e4e4e7'} fontFamily="ui-monospace, monospace">{value}</text>
