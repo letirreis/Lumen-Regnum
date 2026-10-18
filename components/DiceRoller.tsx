@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, RotateCcw, History, Trash2, Dices } from 'lucide-react';
 import { Button } from './ui';
 import { useI18n } from '../i18n';
+import { DiceStage } from './DiceStage';
 
 interface RollResult {
   id: string;
@@ -25,6 +26,9 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
   const [count, setCount] = useState(1);
   const [modifier, setModifier] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Roll being animated; its history entry is added when the dice land so the result is not spoiled.
+  const [pending, setPending] = useState<RollResult | null>(null);
+  const committed = useRef<string | null>(null);
 
   // Scroll to bottom of history when new roll is added
   useEffect(() => {
@@ -33,7 +37,14 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
     }
   }, [history, isOpen]);
 
+  const commit = (r: RollResult) => {
+    if (committed.current === r.id) return;
+    committed.current = r.id;
+    setHistory(prev => [...prev, r]);
+  };
+
   const rollDice = (sides: number) => {
+    if (pending) return;
     const newRolls: number[] = [];
     let sum = 0;
     
@@ -53,16 +64,33 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
       total: sum + modifier
     };
 
-    setHistory(prev => [...prev, result]);
+    const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) commit(result);
+    else setPending(result);
   };
 
   const clearHistory = () => setHistory([]);
+  const finishRoll = () => { if (pending) commit(pending); setPending(null); };
 
   const diceTypes = [4, 6, 8, 10, 12, 20, 100];
+
+  const stage = pending ? (
+    <DiceStage
+      key={pending.id}
+      sides={pending.diceType}
+      rolls={pending.rolls}
+      modifier={pending.modifier}
+      total={pending.total}
+      onLanded={() => commit(pending)}
+      onDone={finishRoll}
+    />
+  ) : null;
 
   // Minimized State (Floating Action Button)
   if (!isOpen) {
     return (
+        <>
+        {stage}
         <button
             onClick={onToggle}
             aria-label={t('dice.open')}
@@ -71,11 +99,14 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
         >
             <Dices className="w-8 h-8" />
         </button>
+        </>
     );
   }
 
   // Expanded State (Panel)
   return (
+    <>
+    {stage}
     <div className="fixed bottom-4 right-4 z-[100] w-80 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl flex flex-col max-h-[600px] animate-in slide-in-from-bottom-5 duration-200">
       {/* Header */}
       <div className="flex justify-between items-center p-3 border-b border-zinc-800 bg-zinc-800/50 rounded-t-lg">
@@ -149,7 +180,8 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
                 <button
                     key={d}
                     onClick={() => rollDice(d)}
-                    className="flex flex-col items-center justify-center bg-zinc-800 hover:bg-indigo-700 hover:text-white border border-zinc-700 rounded p-2 transition-colors group"
+                    disabled={!!pending}
+                    className="flex flex-col items-center justify-center bg-zinc-800 hover:bg-indigo-700 hover:text-white border border-zinc-700 rounded p-2 transition-colors group disabled:opacity-50 disabled:pointer-events-none"
                 >
                     <span className="text-xs font-bold text-zinc-300 group-hover:text-white">d{d}</span>
                 </button>
@@ -165,5 +197,6 @@ export const DiceRoller: React.FC<DiceRollerProps> = ({ isOpen, onToggle }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };

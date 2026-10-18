@@ -122,6 +122,7 @@ export const common = {
   'dice.modifier': 'Modificador',
   'dice.clearHistory': 'Limpar histórico de rolagens',
   'dice.clearLog': 'Limpar histórico',
+  'dice.rolling': 'Rolando {count}d{sides}...',
 
   // --- atributos ---
   'stat.str': 'FOR',
