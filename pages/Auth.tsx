@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { signIn, signUp, resetPassword } from '../services/supabase';
 import { savePlanIntent, type PaidTier } from '../services/billing';
 import type { TKey } from '../i18n';
@@ -13,15 +14,24 @@ interface AuthProps {
 }
 
 export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
-    const { t } = useI18n();
-    const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
+    const { t, setLocale } = useI18n();
+    // Links das páginas de venda: /#/?mode=signup&plan=starter&lang=en  (ou &invite=CODIGO)
+    const [params] = useSearchParams();
+    const planParam = params.get('plan');
+    const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(params.get('mode') === 'signup' ? 'signup' : 'login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [inviteCode, setInviteCode] = useState('');
+    const [inviteCode, setInviteCode] = useState(() => (params.get('invite') || '').toUpperCase().slice(0, 40));
     // Cadastro: ou código de convite, ou escolha de plano (o convite define o plano sozinho)
-    const [hasInvite, setHasInvite] = useState(false);
-    const [chosenTier, setChosenTier] = useState<'free' | PaidTier>('free');
+    const [hasInvite, setHasInvite] = useState(() => !!params.get('invite'));
+    const [chosenTier, setChosenTier] = useState<'free' | PaidTier>(planParam === 'starter' || planParam === 'full' ? planParam : 'free');
+
+    useEffect(() => {
+        const lang = params.get('lang');
+        if (lang === 'en' || lang === 'pt-BR') setLocale(lang, { remote: false });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
