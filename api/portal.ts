@@ -1,6 +1,6 @@
 // POST /api/portal  (Authorization: Bearer <token do Supabase>)
 // Abre o portal do Stripe para o usuário gerenciar/cancelar a própria assinatura. Devolve { url }.
-import { authUser, env, json, sb, stripe } from './_lib/stripe';
+import { authUser, env, json, sb, stripe } from './_lib/stripe.js';
 
 export async function POST(request: Request): Promise<Response> {
   try {

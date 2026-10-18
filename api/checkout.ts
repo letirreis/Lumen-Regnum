@@ -1,7 +1,7 @@
 // POST /api/checkout  { tier: 'starter' | 'full' }  (Authorization: Bearer <token do Supabase>)
 // Cria uma sessão do Stripe Checkout para o usuário logado e devolve { url }.
 // O preço é escolhido AQUI no servidor pelo lookup_key; o navegador nunca envia valor.
-import { authUser, env, json, sb, stripe, TIER_LOOKUP } from './_lib/stripe';
+import { authUser, env, json, sb, stripe, TIER_LOOKUP } from './_lib/stripe.js';
 
 export async function POST(request: Request): Promise<Response> {
   try {
