@@ -55,7 +55,7 @@ const COPY = {
     tiers: [
       { id: 'free', name: 'Explorador', blurb: 'Para conhecer a ferramenta.', cta: 'Criar conta grátis', features: ['1 campanha', 'Até 10 fichas de cada tipo', 'Até 5 sessões', 'Rolador de dados e Códex'] },
       { id: 'starter', name: 'Starter', blurb: 'Para quem mestra toda semana.', cta: 'Assinar Starter', features: ['Até 3 campanhas', 'Até 1.500 fichas de cada tipo', 'Imagens e mapas (50 MB)', 'Backup da campanha'], featured: true },
-      { id: 'full', name: 'Full', blurb: 'Tudo liberado, com recursos futuros.', cta: 'Assinar Full', features: ['Até 100 campanhas', 'Até 5.000 fichas de cada tipo', 'Imagens e mapas (200 MB)', 'Backup da campanha', 'Novidades em primeira mão'] },
+      { id: 'full', name: 'Full', blurb: 'Tudo liberado, com recursos futuros.', cta: 'Assinar Full', features: ['Até 100 campanhas', 'Até 5.000 fichas de cada tipo', 'Imagens e mapas (200 MB)', 'Backup da campanha', 'Acesso à IA', 'Acesso ao co-mestre', 'Novidades em primeira mão'] },
     ],
     compareTitle: 'Comparar em detalhes',
     compareHead: ['', 'Explorador', 'Starter', 'Full'],
@@ -124,7 +124,7 @@ const COPY = {
     tiers: [
       { id: 'free', name: 'Explorer', blurb: 'To get to know the tool.', cta: 'Create a free account', features: ['1 campaign', 'Up to 10 sheets of each type', 'Up to 5 sessions', 'Dice roller and codex'] },
       { id: 'starter', name: 'Starter', blurb: 'For GMs who run games every week.', cta: 'Subscribe to Starter', features: ['Up to 3 campaigns', 'Up to 1,500 sheets of each type', 'Images and maps (50 MB)', 'Campaign backup'], featured: true },
-      { id: 'full', name: 'Full', blurb: 'Everything unlocked, with upcoming features.', cta: 'Subscribe to Full', features: ['Up to 100 campaigns', 'Up to 5,000 sheets of each type', 'Images and maps (200 MB)', 'Campaign backup', 'New features first'] },
+      { id: 'full', name: 'Full', blurb: 'Everything unlocked, with upcoming features.', cta: 'Subscribe to Full', features: ['Up to 100 campaigns', 'Up to 5,000 sheets of each type', 'Images and maps (200 MB)', 'Campaign backup', 'AI access', 'Co-GM access', 'New features first'] },
     ],
     compareTitle: 'Compare in detail',
     compareHead: ['', 'Explorer', 'Starter', 'Full'],
