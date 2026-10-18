@@ -144,15 +144,29 @@ export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: stri
   const { t } = useI18n();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  // Quem chama costuma passar onClose={() => ...} novo a cada render. Se o efeito dependesse dele, cada tecla
+  // digitada (que re-renderiza a tela) reexecutaria o efeito e roubaria o foco do campo. Guardamos a versão mais recente.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  // Quem tinha o foco quando o modal abriu (o botão que o abriu), para devolver o foco ao fechar. Lido antes de os
+  // campos do modal montarem, senão um campo com autoFocus já teria roubado o foco.
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
+  if (isOpen && !wasOpenRef.current && typeof document !== 'undefined') triggerRef.current = document.activeElement as HTMLElement | null;
+  wasOpenRef.current = isOpen;
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    dialogRef.current?.focus();
+    const dialog = dialogRef.current;
+    // Só move o foco para a janela se ele ainda não estiver dentro dela (um campo com autoFocus já deve ser respeitado).
+    const active = document.activeElement as HTMLElement | null;
+    if (dialog && !dialog.contains(active)) dialog.focus();
+    const trigger = triggerRef.current;
+    const previouslyFocused = trigger && trigger.isConnected && !dialog?.contains(trigger) ? trigger : null;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     document.addEventListener('keydown', handleKeyDown);
 
@@ -160,7 +174,7 @@ export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: stri
       document.removeEventListener('keydown', handleKeyDown);
       previouslyFocused?.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
   return (
