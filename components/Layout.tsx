@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { deleteAllMyMedia } from '../services/media';
-import { LayoutDashboard, Users, User, Map, Flag, Box, Swords, BookOpen, LogOut, Dices, Ghost, Menu, X, Settings, Trash2, ChevronDown, ChevronRight, Book } from 'lucide-react';
+import { LayoutDashboard, Users, User, Map, Flag, Box, Swords, BookOpen, LogOut, Dices, Ghost, Image as ImageIcon, Menu, X, Settings, Trash2, ChevronDown, ChevronRight, Book } from 'lucide-react';
 import { Campaign } from '../types';
 import { DiceRoller } from './DiceRoller';
 import { getCurrentUser, signOut, deleteAccount } from '../services/supabase';
@@ -71,6 +71,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
     { icon: Map, label: t('nav.locations'), path: `/campaign/${campaignId}/locations` },
     { icon: Flag, label: t('nav.factions'), path: `/campaign/${campaignId}/factions` },
     { icon: Box, label: t('nav.items'), path: `/campaign/${campaignId}/items` },
+    { icon: ImageIcon, label: t('nav.gallery'), path: `/campaign/${campaignId}/gallery` },
     { icon: Swords, label: t('nav.combat'), path: `/campaign/${campaignId}/combat` },
     { icon: BookOpen, label: t('nav.sessions'), path: `/campaign/${campaignId}/sessions` },
   ];

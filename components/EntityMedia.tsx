@@ -5,6 +5,7 @@ import { useToast } from './Toast';
 import { useI18n } from '../i18n';
 import { translateDbError } from '../i18n/dbErrors';
 import { fetchMyPlan } from '../services/plan';
+import { MediaViewer } from './MediaViewer';
 import {
   MediaEntity, MediaInputError, MediaRow, deleteMedia, listMedia, signedUrls, uploadMedia,
 } from '../services/media';
@@ -25,6 +26,7 @@ export const EntityMedia: React.FC<Props> = ({ campaignId, entityType, entityId,
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [canUpload, setCanUpload] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [viewIdx, setViewIdx] = useState<number | null>(null);
   const portraitInput = useRef<HTMLInputElement>(null);
   const mapInput = useRef<HTMLInputElement>(null);
 
@@ -46,6 +48,8 @@ export const EntityMedia: React.FC<Props> = ({ campaignId, entityType, entityId,
 
   const portrait = rows.find((r) => r.kind === 'portrait');
   const maps = rows.filter((r) => r.kind === 'map');
+  const viewList = [...(portrait ? [portrait] : []), ...maps].filter((r) => urls[r.path]);
+  const openRow = (r: MediaRow) => setViewIdx(Math.max(0, viewList.findIndex((v) => v.id === r.id)));
 
   const errorText = (e: unknown): string => {
     if (e instanceof MediaInputError) {
@@ -101,7 +105,9 @@ export const EntityMedia: React.FC<Props> = ({ campaignId, entityType, entityId,
         <div className="text-sm text-silver/80 mb-2">{t('media.title')}</div>
         <div className="flex items-center gap-3 flex-wrap">
           {portrait && urls[portrait.path] ? (
-            <img src={urls[portrait.path]} alt={entityName || t('media.title')} className="w-24 h-24 object-cover rounded border border-gold/20" />
+            <button type="button" onClick={() => openRow(portrait)} aria-label={t('viewer.open')} className="shrink-0">
+              <img src={urls[portrait.path]} alt={entityName || t('media.title')} className="w-24 h-24 object-cover object-top rounded border border-gold/20 hover:border-gold/60" />
+            </button>
           ) : (
             <div className="w-24 h-24 rounded border border-dashed border-gold/20 flex items-center justify-center text-silver/30">
               <ImagePlus className="w-6 h-6" aria-hidden="true" />
@@ -127,7 +133,11 @@ export const EntityMedia: React.FC<Props> = ({ campaignId, entityType, entityId,
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {maps.map((m) => (
               <div key={m.id} className="relative group">
-                {urls[m.path] && <img src={urls[m.path]} alt={t('media.maps')} className="w-full h-24 object-cover rounded border border-gold/20" />}
+                {urls[m.path] && (
+                  <button type="button" onClick={() => openRow(m)} aria-label={t('viewer.open')} className="block w-full">
+                    <img src={urls[m.path]} alt={t('media.maps')} className="w-full h-24 object-cover rounded border border-gold/20 hover:border-gold/60" />
+                  </button>
+                )}
                 <button
                   type="button"
                   aria-label={t('media.remove')}
@@ -145,6 +155,18 @@ export const EntityMedia: React.FC<Props> = ({ campaignId, entityType, entityId,
             {t('media.addMap')}
           </Button>
         </div>
+      )}
+      {viewIdx !== null && (
+        <MediaViewer
+          items={viewList.map((r) => ({
+            url: urls[r.path],
+            title: entityName || t('media.title'),
+            subtitle: t(r.kind === 'map' ? 'media.kind.map' : 'media.kind.portrait'),
+          }))}
+          index={viewIdx}
+          onIndex={setViewIdx}
+          onClose={() => setViewIdx(null)}
+        />
       )}
     </div>
   );

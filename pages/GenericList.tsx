@@ -12,6 +12,7 @@ import { DND_RACES } from '../App';
 import { useToast } from '../components/Toast';
 import { useI18n, TKey } from '../i18n';
 import { EntityMedia } from '../components/EntityMedia';
+import { MediaViewer, ViewerItem } from '../components/MediaViewer';
 import { MEDIA_ENTITIES, MediaEntity, deleteMediaForEntity, listMedia, signedUrls } from '../services/media';
 
 interface SchemaField {
@@ -59,6 +60,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null); // If null, we are creating
   const [isSaving, setIsSaving] = useState(false); // Prevents double submit
   const [portraits, setPortraits] = useState<Record<string, string>>({}); // entity id -> signed image URL
+  const [mapCounts, setMapCounts] = useState<Record<string, number>>({}); // entity id -> nº de mapas
+  const [viewer, setViewer] = useState<{ items: ViewerItem[]; index: number } | null>(null);
   const hasMedia = MEDIA_ENTITIES.includes(entityType);
 
   // Delete State
@@ -69,6 +72,28 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
       loadItems();
     }
   }, [campaignId, entityType]);
+
+  // Abre o visualizador com o retrato e os mapas da ficha (URLs assinadas pedidas na hora).
+  const openViewer = async (item: Record<string, unknown>, startAtMaps = false) => {
+    if (!campaignId) return;
+    try {
+      const rows = await listMedia(campaignId, entityType as MediaEntity, item.id as string);
+      const ordered = [...rows.filter(r => r.kind === 'portrait'), ...rows.filter(r => r.kind === 'map')];
+      if (!ordered.length) return;
+      const urls = await signedUrls(ordered.map(r => r.path));
+      const list = ordered.filter(r => urls[r.path]);
+      setViewer({
+        items: list.map(r => ({
+          url: urls[r.path],
+          title: String(item.name || ''),
+          subtitle: t(r.kind === 'map' ? 'media.kind.map' : 'media.kind.portrait'),
+        })),
+        index: startAtMaps ? Math.max(0, list.findIndex(r => r.kind === 'map')) : 0,
+      });
+    } catch (e) {
+      console.error('Error opening images', e);
+    }
+  };
 
   const loadItems = async () => {
     if(!campaignId) return;
@@ -87,7 +112,11 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
     // Retratos das fichas (URLs assinadas e temporárias). Falha silenciosa: sem imagem a lista segue igual.
     if (hasMedia) {
         try {
-            const rows = (await listMedia(campaignId, entityType as MediaEntity)).filter(r => r.kind === 'portrait');
+            const all = await listMedia(campaignId, entityType as MediaEntity);
+            const counts: Record<string, number> = {};
+            all.filter(r => r.kind === 'map').forEach(r => { counts[r.entity_id] = (counts[r.entity_id] || 0) + 1; });
+            setMapCounts(counts);
+            const rows = all.filter(r => r.kind === 'portrait');
             const urls = rows.length ? await signedUrls(rows.map(r => r.path)) : {};
             const byEntity: Record<string, string> = {};
             rows.forEach(r => { if (urls[r.path]) byEntity[r.entity_id] = urls[r.path]; });
@@ -95,6 +124,7 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
         } catch (e) {
             console.error('Error loading images', e);
             setPortraits({});
+            setMapCounts({});
         }
     }
 
@@ -596,15 +626,17 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                 key={item.id} 
                 className={`group relative transition-all ${getBorderColor(item.accent_color)}`}
             >
-                {portraits[item.id as string] && (
-                    <img src={portraits[item.id as string]} alt={String(item.name || '')} loading="lazy" className="w-full h-32 object-cover rounded-sm mb-3 border border-gold/10" />
-                )}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex gap-2">
                     <button onClick={() => openEdit(item)} aria-label={t('list.editAria', { name: singular(item) })} className="p-1 bg-zinc-800 rounded hover:bg-indigo-600 text-zinc-300 hover:text-white"><Edit className="w-4 h-4" /></button>
                     <button onClick={() => requestDelete(item.id as string)} aria-label={t('list.deleteAria', { name: singular(item) })} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
                 </div>
-                <div className="flex justify-between items-start pr-16">
-                     <div>
+                <div className="flex justify-between items-start pr-16 gap-3">
+                     {portraits[item.id as string] && (
+                        <button type="button" onClick={() => openViewer(item)} aria-label={t('viewer.open')} className="shrink-0">
+                            <img src={portraits[item.id as string]} alt={String(item.name || '')} loading="lazy" className="w-20 h-20 object-cover object-top rounded border border-gold/20 hover:border-gold/60" />
+                        </button>
+                     )}
+                     <div className="min-w-0 flex-1">
                         <h3 className="text-lg font-bold text-zinc-100 leading-tight">{item.name || item.date}</h3>
                         {item.title && <div className="text-xs text-zinc-400 italic">{item.title}</div>}
                         {entityType === 'monster' && <div className="text-xs text-zinc-400 italic">{optL('size', item.size)} {optL('monster_type', item.monster_type)} {item.cr && t('list.crShort', { cr: item.cr })}</div>}
@@ -614,6 +646,11 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                 <div className="flex flex-wrap gap-1 mt-2 mb-2">
                     {/* Tags */}
                     {renderTags(item.tags)}
+                    {mapCounts[item.id as string] > 0 && (
+                        <button type="button" onClick={() => openViewer(item, true)} className="text-[10px] uppercase font-bold bg-gold/10 text-gold border border-gold/30 px-1.5 py-0.5 rounded tracking-wider hover:bg-gold/20">
+                            🗺 {t('media.mapsCount', { count: mapCounts[item.id as string] })}
+                        </button>
+                    )}
 
                     {/* Race and Class Badges (for NPCs and Characters) */}
                     {(entityType === 'npc' || entityType === 'character') && item.race && (
@@ -797,6 +834,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
             </div>
         )}
       </div>
+
+      {viewer && <MediaViewer items={viewer.items} index={viewer.index} onIndex={(i) => setViewer(v => v && { ...v, index: i })} onClose={() => setViewer(null)} />}
 
       <Modal isOpen={isModalOpen} onClose={() => !isSaving && setModalOpen(false)} title={t(editingItem?.id ? `entity.${entityType}.edit` as TKey : `entity.${entityType}.new` as TKey)}>
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
