@@ -426,9 +426,22 @@ const CampaignRouteWrapper: React.FC = () => {
 }
 
 function App() {
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Idioma da conta: se já houver um salvo, ele vale em qualquer dispositivo; senão, grava o atual.
+  const accountLocale = session?.user?.user_metadata?.locale as string | undefined;
+  const userId = session?.user?.id;
+  useEffect(() => {
+    if (!userId || !supabase) return;
+    if (accountLocale === 'pt-BR' || accountLocale === 'en') {
+      if (accountLocale !== locale) setLocale(accountLocale, { remote: false });
+    } else {
+      supabase.auth.updateUser({ data: { locale } }).catch(() => { /* ignora */ });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, accountLocale]);
 
   useEffect(() => {
     // If Supabase is not configured yet (no env vars, no local storage),
