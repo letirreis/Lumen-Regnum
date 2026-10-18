@@ -6,8 +6,7 @@ import { Layout } from './components/Layout';
 import { db, generateId } from './services/store';
 import { Campaign } from './types';
 import { Button, Input, Modal, ConfirmModal } from './components/ui';
-import { Plus, Trash2, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
-import { SupabaseSetup } from './components/SupabaseSetup';
+import { Plus, Trash2, WifiOff, AlertTriangle } from 'lucide-react';
 import { checkConnection, supabase } from './services/supabase';
 import { Auth } from './pages/Auth';
 import { useToast } from './components/Toast';
@@ -257,7 +256,6 @@ const CampaignSelector: React.FC = () => {
   
   // Connection Status
   const [connStatus, setConnStatus] = useState<'checking' | 'connected' | 'error'>('checking');
-  const [errorMsg, setErrorMsg] = useState('');
 
   // Delete state
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -277,7 +275,7 @@ const CampaignSelector: React.FC = () => {
           loadCampaigns();
       } else {
           setConnStatus('error');
-          setErrorMsg(conn.message || t('common.unknownError'));
+          console.error('Connection check failed:', conn.message);
       }
   };
 
@@ -334,26 +332,17 @@ const CampaignSelector: React.FC = () => {
                 <h1 className="text-4xl font-bold text-white mb-2">{t('app.shortName')}</h1>
                 <p className="text-zinc-400">{t('campaigns.subtitle')}</p>
                 
-                {/* Connection Badge */}
-                <div className="mt-4 flex items-center gap-2">
-                    {connStatus === 'checking' && <span className="text-xs text-zinc-500 animate-pulse">{t('campaigns.checking')}</span>}
-                    {connStatus === 'connected' && (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-900/20 border border-green-800 text-green-400 text-xs font-medium">
-                            <Wifi className="w-3 h-3" /> {t('campaigns.connected')}
+                {connStatus === 'error' && (
+                    <div className="mt-4 flex flex-col gap-1">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-900/20 border border-red-800 text-red-400 text-xs font-medium">
+                            <WifiOff className="w-3 h-3" /> {t('campaigns.connectionFailed')}
                         </span>
-                    )}
-                    {connStatus === 'error' && (
-                        <div className="flex flex-col gap-1">
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-900/20 border border-red-800 text-red-400 text-xs font-medium">
-                                <WifiOff className="w-3 h-3" /> {t('campaigns.connectionFailed')}
-                            </span>
-                            <span className="text-xs text-red-400 max-w-md">
-                                <AlertTriangle className="w-3 h-3 inline mr-1"/>
-                                {t('campaigns.connectionHint', { error: errorMsg })}
-                            </span>
-                        </div>
-                    )}
-                </div>
+                        <span className="text-xs text-red-400 max-w-md">
+                            <AlertTriangle className="w-3 h-3 inline mr-1"/>
+                            {t('campaigns.connectionHint')}
+                        </span>
+                    </div>
+                )}
             </div>
             <Button size="lg" onClick={() => setModalOpen(true)} disabled={connStatus === 'error'}><Plus className="w-5 h-5 mr-2" /> {t('campaigns.new')}</Button>
         </div>
@@ -449,8 +438,7 @@ function App() {
   }, [userId, accountLocale]);
 
   useEffect(() => {
-    // If Supabase is not configured yet (no env vars, no local storage),
-    // we still finish loading to let SupabaseSetup render.
+    // Service not configured: finish loading so the unavailable message renders.
     if(!supabase) {
         setLoading(false);
         return;
@@ -482,12 +470,8 @@ function App() {
 
   return (
     <HashRouter>
-        <SupabaseSetup />
-        
-        {/* If supabase is not configured, we show setup. If configured but no session, we show auth. */}
         {!supabase ? (
-            /* SupabaseSetup handles the UI if not configured */
-            <div className="min-h-screen bg-obsidian" /> 
+            <div className="min-h-screen bg-obsidian flex items-center justify-center text-zinc-400 px-4 text-center">{t('app.unavailable')}</div>
         ) : !session ? (
             <Routes>
                 <Route path="/reset-password" element={<ResetPassword />} />

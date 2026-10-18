@@ -5,23 +5,21 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 const getEnv = (key: string): string => (import.meta.env?.[key] as string) ?? '';
 
 // 1. Try Environment Variables (Priority for Vercel)
-let supabaseUrl = getEnv('VITE_SUPABASE_URL');
-let supabaseKey = getEnv('VITE_SUPABASE_ANON_KEY');
+const supabaseUrl = getEnv('VITE_SUPABASE_URL');
+const supabaseKey = getEnv('VITE_SUPABASE_ANON_KEY');
 
-// 2. Fallback to LocalStorage (For local dev if not using .env file)
-if (!supabaseUrl) {
-    supabaseUrl = localStorage.getItem('dmos_supabase_url') || '';
-}
-if (!supabaseKey) {
-    supabaseKey = localStorage.getItem('dmos_supabase_key') || '';
-}
+// Credentials saved by older versions of the app are no longer used.
+try {
+    localStorage.removeItem('dmos_supabase_url');
+    localStorage.removeItem('dmos_supabase_key');
+} catch { /* ignore */ }
 
-// 3. Validation Helper
+// 2. Validation Helper
 export const isSupabaseConfigured = () => {
     return supabaseUrl && supabaseUrl.startsWith('http') && supabaseKey;
 };
 
-// 4. Safe Client Creation with Crash Protection
+// 3. Safe Client Creation with Crash Protection
 let client: SupabaseClient | null = null;
 
 if (isSupabaseConfigured()) {
@@ -35,20 +33,7 @@ if (isSupabaseConfigured()) {
 
 export const supabase = client;
 
-// 5. Configuration Setter
-export const saveSupabaseConfig = (url: string, key: string) => {
-    localStorage.setItem('dmos_supabase_url', url.trim());
-    localStorage.setItem('dmos_supabase_key', key.trim());
-    window.location.reload(); 
-};
-
-export const clearSupabaseConfig = () => {
-    localStorage.removeItem('dmos_supabase_url');
-    localStorage.removeItem('dmos_supabase_key');
-    window.location.reload();
-};
-
-// 6. Test Connection
+// 4. Test Connection
 export const checkConnection = async (): Promise<{ success: boolean; message?: string }> => {
     if (!supabase) return { success: false, message: "Client not initialized" };
     
