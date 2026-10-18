@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { LayoutDashboard, Users, User, Map, Flag, Box, Swords, BookOpen, LogOut, Dices, Ghost, Menu, X, Settings, Trash2, ChevronDown, ChevronRight, Book } from 'lucide-react';
 import { Campaign } from '../types';
 import { DiceRoller } from './DiceRoller';
@@ -182,6 +183,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
                   <p className="text-[10px] text-zinc-500 uppercase">{t('layout.gameMaster')}</p>
               </div>
           </div>
+          <LanguageSwitcher className="px-3 py-2" />
           <button
             onClick={() => navigate('/')}
             className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-silver/60 hover:text-white hover:bg-white/5 w-full transition-colors mb-1"
@@ -211,6 +213,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
     return (
         <main className="min-h-screen bg-obsidian text-silver p-6 bg-vignette relative">
             <div className="absolute top-4 right-4 flex items-center gap-4">
+                <LanguageSwitcher />
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-zinc-500">{userEmail}</span>
                     <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 text-xs uppercase font-bold border border-red-900/30 px-3 py-1 rounded bg-red-950/20">{t('layout.signOut')}</button>
