@@ -11,7 +11,7 @@ export function translateDbError(message: string | undefined | null): string | n
     const [, table, limit] = quota;
     return translate('quota.exceeded', {
       what: translate(`plan.res.${table}` as TKey),
-      limit,
+      limit: table === 'media_bytes' ? `${Math.round(Number(limit) / 1048576)} MB` : limit,
     });
   }
   if (/FEATURE_LOCKED/.test(message)) return translate('quota.featureLocked');

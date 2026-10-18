@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { deleteAllMyMedia } from '../services/media';
 import { LayoutDashboard, Users, User, Map, Flag, Box, Swords, BookOpen, LogOut, Dices, Ghost, Menu, X, Settings, Trash2, ChevronDown, ChevronRight, Book } from 'lucide-react';
 import { Campaign } from '../types';
 import { DiceRoller } from './DiceRoller';
@@ -52,6 +53,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
 
   const handleDeleteAccount = async () => {
     try {
+      // Apaga as imagens antes: depois que a conta some, não há mais permissão para remover os arquivos.
+      await deleteAllMyMedia().catch((e) => console.error('Error removing images', e));
       await deleteAccount();
       navigate('/');
     } catch (error) {

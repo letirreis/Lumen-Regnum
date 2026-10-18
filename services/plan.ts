@@ -10,6 +10,7 @@ export interface MyPlan {
   usage: Record<string, number>;
   limits: Record<string, number>;
   features: Record<string, boolean>;
+  media?: { bytes_used: number; bytes_limit: number; files_used: number; files_limit: number };
 }
 
 /** Ordem de exibição dos recursos medidos (nomes = tabelas; ver migração 020). */
