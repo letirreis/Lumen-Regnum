@@ -93,6 +93,26 @@
   animation: lr-spin 1s linear infinite;
 }
 
+/* Dice roll animation: dice fly in and tumble, then settle with a small bounce.
+   --fx/--fy: starting offset, --rot: total rotation (a multiple of 360deg so the die lands upright). */
+@keyframes lr-dice-tumble {
+  0%   { transform: translate(var(--fx), var(--fy)) rotate(0deg) scale(0.4); opacity: 0; }
+  12%  { opacity: 1; }
+  60%  { transform: translate(0, 0) rotate(calc(var(--rot) * 0.85)) scale(1.12); }
+  78%  { transform: translate(0, -22px) rotate(calc(var(--rot) * 0.95)) scale(1); }
+  100% { transform: translate(0, 0) rotate(var(--rot)) scale(1); opacity: 1; }
+}
+@keyframes lr-dice-landed {
+  0%   { transform: scale(1.18); }
+  60%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+.lr-dice-tumble { animation: lr-dice-tumble 1000ms cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.lr-dice-landed { animation: lr-dice-landed 300ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .lr-dice-tumble, .lr-dice-landed { animation: none; }
+}
+
 /* Arcane Snow Animation */
 @keyframes arcaneSnow {
   0% { background-position: 0 0, 0 0, 0 0; }

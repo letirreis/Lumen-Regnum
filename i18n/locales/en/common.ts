@@ -118,6 +118,7 @@ export const common = {
   'dice.modifier': 'Modifier',
   'dice.clearHistory': 'Clear roll history',
   'dice.clearLog': 'Clear Log',
+  'dice.rolling': 'Rolling {count}d{sides}...',
 
   'stat.str': 'STR',
   'stat.dex': 'DEX',
