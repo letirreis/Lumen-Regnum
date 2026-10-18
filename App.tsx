@@ -20,6 +20,7 @@ import { GenericList } from './pages/GenericList';
 import { SessionsCalendar } from './pages/SessionsCalendar';
 import { SessionDetail } from './pages/SessionDetail';
 import { ResetPassword } from './pages/ResetPassword';
+import { PlanPage } from './pages/Plan';
 import { UiDemo } from './pages/UiDemo';
 
 // Codex Pages
@@ -491,6 +492,7 @@ function App() {
         ) : (
             <Routes>
                 <Route path="/" element={<Layout><CampaignSelector /></Layout>} />
+                <Route path="/plan" element={<Layout><PlanPage /></Layout>} />
                 <Route path="/campaign/:id/*" element={<Layout><CampaignRouteWrapper /></Layout>} />
             </Routes>
         )}

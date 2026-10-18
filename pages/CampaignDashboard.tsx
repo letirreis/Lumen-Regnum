@@ -5,9 +5,11 @@ import { db, generateId } from '../services/store';
 import type { DbResult } from '../services/store';
 import { Campaign, Session, Note, CampaignCodex } from '../types';
 import { Card, Badge, Button, Textarea, Input, Modal, ConfirmModal } from '../components/ui';
-import { Calendar, MapPin, Users, Plus, Trash2, Edit2, FileText, Dices, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Users, Plus, Trash2, Edit2, FileText, Dices, ExternalLink, Download, Lock } from 'lucide-react';
+import { exportCampaign, fetchMyPlan } from '../services/plan';
 import { useToast } from '../components/Toast';
 import { useI18n } from '../i18n';
+import { translateDbError } from '../i18n/dbErrors';
 
 export const CampaignDashboard: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +23,34 @@ export const CampaignDashboard: React.FC = () => {
   const [stats, setStats] = useState({ npcs: 0, locations: 0, sessions: 0 });
   const [recentSessions, setRecentSessions] = useState<Session[]>([]);
   const [nextSessionDate, setNextSessionDate] = useState<string | null>(null);
+  const [canExport, setCanExport] = useState<boolean | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    // O botão é só um aviso visual: quem libera o backup de verdade é o servidor (export_campaign).
+    fetchMyPlan().then((p) => setCanExport(!!p.features.export)).catch(() => setCanExport(null));
+  }, []);
+
+  const handleExport = async () => {
+    if (!id) return;
+    setExporting(true);
+    try {
+      const data = await exportCampaign(id);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const safe = (campaign?.name || 'campanha').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+      a.href = url;
+      a.download = `lumen-regnum-${safe}-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('export.done'), 'success');
+    } catch (e: any) {
+      showToast(t('export.error', { detail: translateDbError(e?.message) || e?.message || t('common.unknownError') }), 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
   
   // Notes List State
   const [notesList, setNotesList] = useState<Note[]>([]);
@@ -215,6 +245,16 @@ export const CampaignDashboard: React.FC = () => {
                     <Button variant="secondary" className="w-full justify-start text-sm" onClick={toggleDiceRoller}>
                         <Dices className="w-4 h-4 mr-2" />
                         {t('dashboard.openDice')}
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        className="w-full justify-start text-sm"
+                        onClick={handleExport}
+                        disabled={exporting || canExport === false}
+                        title={canExport === false ? t('export.locked') : undefined}
+                    >
+                        {canExport === false ? <Lock className="w-4 h-4 mr-2" /> : <Download className="w-4 h-4 mr-2" />}
+                        {exporting ? t('export.working') : canExport === false ? t('export.locked') : t('export.button')}
                     </Button>
                     <Button variant="secondary" className="w-full justify-start text-sm">{t('dashboard.nameGen')} ({t('common.comingSoon')})</Button>
                 </div>

@@ -185,6 +185,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
           </div>
           <LanguageSwitcher className="px-3 py-2" />
           <button
+            onClick={() => navigate('/plan')}
+            className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-gold/70 hover:text-gold hover:bg-white/5 w-full transition-colors mb-1"
+          >
+            {t('nav.plan')}
+          </button>
+          <button
             onClick={() => navigate('/')}
             className="flex items-center px-3 py-2 text-xs font-cinzel font-medium rounded-sm text-silver/60 hover:text-white hover:bg-white/5 w-full transition-colors mb-1"
           >
@@ -214,6 +220,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeCampaign }) => {
         <main className="min-h-screen bg-obsidian text-silver p-6 bg-vignette relative">
             <div className="absolute top-4 right-4 flex items-center gap-4">
                 <LanguageSwitcher />
+                <button onClick={() => navigate('/plan')} className="text-gold/80 hover:text-gold text-xs uppercase font-bold border border-gold/30 px-3 py-1 rounded bg-gold/5">{t('nav.plan')}</button>
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-zinc-500">{userEmail}</span>
                     <button onClick={handleSignOut} className="text-red-400 hover:text-red-300 text-xs uppercase font-bold border border-red-900/30 px-3 py-1 rounded bg-red-950/20">{t('layout.signOut')}</button>
