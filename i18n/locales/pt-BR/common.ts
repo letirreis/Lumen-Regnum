@@ -2,6 +2,8 @@
 export const common = {
   // --- app / comuns ---
   'app.name': 'Lumen Regnum',
+  'app.documentTitle': 'Lumen Regnum - Gerenciador de Campanhas',
+  'lang.label': 'Idioma',
   'app.shortName': 'Mestre OS',
   'app.tagline': 'Gerenciador de Campanhas para Mestres',
   'app.loading': 'Acessando os Arquivos de Lumen Regnum...',

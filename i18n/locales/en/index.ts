@@ -1,5 +1,9 @@
 import type { Messages } from '../../index';
+import { common } from './common';
+import { entities } from './entities';
+import { fields } from './fields';
+import { options } from './options';
+import { stories } from './stories';
 
-// Inglês: ainda não traduzido. Preencha aos poucos; chaves ausentes usam o texto em pt-BR.
-// Dica: copie uma chave de locales/pt-BR/*.ts e traduza o valor.
-export const en: Messages = {};
+// English dictionary. Missing keys fall back to pt-BR (the source of truth).
+export const en: Messages = { ...common, ...entities, ...fields, ...options, ...stories };

@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ptBR } from './locales/pt-BR';
 import { en } from './locales/en';
 
@@ -33,10 +33,22 @@ const readStoredLocale = (): Locale => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'pt-BR' || saved === 'en') return saved;
   } catch { /* localStorage indisponível: usa o padrão */ }
-  return 'pt-BR';
+  try {
+    const nav = (navigator.languages?.[0] || navigator.language || '').toLowerCase();
+    if (nav.startsWith('pt')) return 'pt-BR';
+    if (nav.startsWith('en')) return 'en';
+  } catch { /* sem navigator */ }
+  return 'en';
 };
 
 let currentLocale: Locale = readStoredLocale();
+
+const applyDocument = (l: Locale) => {
+  try {
+    document.documentElement.lang = l;
+    document.title = translate('app.documentTitle', undefined, l);
+  } catch { /* sem document */ }
+};
 
 const interpolate = (text: string, params?: TParams) =>
   params ? text.replace(/\{(\w+)\}/g, (_, k) => (k in params ? String(params[k]) : `{${k}}`)) : text;
@@ -68,7 +80,7 @@ export function optLabel(group: string, value: string | null | undefined, locale
   if (!value) return '';
   const key = `opt.${group}.${slug(value)}`;
   const dict = DICTIONARIES[locale] as Record<string, string | undefined>;
-  return dict[key] ?? (ptBR as Record<string, string>)[key] ?? value;
+  return dict[key] ?? value;
 }
 
 export const getLocale = () => currentLocale;
@@ -88,11 +100,12 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [locale, setLocaleState] = useState<Locale>(currentLocale);
+  useEffect(() => { applyDocument(currentLocale); }, []);
 
   const setLocale = useCallback((l: Locale) => {
     currentLocale = l;
     try { localStorage.setItem(STORAGE_KEY, l); } catch { /* ignora */ }
-    document.documentElement.lang = l;
+    applyDocument(l);
     setLocaleState(l);
   }, []);
 

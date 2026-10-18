@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { signIn, signUp, resetPassword } from '../services/supabase';
 import { Button, Input, Card } from '../components/ui';
 import { Shield, Scroll, Crown, AlertCircle } from 'lucide-react';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useI18n } from '../i18n';
 import { authErrorKey } from '../i18n/authErrors';
 
@@ -226,6 +227,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
             </Card>
 
             <div className="relative z-10 mt-8 text-center text-zinc-700 text-xs">
+                 <LanguageSwitcher className="mb-3" />
                  <p>{t('auth.footer')}</p>
             </div>
         </div>
