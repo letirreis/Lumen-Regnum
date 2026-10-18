@@ -11,6 +11,8 @@ import { MultiMemberSelect } from '../components/MultiMemberSelect';
 import { DND_RACES } from '../App';
 import { useToast } from '../components/Toast';
 import { useI18n, TKey } from '../i18n';
+import { EntityMedia } from '../components/EntityMedia';
+import { MEDIA_ENTITIES, MediaEntity, deleteMediaForEntity, listMedia, signedUrls } from '../services/media';
 
 interface SchemaField {
   key: string;
@@ -56,6 +58,8 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null); // If null, we are creating
   const [isSaving, setIsSaving] = useState(false); // Prevents double submit
+  const [portraits, setPortraits] = useState<Record<string, string>>({}); // entity id -> signed image URL
+  const hasMedia = MEDIA_ENTITIES.includes(entityType);
 
   // Delete State
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -79,6 +83,20 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
         case 'session': data = await db.sessions.list(campaignId); break;
     }
     setItems(data);
+
+    // Retratos das fichas (URLs assinadas e temporárias). Falha silenciosa: sem imagem a lista segue igual.
+    if (hasMedia) {
+        try {
+            const rows = (await listMedia(campaignId, entityType as MediaEntity)).filter(r => r.kind === 'portrait');
+            const urls = rows.length ? await signedUrls(rows.map(r => r.path)) : {};
+            const byEntity: Record<string, string> = {};
+            rows.forEach(r => { if (urls[r.path]) byEntity[r.entity_id] = urls[r.path]; });
+            setPortraits(byEntity);
+        } catch (e) {
+            console.error('Error loading images', e);
+            setPortraits({});
+        }
+    }
 
     // Load locations for NPCs and Items (Found At) if needed
     if (entityType === 'npc' || entityType === 'item') {
@@ -270,6 +288,11 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
             return;
         }
         
+        // Remove as imagens da ficha (ocupam cota). Falha aqui não impede a exclusão.
+        if (hasMedia) {
+            await deleteMediaForEntity(entityType as MediaEntity, deleteId).catch((e) => console.error('Error removing images', e));
+        }
+
         setDeleteId(null);
         loadItems();
     } catch (error) {
@@ -573,6 +596,9 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                 key={item.id} 
                 className={`group relative transition-all ${getBorderColor(item.accent_color)}`}
             >
+                {portraits[item.id as string] && (
+                    <img src={portraits[item.id as string]} alt={String(item.name || '')} loading="lazy" className="w-full h-32 object-cover rounded-sm mb-3 border border-gold/10" />
+                )}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex gap-2">
                     <button onClick={() => openEdit(item)} aria-label={t('list.editAria', { name: singular(item) })} className="p-1 bg-zinc-800 rounded hover:bg-indigo-600 text-zinc-300 hover:text-white"><Edit className="w-4 h-4" /></button>
                     <button onClick={() => requestDelete(item.id as string)} aria-label={t('list.deleteAria', { name: singular(item) })} className="p-1 bg-zinc-800 rounded hover:bg-red-900 text-zinc-300 hover:text-white"><Trash2 className="w-4 h-4" /></button>
@@ -915,6 +941,20 @@ export const GenericList: React.FC<GenericListProps> = ({ entityType, fields }) 
                     )}
                 </div>
             )})}
+            {hasMedia && campaignId && (
+                editingItem?.id ? (
+                    <EntityMedia
+                        campaignId={campaignId}
+                        entityType={entityType as MediaEntity}
+                        entityId={editingItem.id as string}
+                        entityName={editingItem.name as string}
+                        allowMaps={entityType === 'location'}
+                        onChanged={loadItems}
+                    />
+                ) : (
+                    <p className="text-xs text-silver/50">{t('media.saveFirst')}</p>
+                )
+            )}
             <div className="flex justify-end pt-4">
                 <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? t('common.saving') : t(`entity.${entityType}.save` as TKey)}

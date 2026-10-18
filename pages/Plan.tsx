@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Check, Crown } from 'lucide-react';
+import { Lock, Check, Crown, Clock } from 'lucide-react';
 import { Card, Button } from '../components/ui';
 import { useI18n } from '../i18n';
 import type { TKey } from '../i18n';
 import { fetchMyPlan, MyPlan, PLAN_RESOURCES, UNLIMITED_FROM } from '../services/plan';
 
 const FEATURES = ['export', 'images', 'share_link', 'co_gm', 'ai'] as const;
-const NOT_BUILT_YET = new Set<string>(['images', 'share_link', 'co_gm', 'ai']);
+const NOT_BUILT_YET = new Set<string>(['share_link', 'co_gm', 'ai']);
 
 export const PlanPage: React.FC = () => {
   const { t, formatDate } = useI18n();
@@ -78,6 +78,26 @@ export const PlanPage: React.FC = () => {
                   </li>
                 );
               })}
+              {plan.media && (
+                <li>
+                  <div className="flex justify-between text-sm">
+                    <span>{t('plan.mediaUsage')}</span>
+                    <span className="text-silver/70">
+                      {plan.media.bytes_limit === 0
+                        ? t('plan.mediaNone')
+                        : `${(plan.media.bytes_used / 1048576).toFixed(1)} MB / ${Math.round(plan.media.bytes_limit / 1048576)} MB · ${t('plan.mediaFiles', { count: plan.media.files_used })}`}
+                    </span>
+                  </div>
+                  {plan.media.bytes_limit > 0 && (
+                    <div className="h-1.5 bg-white/5 rounded mt-1" role="progressbar" aria-valuenow={plan.media.bytes_used} aria-valuemin={0} aria-valuemax={plan.media.bytes_limit}>
+                      <div
+                        className={`h-full rounded ${plan.media.bytes_used >= plan.media.bytes_limit ? 'bg-amber-500' : 'bg-gold/70'}`}
+                        style={{ width: `${Math.min(100, Math.round((plan.media.bytes_used / plan.media.bytes_limit) * 100))}%` }}
+                      />
+                    </div>
+                  )}
+                </li>
+              )}
             </ul>
           </Card>
 
@@ -87,7 +107,8 @@ export const PlanPage: React.FC = () => {
                 const on = !!plan.features[f];
                 return (
                   <li key={f} className="flex items-center gap-2 text-sm">
-                    {on ? <Check className="w-4 h-4 text-emerald-400" aria-label={t('plan.feature.on')} />
+                    {NOT_BUILT_YET.has(f) ? <Clock className="w-4 h-4 text-silver/40" aria-label={t('plan.feature.soon')} />
+                        : on ? <Check className="w-4 h-4 text-emerald-400" aria-label={t('plan.feature.on')} />
                         : <Lock className="w-4 h-4 text-silver/40" aria-label={t('plan.feature.off')} />}
                     <span className={on ? '' : 'text-silver/50'}>{t(`plan.feat.${f}` as TKey)}</span>
                     {NOT_BUILT_YET.has(f) && <span className="text-[10px] uppercase text-silver/40">({t('plan.feature.soon')})</span>}

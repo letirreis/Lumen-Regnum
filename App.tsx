@@ -21,6 +21,7 @@ import { SessionsCalendar } from './pages/SessionsCalendar';
 import { SessionDetail } from './pages/SessionDetail';
 import { ResetPassword } from './pages/ResetPassword';
 import { PlanPage } from './pages/Plan';
+import { deleteMediaForCampaign } from './services/media';
 import { UiDemo } from './pages/UiDemo';
 
 // Codex Pages
@@ -313,6 +314,7 @@ const CampaignSelector: React.FC = () => {
 
   const confirmDelete = async () => {
       if (deleteId) {
+          await deleteMediaForCampaign(deleteId).catch((e) => console.error('Error removing images', e));
           const result = await db.campaigns.delete(deleteId);
           if (result.error) {
               console.error('Error deleting campaign:', result.error);
