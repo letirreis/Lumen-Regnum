@@ -2,6 +2,16 @@
 import { supabase } from './supabase';
 import { Campaign, Character, NPC, Location, Faction, MagicItem, Encounter, Session, Note, Monster, UUID, CampaignCodex, SessionScene, Tag } from '../types';
 import type { PostgrestError } from '@supabase/supabase-js';
+import { translateDbError } from '../i18n/dbErrors';
+
+// Troca mensagens técnicas de cota/plano por texto amigável (no idioma atual)
+const friendly = <E extends { message?: string } | null>(error: E): E => {
+  if (error && typeof error.message === 'string') {
+    const msg = translateDbError(error.message);
+    if (msg) return { ...error, message: msg } as E;
+  }
+  return error;
+};
 
 // Utility to generate IDs client-side (Supabase can do this, but we keep it for optimistic UI updates if needed)
 export const generateId = (): UUID => {
@@ -74,7 +84,7 @@ const api = {
         if (error) {
             console.error(`Error adding to ${table}`, error);
         }
-        return { data: data as T | null, error };
+        return { data: data as T | null, error: friendly(error) };
     },
     update: async <T extends { id: string }>(table: string, item: T): Promise<DbResult<T>> => {
         if (!supabase) return { data: null, error: new Error('Supabase not configured') };
@@ -82,7 +92,7 @@ const api = {
         if (error) {
             console.error(`Error updating ${table}`, error);
         }
-        return { data: data as T | null, error };
+        return { data: data as T | null, error: friendly(error) };
     },
     delete: async (table: string, id: string): Promise<DbResult<null>> => {
         if (!supabase) return { data: null, error: new Error('Supabase not configured') };
