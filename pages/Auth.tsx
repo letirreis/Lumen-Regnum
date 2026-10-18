@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { signIn, signUp, resetPassword } from '../services/supabase';
+import { savePlanIntent, type PaidTier } from '../services/billing';
+import type { TKey } from '../i18n';
 import { Button, Input, Card } from '../components/ui';
 import { Shield, Scroll, Crown, AlertCircle } from 'lucide-react';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
@@ -17,6 +19,9 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [inviteCode, setInviteCode] = useState('');
+    // Cadastro: ou código de convite, ou escolha de plano (o convite define o plano sozinho)
+    const [hasInvite, setHasInvite] = useState(false);
+    const [chosenTier, setChosenTier] = useState<'free' | PaidTier>('free');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -34,8 +39,8 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                 await signIn(cleanEmail, password);
                 onLoginSuccess();
             } else if (mode === 'signup') {
-                // Invite-only: a code is required (the server validates it again)
-                if (!inviteCode.trim()) {
+                // With the invite option on, the code is required (the server validates it again)
+                if (hasInvite && !inviteCode.trim()) {
                     setError(t('auth.inviteRequired'));
                     setLoading(false);
                     return;
@@ -55,12 +60,18 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     return;
                 }
                 
-                await signUp(cleanEmail, password, inviteCode.trim());
-                setMessage(t('auth.signupSuccess'));
+                await signUp(cleanEmail, password, hasInvite ? inviteCode.trim() : '');
+                // Só uma intenção: depois do login a pessoa é levada ao pagamento. O plano só vale quando o Stripe confirmar.
+                savePlanIntent(!hasInvite && chosenTier !== 'free' ? chosenTier : null);
+                setMessage(!hasInvite && chosenTier !== 'free'
+                    ? `${t('auth.signupSuccess')} ${t('auth.plan.paidNext', { tier: t(`plan.tier.${chosenTier}` as TKey) })}`
+                    : t('auth.signupSuccess'));
                 setMode('login'); // Switch to login view
                 setPassword('');
                 setConfirmPassword('');
                 setInviteCode('');
+                setHasInvite(false);
+                setChosenTier('free');
             } else if (mode === 'forgot') {
                 await resetPassword(cleanEmail);
                 setMessage(t('auth.resetSent'));
@@ -69,7 +80,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
         } catch (err: any) {
             const raw: string = err?.message || '';
             // The invite trigger rejects the insert; Supabase Auth reports that as a generic database error.
-            if (mode === 'signup' && /database error saving new user/i.test(raw)) {
+            if (mode === 'signup' && hasInvite && /database error saving new user/i.test(raw)) {
                 setError(t('auth.inviteInvalid'));
             } else {
                 const key = authErrorKey(raw);
@@ -100,13 +111,13 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     <div className="flex border-b border-gold/10 mb-6">
                         <button 
                             className={`flex-1 pb-2 text-sm font-cinzel font-bold tracking-wide transition-colors ${mode === 'login' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-zinc-400'}`}
-                            onClick={() => { setMode('login'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); setInviteCode(''); }}
+                            onClick={() => { setMode('login'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); setInviteCode(''); setHasInvite(false); setChosenTier('free'); }}
                         >
                             {t('auth.tabLogin')}
                         </button>
                         <button 
                             className={`flex-1 pb-2 text-sm font-cinzel font-bold tracking-wide transition-colors ${mode === 'signup' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-zinc-400'}`}
-                            onClick={() => { setMode('signup'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); setInviteCode(''); }}
+                            onClick={() => { setMode('signup'); setError(null); setMessage(null); setPassword(''); setConfirmPassword(''); setInviteCode(''); setHasInvite(false); setChosenTier('free'); }}
                         >
                             {t('auth.tabSignup')}
                         </button>
@@ -169,19 +180,61 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                         />
                     )}
 
+                    {mode === 'signup' && !hasInvite && (
+                        <fieldset className="space-y-2">
+                            <legend className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">{t('auth.choosePlan')}</legend>
+                            {(['free', 'starter', 'full'] as const).map((tier) => (
+                                <label
+                                    key={tier}
+                                    className={`flex items-start gap-3 p-3 rounded border cursor-pointer transition-colors ${chosenTier === tier ? 'border-gold bg-gold/5' : 'border-zinc-800 hover:border-zinc-600'}`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="plan"
+                                        value={tier}
+                                        checked={chosenTier === tier}
+                                        onChange={() => setChosenTier(tier)}
+                                        className="mt-1 accent-[#d4af37]"
+                                    />
+                                    <span className="flex-1 min-w-0">
+                                        <span className="flex justify-between gap-2 font-cinzel text-sm text-gold">
+                                            <span>{t(`plan.tier.${tier}` as TKey)}</span>
+                                            <span className="text-silver/80 font-sans text-xs">{t(`auth.plan.price.${tier}` as TKey)}</span>
+                                        </span>
+                                        <span className="block text-xs text-zinc-400 mt-0.5">{t(`plan.tierHint.${tier}` as TKey)}</span>
+                                    </span>
+                                </label>
+                            ))}
+                            {chosenTier !== 'free' && <p className="text-[11px] text-zinc-500">{t('auth.plan.priceNote')}</p>}
+                        </fieldset>
+                    )}
+
+                    {mode === 'signup' && hasInvite && (
+                        <div className="space-y-2">
+                            <Input
+                                label={t('auth.inviteCode')}
+                                type="text"
+                                required
+                                value={inviteCode}
+                                onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                                placeholder="LUMEN-XXXX-XXXX-XXXX"
+                                autoComplete="off"
+                                autoCapitalize="characters"
+                                spellCheck={false}
+                                className="bg-obsidian border-zinc-800 focus:border-violet font-mono tracking-wider"
+                            />
+                            <p className="text-[11px] text-zinc-500">{t('auth.inviteGivesPlan')}</p>
+                        </div>
+                    )}
+
                     {mode === 'signup' && (
-                        <Input
-                            label={t('auth.inviteCode')}
-                            type="text"
-                            required
-                            value={inviteCode}
-                            onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                            placeholder="LUMEN-XXXX-XXXX-XXXX"
-                            autoComplete="off"
-                            autoCapitalize="characters"
-                            spellCheck={false}
-                            className="bg-obsidian border-zinc-800 focus:border-violet font-mono tracking-wider"
-                        />
+                        <button
+                            type="button"
+                            onClick={() => { setHasInvite(v => !v); setError(null); }}
+                            className="text-xs text-zinc-400 hover:text-gold transition-colors font-cinzel underline underline-offset-4"
+                        >
+                            {hasInvite ? t('auth.noInvite') : t('auth.hasInvite')}
+                        </button>
                     )}
 
                     <Button 
