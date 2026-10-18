@@ -123,6 +123,8 @@ export const common = {
   'dice.clearHistory': 'Limpar histórico de rolagens',
   'dice.clearLog': 'Limpar histórico',
   'dice.rolling': 'Rolando {count}d{sides}...',
+  'dice.critSuccess': 'Sucesso crítico!',
+  'dice.critFail': 'Falha crítica!',
 
   // --- atributos ---
   'stat.str': 'FOR',

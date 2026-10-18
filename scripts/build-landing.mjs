@@ -47,8 +47,8 @@ const COPY = {
       ['Seus dados são seus', 'Faça backup da campanha em arquivo e use em português ou inglês, com o idioma salvo na sua conta.'],
     ],
     diceTitle: 'Dados que rolam de verdade',
-    diceText: 'Escolha quantos dados rolar e confirme. Eles entram girando na tela, param no resultado e o total aparece em seguida. Um 20 natural brilha em dourado; um 1 natural, em vermelho.',
-    diceAlt: 'Duas rolagens separadas de 1d20: um 20 natural brilhando em dourado e um 1 natural brilhando em vermelho',
+    diceText: 'Escolha quantos dados rolar e confirme. Eles entram girando na tela, param no resultado e o total aparece em seguida. Um 20 natural traz "Sucesso crítico!" em dourado; um 1 natural, "Falha crítica!" em vermelho.',
+    diceAlt: 'Duas rolagens separadas de 1d20: um 20 natural com a mensagem Sucesso crítico em dourado e um 1 natural com a mensagem Falha crítica em vermelho',
     priceTitle: 'Planos simples, comece de graça',
     priceSub: 'Cobrança mensal, cancele quando quiser. A moeda final aparece na tela de pagamento.',
     launchPriceTag: 'Preço de lançamento',
@@ -116,8 +116,8 @@ const COPY = {
       ['Your data is yours', 'Back up the campaign to a file and use it in English or Portuguese, with your language saved to your account.'],
     ],
     diceTitle: 'Dice that actually roll',
-    diceText: 'Choose how many dice to roll and confirm. They tumble onto the screen, land on the result, and the total appears. A natural 20 glows gold; a natural 1 glows red.',
-    diceAlt: 'Two separate 1d20 rolls: a natural 20 glowing gold and a natural 1 glowing red',
+    diceText: 'Choose how many dice to roll and confirm. They tumble onto the screen, land on the result, and the total appears. A natural 20 brings "Critical success!" in gold; a natural 1, "Critical failure!" in red.',
+    diceAlt: 'Two separate 1d20 rolls: a natural 20 with a gold Critical success message and a natural 1 with a red Critical failure message',
     priceTitle: 'Simple plans, start free',
     priceSub: 'Billed monthly, cancel anytime. The final currency is shown at checkout.',
     launchPriceTag: 'Launch price',
@@ -267,7 +267,7 @@ function page(locale, variant) {
         <h2 class="section-title left">${esc(c.diceTitle)}</h2>
         <p>${esc(c.diceText)}</p>
       </div>
-      <img src="/landing/dice.png" width="760" height="260" loading="lazy" alt="${esc(c.diceAlt)}">
+      <img src="/landing/dice-${short}.png" width="760" height="300" loading="lazy" alt="${esc(c.diceAlt)}">
     </section>
 
     <section id="pricing" class="section">
