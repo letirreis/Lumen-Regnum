@@ -8,6 +8,8 @@ import { Campaign } from './types';
 import { Button, Input, Modal, ConfirmModal } from './components/ui';
 import { Plus, Trash2, WifiOff, AlertTriangle } from 'lucide-react';
 import { checkConnection, supabase } from './services/supabase';
+import { startCheckout, takePlanIntent } from './services/billing';
+import { fetchMyPlan } from './services/plan';
 import { Auth } from './pages/Auth';
 import { useToast } from './components/Toast';
 import { useI18n } from './i18n';
@@ -436,6 +438,16 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, accountLocale]);
+
+  // Plano pago escolhido no cadastro: no primeiro acesso, leva ao pagamento (o plano só vale quando o Stripe confirmar)
+  useEffect(() => {
+    if (!userId) return;
+    const intent = takePlanIntent();
+    if (!intent) return;
+    fetchMyPlan()
+      .then((p) => (p.tier === 'free' ? startCheckout(intent) : undefined))
+      .catch(() => { /* a pessoa pode assinar depois, na página Plano */ });
+  }, [userId]);
 
   useEffect(() => {
     // Service not configured: finish loading so the unavailable message renders.

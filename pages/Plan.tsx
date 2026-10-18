@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, Check, Crown, Clock } from 'lucide-react';
 import { Card, Button } from '../components/ui';
 import { useI18n } from '../i18n';
 import type { TKey } from '../i18n';
 import { fetchMyPlan, MyPlan, PLAN_RESOURCES, UNLIMITED_FROM } from '../services/plan';
+import { startCheckout, openBillingPortal, BillingError, type PaidTier } from '../services/billing';
 
 const FEATURES = ['export', 'images', 'share_link', 'co_gm', 'ai'] as const;
 const NOT_BUILT_YET = new Set<string>(['share_link', 'co_gm', 'ai']);
@@ -14,11 +15,52 @@ export const PlanPage: React.FC = () => {
   const navigate = useNavigate();
   const [plan, setPlan] = useState<MyPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [params] = useSearchParams();
+  const checkout = params.get('checkout'); // 'success' | 'cancel' depois de voltar do Stripe
+  const [busy, setBusy] = useState(false);
+  const [billingMsg, setBillingMsg] = useState<string | null>(null);
+  const [checkoutNote, setCheckoutNote] = useState<string | null>(
+    checkout === 'success' ? t('plan.checkout.success') : checkout === 'cancel' ? t('plan.checkout.cancel') : null,
+  );
 
   useEffect(() => {
     fetchMyPlan().then(setPlan).catch((e) => setError(e?.message || t('common.unknownError')));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Depois do pagamento, o Stripe avisa o servidor por webhook (alguns segundos): consulta até o plano mudar.
+  useEffect(() => {
+    if (checkout !== 'success') return;
+    let tries = 0;
+    const timer = window.setInterval(async () => {
+      tries += 1;
+      try {
+        const p = await fetchMyPlan();
+        if (p.tier !== 'free') {
+          setPlan(p);
+          setCheckoutNote(t('plan.checkout.updated'));
+          window.clearInterval(timer);
+          return;
+        }
+      } catch { /* tenta de novo */ }
+      if (tries >= 10) { setCheckoutNote(t('plan.checkout.slow')); window.clearInterval(timer); }
+    }, 2000);
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkout]);
+
+  const billing = async (action: () => Promise<void>) => {
+    setBusy(true);
+    setBillingMsg(null);
+    try {
+      await action();
+    } catch (e) {
+      setBillingMsg(e instanceof BillingError && e.code === 'already_subscribed' ? t('plan.billing.already') : t('plan.billing.error'));
+      setBusy(false);
+    }
+  };
+  const subscribe = (tier: PaidTier) => billing(() => startCheckout(tier));
+  const hasStripeSub = !!plan && plan.source === 'stripe' && plan.tier !== 'free';
 
   const expired = plan && plan.stored_tier !== 'free' && plan.tier === 'free';
 
@@ -27,6 +69,8 @@ export const PlanPage: React.FC = () => {
       <button onClick={() => navigate('/')} className="text-xs text-silver/60 hover:text-white">{t('plan.back')}</button>
       <h1 className="font-cinzel text-2xl text-gold tracking-wider">{t('plan.title')}</h1>
 
+      {checkoutNote && <p role="status" className="text-sm text-emerald-300 bg-emerald-900/20 border border-emerald-900/50 rounded p-3">{checkoutNote}</p>}
+      {billingMsg && <p role="alert" className="text-sm text-red-300 bg-red-950/30 border border-red-900/50 rounded p-3">{billingMsg}</p>}
       {error && <p className="text-red-400 text-sm">{t('plan.loadError', { detail: error })}</p>}
       {!plan && !error && <p className="text-silver/60 text-sm">{t('plan.loading')}</p>}
 
@@ -47,11 +91,19 @@ export const PlanPage: React.FC = () => {
                 )}
                 {expired && <p className="text-xs text-amber-400 mt-2">{t('plan.expiredNote')}</p>}
               </div>
-              {plan.tier !== 'full' && (
-                <Button variant="secondary" disabled title={t('plan.upgradeSoon')}>
-                  {t('plan.upgrade')} ({t('plan.upgradeSoon')})
-                </Button>
-              )}
+              <div className="flex flex-col gap-2 items-stretch">
+                {hasStripeSub ? (
+                  <Button variant="secondary" disabled={busy} onClick={() => billing(openBillingPortal)}>{t('plan.manage')}</Button>
+                ) : (
+                  (['starter', 'full'] as const)
+                    .filter((tier) => tier !== plan.tier && !(tier === 'starter' && plan.tier === 'full'))
+                    .map((tier) => (
+                      <Button key={tier} variant="secondary" disabled={busy} onClick={() => subscribe(tier)}>
+                        {t('plan.subscribe', { tier: t(`plan.tier.${tier}` as TKey) })} · {t(`auth.plan.price.${tier}` as TKey)}
+                      </Button>
+                    ))
+                )}
+              </div>
             </div>
           </Card>
 
