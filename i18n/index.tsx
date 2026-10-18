@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ptBR } from './locales/pt-BR';
 import { en } from './locales/en';
+import { supabase } from '../services/supabase';
 
 // ---------------------------------------------------------------------------
 // Sistema de tradução do Lumen Regnum
@@ -87,7 +88,8 @@ export const getLocale = () => currentLocale;
 
 interface I18nContextValue {
   locale: Locale;
-  setLocale: (l: Locale) => void;
+  /** `remote: false` aplica o idioma sem gravá-lo na conta (usado ao carregar o idioma da conta). */
+  setLocale: (l: Locale, opts?: { remote?: boolean }) => void;
   t: (key: TKey, params?: TParams) => string;
   opt: (group: string, value: string | null | undefined) => string;
   formatDate: (date: Date | string | number, options?: Intl.DateTimeFormatOptions) => string;
@@ -102,11 +104,17 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [locale, setLocaleState] = useState<Locale>(currentLocale);
   useEffect(() => { applyDocument(currentLocale); }, []);
 
-  const setLocale = useCallback((l: Locale) => {
+  const setLocale = useCallback((l: Locale, opts?: { remote?: boolean }) => {
     currentLocale = l;
     try { localStorage.setItem(STORAGE_KEY, l); } catch { /* ignora */ }
     applyDocument(l);
     setLocaleState(l);
+    if (opts?.remote !== false && supabase) {
+      // Guarda o idioma na conta (user_metadata), se houver login. Falha silenciosa: o local já vale.
+      supabase.auth.getSession()
+        .then(({ data }) => (data.session ? supabase!.auth.updateUser({ data: { locale: l } }) : null))
+        .catch(() => { /* ignora */ });
+    }
   }, []);
 
   const value = useMemo<I18nContextValue>(() => {
