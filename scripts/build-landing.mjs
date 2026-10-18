@@ -47,8 +47,8 @@ const COPY = {
       ['Seus dados são seus', 'Faça backup da campanha em arquivo e use em português ou inglês, com o idioma salvo na sua conta.'],
     ],
     diceTitle: 'Dados que rolam de verdade',
-    diceText: 'Escolha quantos dados rolar e confirme. Eles entram girando na tela, param no resultado e o total aparece em seguida. Um 20 natural brilha em dourado.',
-    diceAlt: 'Quatro dados de vinte faces rolados na tela, com o total somado',
+    diceText: 'Precisa de 8d6 para o dano de uma bola de fogo? Escolha a quantidade e confirme: os dados entram girando na tela, param no resultado e o total aparece em seguida. Um 20 natural no d20 brilha em dourado.',
+    diceAlt: 'Oito dados de seis faces rolados na tela, com o total 30',
     priceTitle: 'Planos simples, comece de graça',
     priceSub: 'Cobrança mensal, cancele quando quiser. A moeda final aparece na tela de pagamento.',
     launchPriceTag: 'Preço de lançamento',
@@ -116,8 +116,8 @@ const COPY = {
       ['Your data is yours', 'Back up the campaign to a file and use it in English or Portuguese, with your language saved to your account.'],
     ],
     diceTitle: 'Dice that actually roll',
-    diceText: 'Choose how many dice to roll and confirm. They tumble onto the screen, land on the result, and the total appears. A natural 20 glows gold.',
-    diceAlt: 'Four twenty-sided dice rolled on screen, with the total added up',
+    diceText: 'Need 8d6 for the damage of a fireball? Pick the count and confirm: the dice tumble onto the screen, land on the result, and the total appears. A natural 20 on a d20 glows gold.',
+    diceAlt: 'Eight six-sided dice rolled on screen, with a total of 30',
     priceTitle: 'Simple plans, start free',
     priceSub: 'Billed monthly, cancel anytime. The final currency is shown at checkout.',
     launchPriceTag: 'Launch price',
@@ -267,7 +267,7 @@ function page(locale, variant) {
         <h2 class="section-title left">${esc(c.diceTitle)}</h2>
         <p>${esc(c.diceText)}</p>
       </div>
-      <img src="/landing/dice.png" width="640" height="320" loading="lazy" alt="${esc(c.diceAlt)}">
+      <img src="/landing/dice.png" width="760" height="260" loading="lazy" alt="${esc(c.diceAlt)}">
     </section>
 
     <section id="pricing" class="section">
