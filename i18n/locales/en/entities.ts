@@ -64,7 +64,7 @@ export const entities = {
   'list.card.runes': 'Runes',
   'list.card.random': 'Random',
 
-  'tags.createError': 'Failed to create tag. Make sure the dmos_tags table exists in the database.',
+  'tags.createError': 'Failed to create tag. Please try again.',
   'tags.filterByType': 'Filter by type:',
   'tags.allTypes': 'All types',
   'tags.selected': 'Selected tags:',

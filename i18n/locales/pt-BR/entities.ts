@@ -65,7 +65,7 @@ export const entities = {
   'list.card.random': 'Aleatório',
 
   // etiquetas
-  'tags.createError': 'Erro ao criar a etiqueta. Verifique se a tabela dmos_tags existe no banco de dados.',
+  'tags.createError': 'Erro ao criar a etiqueta. Tente novamente.',
   'tags.filterByType': 'Filtrar por tipo:',
   'tags.allTypes': 'Todos os tipos',
   'tags.selected': 'Etiquetas selecionadas:',

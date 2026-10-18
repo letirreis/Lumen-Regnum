@@ -1,4 +1,4 @@
-// English: common texts, menu, auth, campaigns and setup.
+// English: common texts, menu, auth and campaigns.
 export const common = {
   'app.name': 'Lumen Regnum',
   'app.shortName': 'DM OS',
@@ -91,26 +91,11 @@ export const common = {
   'reset.quote': 'With new words of power, you may enter once more.',
   'reset.footer': 'Secure. Private. Protected.',
 
-  'setup.disconnectTitle': 'Disconnect Database',
-  'setup.disconnectMessage': 'Are you sure you want to disconnect? This will clear stored credentials.',
-  'setup.disconnect': 'Disconnect',
-  'setup.connectTitle': 'Connect to Database',
-  'setup.welcome': 'Welcome to DM OS!',
-  'setup.welcomeText': 'To persist your campaign data, please connect your Supabase project.',
-  'setup.projectUrl': 'Project URL',
-  'setup.anonKey': 'Anon Public Key',
-  'setup.howTo': 'How to get these:',
-  'setup.step1': 'Create a project at',
-  'setup.step2': 'Run the SQL setup script in the SQL Editor.',
-  'setup.step3': 'Go to Project Settings > API.',
-  'setup.step4': 'Copy the URL and anon/public Key.',
-  'setup.connectRestart': 'Connect & Restart',
 
   'campaigns.subtitle': 'Select a campaign to begin preparation.',
-  'campaigns.checking': 'Checking DB connection...',
-  'campaigns.connected': 'Database Connected',
-  'campaigns.connectionFailed': 'Connection Failed',
-  'campaigns.connectionHint': 'Error: {error}. Did you run the SQL Setup script?',
+  'campaigns.connectionFailed': 'Failed to load',
+  'campaigns.connectionHint': 'We could not load your campaigns. Refresh the page or try again shortly.',
+  'app.unavailable': 'Service unavailable right now. Please try again shortly.',
   'campaigns.new': 'New Campaign',
   'campaigns.empty': 'No campaigns found. Create one to get started.',
   'campaigns.modalTitle': 'Start New Campaign',
