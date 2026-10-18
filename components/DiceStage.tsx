@@ -70,6 +70,11 @@ export const DiceStage: React.FC<DiceStageProps> = ({ sides, rolls, modifier, to
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Natural 20 / natural 1 on a d20: the result also gets a message, in the same colours as the glowing die.
+  const critSuccess = sides === 20 && rolls.includes(20);
+  const critFail = sides === 20 && rolls.includes(1);
+  const critText = [critSuccess && t('dice.critSuccess'), critFail && t('dice.critFail')].filter(Boolean).join(' · ');
+
   const size = visible.length <= 6 ? 88 : visible.length <= 10 ? 60 : 52;
   const shape = SHAPES[sides] ?? SHAPES[20];
 
@@ -79,7 +84,7 @@ export const DiceStage: React.FC<DiceStageProps> = ({ sides, rolls, modifier, to
       onClick={onDone}
       role="status"
       aria-live="polite"
-      aria-label={landed ? `${rolls.length}d${sides}: ${total}` : t('dice.rolling', { count: rolls.length, sides })}
+      aria-label={landed ? `${rolls.length}d${sides}: ${total}${critText ? `. ${critText}` : ''}` : t('dice.rolling', { count: rolls.length, sides })}
     >
       <div className="flex flex-wrap items-center justify-center gap-4 max-w-2xl px-4">
         {visible.map((value, i) => {
@@ -122,6 +127,17 @@ export const DiceStage: React.FC<DiceStageProps> = ({ sides, rolls, modifier, to
         <div className="mt-2 text-sm text-zinc-400 font-mono">
           {rolls.length}d{sides}{modifier !== 0 && (modifier > 0 ? ` +${modifier}` : ` ${modifier}`)}
         </div>
+        {critText && (
+          <div
+            className="mt-3 text-xl font-bold tracking-wide"
+            style={{
+              color: critSuccess && !critFail ? '#facc15' : critFail && !critSuccess ? '#f87171' : '#e4e4e7',
+              textShadow: `0 0 12px ${critSuccess && !critFail ? 'rgba(250,204,21,0.55)' : critFail && !critSuccess ? 'rgba(248,113,113,0.55)' : 'rgba(228,228,231,0.3)'}`,
+            }}
+          >
+            {critText}
+          </div>
+        )}
       </div>
     </div>,
     document.body,
