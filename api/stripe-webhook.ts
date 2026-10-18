@@ -1,6 +1,6 @@
 // POST /api/stripe-webhook  (chamado só pelo Stripe; autenticado pela assinatura)
 // Único lugar que concede/remove plano pago. Escreve em dmos_subscriptions com a service_role.
-import { env, json, sb, stripe, verifyStripeSignature } from './_lib/stripe';
+import { env, json, sb, stripe, verifyStripeSignature } from './_lib/stripe.js';
 
 const GRACE_MS = 3 * 24 * 3600 * 1000; // folga após o fim do período, caso um aviso do Stripe atrase
 const ACTIVE = new Set(['active', 'trialing', 'past_due']);

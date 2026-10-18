@@ -1,7 +1,7 @@
 // POST /api/waitlist  { email, lang, source, website }
 // Guarda o e-mail na lista de espera. Responde sempre {ok:true} para e-mails válidos (inclusive repetidos),
 // para a rota não revelar quem já está na lista. O campo "website" é uma armadilha para robôs.
-import { json, sb } from './_lib/stripe';
+import { json, sb } from './_lib/stripe.js';
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 const hits = new Map<string, number[]>(); // limite por IP (melhor esforço: cada instância tem a sua memória)
