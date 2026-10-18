@@ -17,6 +17,7 @@ import { useI18n } from './i18n';
 import { CampaignDashboard } from './pages/CampaignDashboard';
 import { CombatTracker } from './pages/CombatTracker';
 import { GenericList } from './pages/GenericList';
+import { Gallery } from './pages/Gallery';
 import { SessionsCalendar } from './pages/SessionsCalendar';
 import { SessionDetail } from './pages/SessionDetail';
 import { ResetPassword } from './pages/ResetPassword';
@@ -406,6 +407,7 @@ const CampaignRouteWrapper: React.FC = () => {
              <Route path="/locations" element={<GenericList entityType="location" fields={SCHEMAS.location as any} />} />
              <Route path="/factions" element={<GenericList entityType="faction" fields={SCHEMAS.faction as any} />} />
              <Route path="/items" element={<GenericList entityType="item" fields={SCHEMAS.item as any} />} />
+             <Route path="/gallery" element={<Gallery />} />
              <Route path="/sessions" element={<SessionsCalendar />} />
              <Route path="/sessions/:sessionId" element={<SessionDetail />} />
              <Route path="/combat" element={<CombatTracker />} />
