@@ -2,6 +2,13 @@ import { supabase } from './supabase';
 
 export type Tier = 'free' | 'starter' | 'full';
 
+/**
+ * O plano Full só volta a ser vendido quando IA e co-mestre existirem de verdade.
+ * false = some do cadastro e da tela de plano (quem já tem Full continua com ele) e o /api/checkout recusa.
+ * Para reativar: true aqui, SHOW_FULL em scripts/build-landing.mjs e FULL_PLAN_ENABLED=true na Vercel.
+ */
+export const FULL_PLAN_ENABLED = false;
+
 export interface MyPlan {
   tier: Tier;
   stored_tier: Tier;

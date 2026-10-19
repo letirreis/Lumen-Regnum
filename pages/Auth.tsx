@@ -8,13 +8,17 @@ import { Shield, Scroll, Crown, AlertCircle } from 'lucide-react';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useI18n } from '../i18n';
 import { authErrorKey } from '../i18n/authErrors';
+import { FULL_PLAN_ENABLED } from '../services/plan';
 
 interface AuthProps {
     onLoginSuccess: () => void;
 }
 
 export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
-    const { t, setLocale } = useI18n();
+    const { t, setLocale, locale } = useI18n();
+    const legalBase = locale === 'en' ? '/en' : '/pt';
+    const termsHref = `${legalBase}/${locale === 'en' ? 'terms' : 'termos'}/`;
+    const privacyHref = `${legalBase}/${locale === 'en' ? 'privacy' : 'privacidade'}/`;
     // Links das páginas de venda: /#/?mode=signup&plan=starter&lang=en  (ou &invite=CODIGO)
     const [params] = useSearchParams();
     const planParam = params.get('plan');
@@ -25,7 +29,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
     const [inviteCode, setInviteCode] = useState(() => (params.get('invite') || '').toUpperCase().slice(0, 40));
     // Cadastro: ou código de convite, ou escolha de plano (o convite define o plano sozinho)
     const [hasInvite, setHasInvite] = useState(() => !!params.get('invite'));
-    const [chosenTier, setChosenTier] = useState<'free' | PaidTier>(planParam === 'starter' || planParam === 'full' ? planParam : 'free');
+    const [chosenTier, setChosenTier] = useState<'free' | PaidTier>(planParam === 'starter' || (planParam === 'full' && FULL_PLAN_ENABLED) ? planParam : 'free');
 
     useEffect(() => {
         const lang = params.get('lang');
@@ -193,7 +197,7 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     {mode === 'signup' && !hasInvite && (
                         <fieldset className="space-y-2">
                             <legend className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">{t('auth.choosePlan')}</legend>
-                            {(['free', 'starter', 'full'] as const).map((tier) => (
+                            {(FULL_PLAN_ENABLED ? (['free', 'starter', 'full'] as const) : (['free', 'starter'] as const)).map((tier) => (
                                 <label
                                     key={tier}
                                     className={`flex items-start gap-3 p-3 rounded border cursor-pointer transition-colors ${chosenTier === tier ? 'border-gold bg-gold/5' : 'border-zinc-800 hover:border-zinc-600'}`}
@@ -245,6 +249,15 @@ export const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                         >
                             {hasInvite ? t('auth.noInvite') : t('auth.hasInvite')}
                         </button>
+                    )}
+
+                    {mode === 'signup' && (
+                        <p className="text-[11px] text-zinc-500 leading-relaxed">
+                            {t('auth.legal.agree')}{' '}
+                            <a href={termsHref} target="_blank" rel="noopener noreferrer" className="text-gold underline underline-offset-2">{t('auth.legal.terms')}</a>
+                            {' '}{t('auth.legal.and')}{' '}
+                            <a href={privacyHref} target="_blank" rel="noopener noreferrer" className="text-gold underline underline-offset-2">{t('auth.legal.privacy')}</a>.
+                        </p>
                     )}
 
                     <Button 

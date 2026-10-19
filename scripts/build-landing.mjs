@@ -4,12 +4,17 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { LEGAL, OPERATOR, UPDATED } from './legal-content.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 
 // ---- Configuração ---------------------------------------------------------------------------
 // Data de lançamento para a versão "lista de espera" (formato AAAA-MM-DD). null = mostra "Em breve".
 const LAUNCH_DATE = null;
+
+// Mostrar o plano Full nas páginas de venda? Fica false até IA e co-mestre existirem no app.
+// Para voltar com o Full: troque para true, rode o build e reative também FULL_PLAN_ENABLED no app (services/plan.ts).
+const SHOW_FULL = false;
 
 const PRICES = {
   'pt-BR': { free: 'Grátis', starter: 'R$ 14,90', full: 'R$ 39,90', per: '/mês' },
@@ -31,6 +36,7 @@ const COPY = {
     waitSub: 'Deixe seu e-mail e avisamos quando abrirmos as portas. Só usaremos o e-mail para isso.',
     launch: (d) => (d ? `Lançamento: ${d}` : 'Lançamento em breve'),
     emailLabel: 'Seu e-mail', emailPh: 'voce@email.com', waitBtn: 'Entrar na lista', sending: 'Enviando...',
+    waitConsent: 'Ao entrar na lista, você concorda com a',
     waitOk: 'Pronto! Você está na lista. Avisaremos por e-mail.', waitErr: 'Não deu certo agora. Confira o e-mail e tente de novo.', waitRate: 'Muitas tentativas. Tente de novo em alguns minutos.',
     stripTitle: 'Menos abas abertas, mais mesa.',
     stripText: 'Caderno, planilha, documento solto: tudo vira um mundo organizado, que você encontra na hora em que a história pede.',
@@ -53,7 +59,7 @@ const COPY = {
     priceSub: 'Cobrança mensal, cancele quando quiser. A moeda final aparece na tela de pagamento.',
     launchPriceTag: 'Preço de lançamento',
     tiers: [
-      { id: 'free', name: 'Explorador', blurb: 'Para conhecer a ferramenta.', cta: 'Criar conta grátis', features: ['1 campanha', 'Até 10 fichas de cada tipo', 'Até 5 sessões', 'Rolador de dados e Códex'] },
+      { id: 'free', name: 'Explorador', blurb: 'Para conhecer a ferramenta.', cta: 'Criar conta grátis', features: ['1 campanha', 'Até 10 fichas de cada tipo', 'Até 10 sessões', 'Rolador de dados e Códex'] },
       { id: 'starter', name: 'Starter', blurb: 'Para quem mestra toda semana.', cta: 'Assinar Starter', features: ['Até 3 campanhas', 'Até 1.500 fichas de cada tipo', 'Imagens e mapas (50 MB)', 'Backup da campanha'], featured: true },
       { id: 'full', name: 'Full', blurb: 'Tudo liberado, com recursos futuros.', cta: 'Assinar Full', features: ['Até 100 campanhas', 'Até 5.000 fichas de cada tipo', 'Imagens e mapas (200 MB)', 'Backup da campanha', 'Acesso à IA', 'Acesso ao co-mestre', 'Novidades em primeira mão'] },
     ],
@@ -62,9 +68,9 @@ const COPY = {
     compareRows: [
       ['Campanhas', '1', '3', '100'],
       ['Fichas de cada tipo (NPCs, locais, facções, itens, monstros, personagens)', '10', '1.500', '5.000'],
-      ['Sessões', '5', '1.000', '3.000'],
-      ['Cenas', '40', '5.000', '15.000'],
-      ['Encontros', '5', '500', '2.000'],
+      ['Sessões', '10', '1.000', '3.000'],
+      ['Cenas', '80', '5.000', '15.000'],
+      ['Encontros', '10', '500', '2.000'],
       ['Imagens e mapas', '—', '50 MB', '200 MB'],
       ['Backup da campanha', '—', '✓', '✓'],
       ['Link só de leitura para jogadores', '—', '—', 'em breve'],
@@ -72,14 +78,14 @@ const COPY = {
       ['Co-mestre', '—', '—', 'em breve'],
     ],
     soonTitle: 'O que vem por aí',
-    soonText: 'Link somente leitura para seus jogadores, IA para sugerir fichas e resumir sessões, e co-mestre. Chegam primeiro no plano Full.',
+    soonText: 'Estamos desenvolvendo: link somente leitura para seus jogadores, IA para sugerir fichas e resumir sessões, e co-mestre.',
     faqTitle: 'Dúvidas frequentes',
     faq: [
-      ['Preciso pagar para começar?', 'Não. O plano Explorador é grátis e não pede cartão. Quando sua campanha crescer, você assina o Starter ou o Full.'],
+      ['Preciso pagar para começar?', 'Não. O plano Explorador é grátis e não pede cartão. Quando sua campanha crescer, você assina o Starter.'],
       ['Posso cancelar quando quiser?', 'Sim. Você gerencia a assinatura dentro do próprio app, pelo portal de pagamento, e cancela a qualquer momento.'],
       ['O que acontece com meus dados se eu cancelar?', 'Nada é apagado. Você volta ao plano gratuito, e o que já existe continua ali; só não dá para criar acima do limite do plano.'],
       ['Funciona com qual sistema de RPG?', 'O Lumen Regnum é focado na história e na mesa, não em regras de um sistema específico. Você descreve suas fichas como quiser.'],
-      ['Meus jogadores precisam de conta?', 'Hoje o app é do mestre. O link somente leitura para jogadores está a caminho.'],
+      ['Meus jogadores precisam de conta?', 'Hoje o app é do mestre. O link somente leitura para jogadores está em desenvolvimento.'],
       ['Meus dados ficam seguros?', 'Cada conta só enxerga as próprias campanhas, e os limites de cada plano são aplicados no servidor.'],
     ],
     finalTitle: 'Sua próxima sessão começa aqui.',
@@ -100,6 +106,7 @@ const COPY = {
     waitSub: 'Leave your email and we will tell you when the doors open. We only use it for that.',
     launch: (d) => (d ? `Launching ${d}` : 'Launching soon'),
     emailLabel: 'Your email', emailPh: 'you@email.com', waitBtn: 'Join the list', sending: 'Sending...',
+    waitConsent: 'By joining the list, you agree to the',
     waitOk: 'Done! You are on the list. We will email you.', waitErr: 'That did not work. Check your email and try again.', waitRate: 'Too many attempts. Try again in a few minutes.',
     stripTitle: 'Fewer tabs, more table.',
     stripText: 'Notebook, spreadsheet, scattered docs: all of it becomes one organized world you can find the moment the story asks for it.',
@@ -122,7 +129,7 @@ const COPY = {
     priceSub: 'Billed monthly, cancel anytime. The final currency is shown at checkout.',
     launchPriceTag: 'Launch price',
     tiers: [
-      { id: 'free', name: 'Explorer', blurb: 'To get to know the tool.', cta: 'Create a free account', features: ['1 campaign', 'Up to 10 sheets of each type', 'Up to 5 sessions', 'Dice roller and codex'] },
+      { id: 'free', name: 'Explorer', blurb: 'To get to know the tool.', cta: 'Create a free account', features: ['1 campaign', 'Up to 10 sheets of each type', 'Up to 10 sessions', 'Dice roller and codex'] },
       { id: 'starter', name: 'Starter', blurb: 'For GMs who run games every week.', cta: 'Subscribe to Starter', features: ['Up to 3 campaigns', 'Up to 1,500 sheets of each type', 'Images and maps (50 MB)', 'Campaign backup'], featured: true },
       { id: 'full', name: 'Full', blurb: 'Everything unlocked, with upcoming features.', cta: 'Subscribe to Full', features: ['Up to 100 campaigns', 'Up to 5,000 sheets of each type', 'Images and maps (200 MB)', 'Campaign backup', 'AI access', 'Co-GM access', 'New features first'] },
     ],
@@ -131,9 +138,9 @@ const COPY = {
     compareRows: [
       ['Campaigns', '1', '3', '100'],
       ['Sheets of each type (NPCs, locations, factions, items, monsters, characters)', '10', '1,500', '5,000'],
-      ['Sessions', '5', '1,000', '3,000'],
-      ['Scenes', '40', '5,000', '15,000'],
-      ['Encounters', '5', '500', '2,000'],
+      ['Sessions', '10', '1,000', '3,000'],
+      ['Scenes', '80', '5,000', '15,000'],
+      ['Encounters', '10', '500', '2,000'],
       ['Images and maps', '—', '50 MB', '200 MB'],
       ['Campaign backup', '—', '✓', '✓'],
       ['Read-only link for players', '—', '—', 'coming soon'],
@@ -141,14 +148,14 @@ const COPY = {
       ['Co-GM', '—', '—', 'coming soon'],
     ],
     soonTitle: 'What is coming',
-    soonText: 'A read-only link for your players, AI to suggest sheets and summarize sessions, and a co-GM. They arrive first on the Full plan.',
+    soonText: 'In development: a read-only link for your players, AI to suggest sheets and summarize sessions, and a co-GM.',
     faqTitle: 'Frequently asked questions',
     faq: [
-      ['Do I have to pay to start?', 'No. The Explorer plan is free and asks for no card. When your campaign grows, you subscribe to Starter or Full.'],
+      ['Do I have to pay to start?', 'No. The Explorer plan is free and asks for no card. When your campaign grows, you subscribe to Starter.'],
       ['Can I cancel anytime?', 'Yes. You manage your subscription inside the app through the billing portal and can cancel at any time.'],
       ['What happens to my data if I cancel?', 'Nothing is deleted. You go back to the free plan and what already exists stays; you just cannot create beyond the plan limit.'],
       ['Which RPG system does it work with?', 'Lumen Regnum focuses on story and table prep, not on the rules of a specific system. You describe your sheets however you like.'],
-      ['Do my players need an account?', 'Today the app is for the game master. A read-only link for players is on the way.'],
+      ['Do my players need an account?', 'Today the app is for the game master. A read-only link for players is in development.'],
       ['Is my data safe?', 'Each account only sees its own campaigns, and the limits of each plan are enforced on the server.'],
     ],
     finalTitle: 'Your next session starts here.',
@@ -185,6 +192,9 @@ function page(locale, variant) {
   const otherHref = buy ? `/${otherShort}/` : `/${otherShort}/${otherWaitPath}/`;
   const loginHref = `/#/?lang=${locale === 'en' ? 'en' : 'pt-BR'}`;
   const source = `${buy ? 'sales' : 'waitlist'}-${short}`;
+  const L = LEGAL[locale];
+  const privacyHref = `/${short}/${L.privacy.slug}/`;
+  const termsHref = `/${short}/${L.terms.slug}/`;
 
   const waitForm = (id) => `
         <form class="wait-form" data-wait-form data-lang="${locale === 'en' ? 'en' : 'pt-BR'}" data-source="${source}-${id}" novalidate
@@ -194,14 +204,15 @@ function page(locale, variant) {
           <input class="hp" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
           <button class="btn btn-gold" type="submit">${esc(c.waitBtn)}</button>
           <p class="wait-msg" role="status" aria-live="polite"></p>
-        </form>`;
+        </form>
+        <p class="muted small wait-legal">${esc(c.waitConsent)} <a href="${privacyHref}">${esc(L.privacy.title)}</a>.</p>`;
 
   const heroActions = buy
     ? `<div class="actions"><a class="btn btn-gold" href="${appLink(locale, 'free')}">${esc(c.ctaBuy)}</a><a class="btn btn-ghost" href="#pricing">${esc(c.ctaBuy2)}</a></div>
        <p class="muted small"><a href="${loginHref}">${esc(c.haveAccount)}</a></p>`
     : `<div class="wait-box"><h2 class="wait-title">${esc(c.waitHeadline)}</h2><p class="muted">${esc(c.waitSub)}</p>${waitForm('hero')}<p class="launch">${esc(launchText(locale, c))}</p></div>`;
 
-  const tiers = c.tiers.map((t) => `
+  const tiers = c.tiers.filter((t) => SHOW_FULL || t.id !== 'full').map((t) => `
         <article class="tier${t.featured ? ' featured' : ''}">
           ${!buy && t.id !== 'free' ? `<span class="badge">${esc(c.launchPriceTag)}</span>` : ''}
           <h3>${esc(t.name)}</h3>
@@ -211,7 +222,10 @@ function page(locale, variant) {
           ${buy ? `<a class="btn ${t.featured ? 'btn-gold' : 'btn-ghost'}" href="${appLink(locale, t.id)}">${esc(t.cta)}</a>` : ''}
         </article>`).join('');
 
-  const rows = c.compareRows.map((r) => `<tr><th scope="row">${esc(r[0])}</th>${r.slice(1).map((v) => `<td>${esc(v)}</td>`).join('')}</tr>`).join('');
+  const soonCell = /^(em breve|coming soon)$/;
+  const cols = SHOW_FULL ? 4 : 3;
+  const head = c.compareHead.slice(0, cols);
+  const rows = c.compareRows.filter((r) => SHOW_FULL || !soonCell.test(r[3])).map((r) => r.slice(0, cols)).map((r) => `<tr><th scope="row">${esc(r[0])}</th>${r.slice(1).map((v) => `<td>${esc(v)}</td>`).join('')}</tr>`).join('');
 
   return `<!DOCTYPE html>
 <html lang="${c.htmlLang}">
@@ -279,7 +293,7 @@ function page(locale, variant) {
       <h3 class="compare-title">${esc(c.compareTitle)}</h3>
       <div class="table-wrap">
         <table>
-          <thead><tr>${c.compareHead.map((h, i) => `<th scope="col"${i === 0 ? ' class="sr-only"' : ''}>${esc(h || (locale === 'en' ? 'Feature' : 'Recurso'))}</th>`).join('')}</tr></thead>
+          <thead><tr>${head.map((h, i) => `<th scope="col"${i === 0 ? ' class="sr-only"' : ''}>${esc(h || (locale === 'en' ? 'Feature' : 'Recurso'))}</th>`).join('')}</tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -305,8 +319,60 @@ function page(locale, variant) {
 
   <footer>
     <p>${esc(c.footer)}</p>
+    <p class="legal-links"><a href="${termsHref}">${esc(L.navTerms)}</a> · <a href="${privacyHref}">${esc(L.navPrivacy)}</a></p>
   </footer>
   <script src="/landing/landing.js" defer></script>
+</body>
+</html>
+`;
+}
+
+function legalPage(locale, kind) {
+  const L = LEGAL[locale];
+  const doc = L[kind];
+  const short = locale === 'en' ? 'en' : 'pt';
+  const other = kind === 'privacy' ? 'terms' : 'privacy';
+  const body = doc.sections.map(([h, paras], i) => {
+    const out = []; let list = [];
+    const flush = () => { if (list.length) { out.push(`<ul>${list.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`); list = []; } };
+    for (const para of paras) {
+      if (para.startsWith('• ')) list.push(para.slice(2)); else { flush(); out.push(`<p>${esc(para)}</p>`); }
+    }
+    flush();
+    return `<section><h2>${i + 1}. ${esc(h)}</h2>${out.join('')}</section>`;
+  }).join('\n      ');
+  const contact = OPERATOR.contactEmail
+    ? `<section><h2>${esc(L.contactTitle)}</h2><p>${esc(L.contactText(OPERATOR.contactEmail))}</p></section>`
+    : '';
+  return `<!DOCTYPE html>
+<html lang="${locale === 'en' ? 'en' : 'pt-BR'}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${esc(doc.title)} · Lumen Regnum</title>
+  <meta name="description" content="${esc(doc.intro)}">
+  <meta name="theme-color" content="#1A1B23">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 18h18v2H3v-2Zm0-2L1 7l5.5 4L12 4l5.5 7L23 7l-2 9H3Z' fill='%23D4B875'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/landing/landing.css">
+</head>
+<body>
+  <header class="top">
+    <a class="logo" href="/${short}/" aria-label="Lumen Regnum">${crown}<span>LUMEN REGNUM</span></a>
+    <nav aria-label="Principal"><a href="/${short}/">${esc(L.backHome)}</a></nav>
+  </header>
+  <main class="legal">
+    <h1>${esc(doc.title)}</h1>
+    <p class="muted small">${esc(L.updated)}: ${esc(UPDATED[locale])}</p>
+    <p class="legal-intro">${esc(doc.intro)}</p>
+      ${body}
+      ${contact}
+  </main>
+  <footer>
+    <p class="legal-links"><a href="/${short}/${L[other].slug}/">${esc(L[other].title)}</a> · <a href="/${short}/">${esc(L.backHome)}</a></p>
+  </footer>
 </body>
 </html>
 `;
@@ -324,3 +390,14 @@ for (const [file, locale, variant] of outputs) {
   writeFileSync(full, page(locale, variant));
   console.log('gerado', file);
 }
+for (const locale of ['pt-BR', 'en']) {
+  for (const kind of ['privacy', 'terms']) {
+    const short = locale === 'en' ? 'en' : 'pt';
+    const file = `${short}/${LEGAL[locale][kind].slug}/index.html`;
+    const full = join(ROOT, file);
+    mkdirSync(dirname(full), { recursive: true });
+    writeFileSync(full, legalPage(locale, kind));
+    console.log('gerado', file);
+  }
+}
+if (!OPERATOR.contactEmail) console.warn('AVISO: OPERATOR.contactEmail (scripts/legal-content.mjs) está vazio; as páginas legais saem sem a seção de contato.');
