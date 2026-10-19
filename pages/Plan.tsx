@@ -4,7 +4,7 @@ import { Lock, Check, Crown, Clock } from 'lucide-react';
 import { Card, Button } from '../components/ui';
 import { useI18n } from '../i18n';
 import type { TKey } from '../i18n';
-import { fetchMyPlan, MyPlan, PLAN_RESOURCES, UNLIMITED_FROM } from '../services/plan';
+import { fetchMyPlan, MyPlan, PLAN_RESOURCES, UNLIMITED_FROM, FULL_PLAN_ENABLED } from '../services/plan';
 import { startCheckout, openBillingPortal, BillingError, type PaidTier } from '../services/billing';
 
 const FEATURES = ['export', 'images', 'share_link', 'co_gm', 'ai'] as const;
@@ -96,7 +96,7 @@ export const PlanPage: React.FC = () => {
                   <Button variant="secondary" disabled={busy} onClick={() => billing(openBillingPortal)}>{t('plan.manage')}</Button>
                 ) : (
                   (['starter', 'full'] as const)
-                    .filter((tier) => tier !== plan.tier && !(tier === 'starter' && plan.tier === 'full'))
+                    .filter((tier) => (FULL_PLAN_ENABLED || tier !== 'full') && tier !== plan.tier && !(tier === 'starter' && plan.tier === 'full'))
                     .map((tier) => (
                       <Button key={tier} variant="secondary" disabled={busy} onClick={() => subscribe(tier)}>
                         {t('plan.subscribe', { tier: t(`plan.tier.${tier}` as TKey) })} · {t(`auth.plan.price.${tier}` as TKey)}

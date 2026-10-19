@@ -11,6 +11,8 @@ export async function POST(request: Request): Promise<Response> {
     const { tier, locale } = (await request.json().catch(() => ({}))) as { tier?: string; locale?: string };
     const lookupKey = tier ? TIER_LOOKUP[tier] : undefined;
     if (!lookupKey) return json({ error: 'invalid_tier' }, 400);
+    // O Full está fora de venda até IA e co-mestre existirem. Para reativar, defina FULL_PLAN_ENABLED=true na Vercel.
+    if (tier === 'full' && process.env.FULL_PLAN_ENABLED !== 'true') return json({ error: 'tier_unavailable' }, 400);
 
     // Já tem assinatura ativa pelo Stripe? Então troca/cancelamento é pelo portal, não por outro checkout.
     const rows = await sb('GET', `/dmos_subscriptions?user_id=eq.${user.id}&select=tier,source,tier_expires_at,stripe_customer_id,stripe_subscription_id`);
